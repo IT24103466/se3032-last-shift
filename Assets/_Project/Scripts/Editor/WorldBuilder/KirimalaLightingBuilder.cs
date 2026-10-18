@@ -86,7 +86,7 @@ namespace WorldBuilder.EditorTools
                 lamps += Lamp(path, $"Lamp_Path_{c.x:0}_{c.y:0}", OnTerrain(c.x, c.y, 3f), 12f, 6f, Sodium, LightmapBakeType.Baked);
 
             // Leaf collection shed (X 42-48, Z 20-26).
-            lamps += Lamp(path, "Lamp_LeafShed", OnTerrain(45f, 23f, 2.8f), 10f, 6f, Sodium, LightmapBakeType.Baked);
+            lamps += Lamp(path, "Lamp_LeafShed", OnTerrain(45f, 23f, 2.25f), 10f, 6f, Sodium, LightmapBakeType.Baked);
 
             // Rolling floor (X 10-36, Z 52-76). Open part hangs from the roof; under the loft
             // (Z 66-76) the lamps hang just below the loft floor.
@@ -101,7 +101,7 @@ namespace WorldBuilder.EditorTools
             // Withering loft (upper level, Y 12.5) and the catwalk.
             var loft = Group(lights, "Loft");
             foreach (float x in new[] { 14f, 22f, 30f })
-                lamps += Lamp(loft, $"Lamp_Loft_{x:0}", new Vector3(x, RoofY - 1.2f, 71f), 10f, 5f, Sodium, LightmapBakeType.Baked);
+                lamps += Lamp(loft, $"Lamp_Loft_{x:0}", new Vector3(x, RoofY - 1.2f, 71f), 11f, 8f, Sodium, LightmapBakeType.Baked);
             lamps += Lamp(loft, "Lamp_Catwalk", new Vector3(34f, LoftY + 2.8f, 62f), 8f, 4f, Sodium, LightmapBakeType.Baked);
 
             // Storeroom (X 36-50, Z 52-62).
@@ -163,6 +163,11 @@ namespace WorldBuilder.EditorTools
             RenderSettings.ambientEquatorColor = new Color(0.15f, 0.19f, 0.28f);
             RenderSettings.ambientGroundColor = new Color(0.05f, 0.06f, 0.08f);
 
+            // Blue-hour sky: Unity's procedural skybox, dimmed and tinted. The moonlight is the
+            // "sun", so the moon disc sits where the shadows come from. The ground colour matches
+            // the fog, so distant hills melt into the horizon.
+            RenderSettings.skybox = SkyMaterial();
+
             // Monsoon mist: exponential-squared fog in a cold grey-blue. At 0.015 about 80% of the
             // scene is still visible at 30 m and about 45% at 60 m, so it hides the map edges
             // without hiding enemies the player needs to see coming.
@@ -170,6 +175,25 @@ namespace WorldBuilder.EditorTools
             RenderSettings.fogMode = FogMode.ExponentialSquared;
             RenderSettings.fogColor = new Color(0.30f, 0.36f, 0.46f);
             RenderSettings.fogDensity = 0.015f;
+        }
+
+        static Material SkyMaterial()
+        {
+            const string path = "Assets/_Project/Art/Environment/Materials/Lighting/M_Sky_BlueHour.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(Shader.Find("Skybox/Procedural"));
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.SetFloat("_SunDisk", 1f);                  // simple disc = the moon
+            m.SetFloat("_SunSize", 0.025f);
+            m.SetFloat("_AtmosphereThickness", 0.55f);
+            m.SetColor("_SkyTint", new Color(0.22f, 0.30f, 0.50f));
+            m.SetColor("_GroundColor", new Color(0.30f, 0.36f, 0.46f));
+            m.SetFloat("_Exposure", 0.32f);
+            EditorUtility.SetDirty(m);
+            return m;
         }
 
         static int Lamp(Transform parent, string name, Vector3 pos, float range, float intensity,

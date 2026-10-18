@@ -135,7 +135,7 @@ namespace WorldBuilder.EditorTools
             Vector3 size = rows[0].localScale;                       // all rows share one size (4 x 1.4 x 0.9 m)
             var variants = new Mesh[3];
             for (int v = 0; v < variants.Length; v++)
-                variants[v] = store.Get($"TeaBush_{v}_{size.x:0.0}x{size.y:0.0}x{size.z:0.0}", () => TeaBushMesh(size, 17.3f * (v + 1)));
+                variants[v] = store.Get($"TeaBush6_{v}_{size.x:0.0}x{size.y:0.0}x{size.z:0.0}", () => TeaBushMesh(size, 17.3f * (v + 1)));
 
             for (int i = 0; i < rows.Count; i++)
             {
@@ -161,7 +161,7 @@ namespace WorldBuilder.EditorTools
         {
             var verts = new List<Vector3>(); var tris = new List<int>();
             var index = new Dictionary<Vector3Int, int>();
-            int sx = Mathf.CeilToInt(size.x * 8), sy = Mathf.CeilToInt(size.y * 8), sz = Mathf.CeilToInt(size.z * 8);
+            int sx = Mathf.CeilToInt(size.x * 6), sy = Mathf.CeilToInt(size.y * 6), sz = Mathf.CeilToInt(size.z * 6);   // 6 verts/m
             Vector3[] n = { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
 
             foreach (var normal in n)
