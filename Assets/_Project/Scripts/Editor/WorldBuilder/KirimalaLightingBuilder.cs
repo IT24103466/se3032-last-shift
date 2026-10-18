@@ -72,46 +72,46 @@ namespace WorldBuilder.EditorTools
             for (float x = 14f; x <= 46f; x += 8f)
             {
                 var mode = Mathf.RoundToInt(x - 14f) % 16 == 0 ? LightmapBakeType.Mixed : LightmapBakeType.Baked;
-                lamps += Lamp(yard, $"Lamp_Yard_{x:0}", new Vector3(x, Ground + 4.5f, 41f), 14f, 4f, Sodium, mode);
+                lamps += Lamp(yard, $"Lamp_Yard_{x:0}", new Vector3(x, Ground + 4.5f, 41f), 16f, 10f, Sodium, mode);
             }
 
             // Estate road and main gate.
             var gate = Group(lights, "Gate");
-            lamps += Lamp(gate, "Lamp_Gate", new Vector3(8f, Ground + 4f, 46f), 12f, 4f, Sodium, LightmapBakeType.Baked);
+            lamps += Lamp(gate, "Lamp_Gate", new Vector3(8f, Ground + 4f, 46f), 14f, 9f, Sodium, LightmapBakeType.Baked);
 
             // Footpath through the tea: low lamps at the zigzag corners, on the terrain.
             var path = Group(lights, "Footpath");
             Vector2[] corners = { new Vector2(18.3f, 12.7f), new Vector2(40f, 22.3f), new Vector2(30f, 32.7f) };
             foreach (var c in corners)
-                lamps += Lamp(path, $"Lamp_Path_{c.x:0}_{c.y:0}", OnTerrain(c.x, c.y, 3f), 10f, 2.5f, Sodium, LightmapBakeType.Baked);
+                lamps += Lamp(path, $"Lamp_Path_{c.x:0}_{c.y:0}", OnTerrain(c.x, c.y, 3f), 12f, 6f, Sodium, LightmapBakeType.Baked);
 
             // Leaf collection shed (X 42-48, Z 20-26).
-            lamps += Lamp(path, "Lamp_LeafShed", OnTerrain(45f, 23f, 2.8f), 8f, 2.5f, Sodium, LightmapBakeType.Baked);
+            lamps += Lamp(path, "Lamp_LeafShed", OnTerrain(45f, 23f, 2.8f), 10f, 6f, Sodium, LightmapBakeType.Baked);
 
             // Rolling floor (X 10-36, Z 52-76). Open part hangs from the roof; under the loft
             // (Z 66-76) the lamps hang just below the loft floor.
             var rolling = Group(lights, "RollingFloor");
             foreach (float x in new[] { 15f, 23f, 31f })
             {
-                lamps += Lamp(rolling, $"Lamp_Rolling_{x:0}_56", new Vector3(x, RoofY - 1.5f, 56f), 12f, 3f, Sodium, LightmapBakeType.Baked);
-                lamps += Lamp(rolling, $"Lamp_Rolling_{x:0}_62", new Vector3(x, RoofY - 1.5f, 62f), 12f, 3f, Sodium, LightmapBakeType.Baked);
-                lamps += Lamp(rolling, $"Lamp_UnderLoft_{x:0}", new Vector3(x, LoftY - 0.6f, 71f), 9f, 2.5f, Sodium, LightmapBakeType.Baked);
+                lamps += Lamp(rolling, $"Lamp_Rolling_{x:0}_56", new Vector3(x, RoofY - 1.5f, 56f), 14f, 7f, Sodium, LightmapBakeType.Baked);
+                lamps += Lamp(rolling, $"Lamp_Rolling_{x:0}_62", new Vector3(x, RoofY - 1.5f, 62f), 14f, 7f, Sodium, LightmapBakeType.Baked);
+                lamps += Lamp(rolling, $"Lamp_UnderLoft_{x:0}", new Vector3(x, LoftY - 0.6f, 71f), 10f, 5f, Sodium, LightmapBakeType.Baked);
             }
 
             // Withering loft (upper level, Y 12.5) and the catwalk.
             var loft = Group(lights, "Loft");
             foreach (float x in new[] { 14f, 22f, 30f })
-                lamps += Lamp(loft, $"Lamp_Loft_{x:0}", new Vector3(x, RoofY - 1.2f, 71f), 9f, 2.5f, Sodium, LightmapBakeType.Baked);
-            lamps += Lamp(loft, "Lamp_Catwalk", new Vector3(34f, LoftY + 2.8f, 62f), 7f, 2f, Sodium, LightmapBakeType.Baked);
+                lamps += Lamp(loft, $"Lamp_Loft_{x:0}", new Vector3(x, RoofY - 1.2f, 71f), 10f, 5f, Sodium, LightmapBakeType.Baked);
+            lamps += Lamp(loft, "Lamp_Catwalk", new Vector3(34f, LoftY + 2.8f, 62f), 8f, 4f, Sodium, LightmapBakeType.Baked);
 
             // Storeroom (X 36-50, Z 52-62).
             var store = Group(lights, "Storeroom");
-            lamps += Lamp(store, "Lamp_Storeroom", new Vector3(43f, Ground + 3.2f, 57f), 9f, 2.5f, Sodium, LightmapBakeType.Baked);
+            lamps += Lamp(store, "Lamp_Storeroom", new Vector3(43f, Ground + 3.2f, 57f), 10f, 6f, Sodium, LightmapBakeType.Baked);
 
             // Boiler room (X 36-50, Z 62-76, ceiling 11.5): hotter tint, low ceiling.
             var boiler = Group(lights, "BoilerRoom");
-            lamps += Lamp(boiler, "Lamp_Boiler_South", new Vector3(41f, 11.0f, 66f), 9f, 3f, BoilerGlow, LightmapBakeType.Baked);
-            lamps += Lamp(boiler, "Lamp_Boiler_North", new Vector3(45f, 11.0f, 72f), 9f, 3f, BoilerGlow, LightmapBakeType.Baked);
+            lamps += Lamp(boiler, "Lamp_Boiler_South", new Vector3(41f, 11.0f, 66f), 10f, 7f, BoilerGlow, LightmapBakeType.Baked);
+            lamps += Lamp(boiler, "Lamp_Boiler_North", new Vector3(45f, 11.0f, 72f), 10f, 7f, BoilerGlow, LightmapBakeType.Baked);
 
             // Reflection probes: one per space, box size = the room.
             ReflectionProbe(probes, "RP_Yard", new Vector3(30f, Ground + 3f, 46f), new Vector3(40f, 8f, 12f));
@@ -185,6 +185,7 @@ namespace WorldBuilder.EditorTools
             light.intensity = intensity;
             light.shadows = LightShadows.Soft;
             light.lightmapBakeType = mode;
+            AddBulb(go.transform, color);
             if (mode == LightmapBakeType.Mixed)
             {
                 // Mixed point lights keep realtime shadows for moving objects. Each one needs
@@ -198,6 +199,43 @@ namespace WorldBuilder.EditorTools
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
             return 1;
+        }
+
+        // A small glowing sphere at each lamp. Point lights themselves are invisible; without a
+        // bright surface there is nothing on screen for Bloom to spread, so the lamps would
+        // light the ground but never look like lamps.
+        static void AddBulb(Transform lamp, Color color)
+        {
+            var bulb = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            bulb.name = "Bulb";
+            Object.DestroyImmediate(bulb.GetComponent<Collider>()); // decoration only: no physics, no NavMesh
+            bulb.transform.SetParent(lamp, false);
+            bulb.transform.localScale = Vector3.one * 0.3f;
+            var r = bulb.GetComponent<MeshRenderer>();
+            r.sharedMaterial = BulbMaterial(color);
+            r.shadowCastingMode = ShadowCastingMode.Off; // it sits inside its own light
+            r.receiveGI = ReceiveGI.LightProbes;
+        }
+
+        const string BulbFolder = "Assets/_Project/Art/Environment/Materials/Lighting";
+
+        static Material BulbMaterial(Color color)
+        {
+            string name = color == BoilerGlow ? "M_Bulb_Boiler" : "M_Bulb_Sodium";
+            string path = $"{BulbFolder}/{name}.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat != null) return mat;
+
+            if (!AssetDatabase.IsValidFolder(BulbFolder))
+                AssetDatabase.CreateFolder("Assets/_Project/Art/Environment/Materials", "Lighting");
+            mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            mat.SetColor("_BaseColor", color);
+            mat.EnableKeyword("_EMISSION");
+            // HDR emission well above 1.0, so it passes the Bloom threshold (1.1).
+            mat.SetColor("_EmissionColor", color * 6f);
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None; // the Light already bakes the lamp's light
+            AssetDatabase.CreateAsset(mat, path);
+            return mat;
         }
 
         static void ReflectionProbe(Transform parent, string name, Vector3 center, Vector3 size)
