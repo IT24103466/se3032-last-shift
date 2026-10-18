@@ -144,11 +144,12 @@ namespace WorldBuilder.EditorTools
             Undo.RecordObject(light, "Moonlight");
             Undo.SetTransformParent(go.transform, parent.parent, "Moonlight"); // under --- LIGHTING ---/Lights
             go.name = "Moonlight";
-            // Low in the sky from the north-east, so the factory throws long shadows over the yard.
-            go.transform.rotation = Quaternion.Euler(28f, 215f, 0f);
+            // From the south-east, behind the player's approach: the estate slope and the
+            // factory front are lit, and the factory throws its shadow away from the yard.
+            go.transform.rotation = Quaternion.Euler(35f, -35f, 0f);
             light.type = LightType.Directional;
             light.color = Moon;
-            light.intensity = 0.35f;
+            light.intensity = 0.55f;
             light.shadows = LightShadows.Soft;
             light.lightmapBakeType = LightmapBakeType.Mixed;
             RenderSettings.sun = light;
@@ -158,8 +159,8 @@ namespace WorldBuilder.EditorTools
         {
             // Blue hour: the sky is the main light source, so ambient carries most of the mood.
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.20f, 0.27f, 0.42f);
-            RenderSettings.ambientEquatorColor = new Color(0.12f, 0.16f, 0.25f);
+            RenderSettings.ambientSkyColor = new Color(0.24f, 0.30f, 0.44f);
+            RenderSettings.ambientEquatorColor = new Color(0.15f, 0.19f, 0.28f);
             RenderSettings.ambientGroundColor = new Color(0.05f, 0.06f, 0.08f);
 
             // Monsoon mist: exponential-squared fog in a cold grey-blue. At 0.015 about 80% of the

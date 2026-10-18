@@ -55,13 +55,35 @@ namespace WorldBuilder.EditorTools
             AssetDatabase.SaveAssets();
         }
 
-        static void BuildMaterial(string setName, Dictionary<TextureRole, Texture2D> maps)
+        /// <summary>
+        /// Builds the material for the one texture set inside <paramref name="folder"/>
+        /// (same rules as the menu item) and returns it. Used by the surface builder.
+        /// </summary>
+        public static Material BuildSetFromFolder(string folder)
+        {
+            Material result = null;
+            var maps = new Dictionary<TextureRole, Texture2D>();
+            string set = null;
+            foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { folder }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                TextureRole role = TextureNaming.Classify(path, out string name);
+                if (role == TextureRole.Unknown || role == TextureRole.PackedMask) continue;
+                set ??= name;
+                maps[role] = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            }
+            if (set != null) result = BuildMaterial(set, maps);
+            AssetDatabase.SaveAssets();
+            return result;
+        }
+
+        static Material BuildMaterial(string setName, Dictionary<TextureRole, Texture2D> maps)
         {
             Shader shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null)
             {
                 Debug.LogError("[World Builder] URP Lit shader not found. Is the project using the Universal Render Pipeline?");
-                return;
+                return null;
             }
 
             EnsureFolder(MaterialFolder);
@@ -129,6 +151,7 @@ namespace WorldBuilder.EditorTools
 
             EditorUtility.SetDirty(mat);
             Debug.Log($"[World Builder] Material ready: {matPath}", mat);
+            return mat;
         }
 
         // ------------------------------------------------------------------ packing

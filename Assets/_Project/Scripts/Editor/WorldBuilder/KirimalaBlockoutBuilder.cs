@@ -35,7 +35,7 @@ namespace WorldBuilder.EditorTools
         static Material floorMat, wallMat, accentMat, teaMat, coverMat;
 
         // Footpath through the estate (X, Z), bottom to top
-        static readonly Vector2[] Path =
+        internal static readonly Vector2[] Path =
         {
             new Vector2(30f, 5f), new Vector2(18.3f, 12.7f), new Vector2(40f, 22.3f),
             new Vector2(30f, 32.7f), new Vector2(30f, 40f)
@@ -71,6 +71,10 @@ namespace WorldBuilder.EditorTools
             BuildFactory(structure, props);
             BuildEstate(props, terrain);
             BuildGameplay(dynamic, spawns, terrain);
+
+            // Re-apply textured surfaces if they have been built before (rebuilding the
+            // blockout would otherwise put the grey MB_ materials back).
+            KirimalaSurfaceBuilder.ApplyIfBuilt();
 
             EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             LevelBakeTool.MarkEnvironmentStatic();
@@ -151,6 +155,10 @@ namespace WorldBuilder.EditorTools
                   new[] { new Vector3(59f, 61f, DoorH), new Vector3(70f, 72f, DoorH) });
             // Storeroom / boiler room divider with one door
             WallX("Wall_Inner_Z62", f, 62f, 36f, 50f, Ground, 4.5f, Wall, new[] { new Vector3(40f, 42f, DoorH) });
+
+            // Factory floor slab on top of the foundation, so the inside (concrete) and the
+            // yard (gravel) can have different surfaces. 2 cm thick: no step for the player.
+            Box("Floor_Factory", f, 10, Ground, 52, 50, Ground + 0.02f, 76, floorMat);
 
             // Ceilings and roof
             Box("Ceiling_Boiler", f, 36, Ground + 3.5f, 62, 50, Ground + 3.8f, 76, wallMat);   // low and oppressive
@@ -338,7 +346,7 @@ namespace WorldBuilder.EditorTools
         static float Height(TerrainData t, float x, float z) =>
             t.GetInterpolatedHeight(Mathf.Clamp01(x / t.size.x), Mathf.Clamp01(z / t.size.z));
 
-        static float DistanceToPath(Vector2 p)
+        internal static float DistanceToPath(Vector2 p)
         {
             float best = float.MaxValue;
             for (int i = 0; i < Path.Length - 1; i++)
