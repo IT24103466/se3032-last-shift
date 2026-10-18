@@ -280,7 +280,7 @@ namespace WorldBuilder.EditorTools
         static Vector3 OnTerrain(float x, float z, float height)
         {
             var p = new Vector3(x, 0f, z);
-            var t = Terrain.activeTerrain;
+            var t = KirimalaBlockoutBuilder.EstateTerrain();
             if (t != null) p.y = t.SampleHeight(p) + t.transform.position.y;
             p.y += height;
             return p;

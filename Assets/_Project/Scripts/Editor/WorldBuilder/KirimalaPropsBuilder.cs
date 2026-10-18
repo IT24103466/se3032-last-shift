@@ -302,7 +302,7 @@ namespace WorldBuilder.EditorTools
             Undo.RegisterCreatedObjectUndo(root.gameObject, "Signs");
             root.SetParent(propsRoot, false);
 
-            float T(float x, float z) { var t = Terrain.activeTerrain; return t != null ? t.SampleHeight(new Vector3(x, 0, z)) + t.transform.position.y : Ground; }
+            float T(float x, float z) { var t = KirimalaBlockoutBuilder.EstateTerrain(); return t != null ? t.SampleHeight(new Vector3(x, 0, z)) + t.transform.position.y : Ground; }
             float shed = T(45f, 23f);
             const float wallFace = 0.15f + 0.03f;   // half wall thickness + sign standoff
 

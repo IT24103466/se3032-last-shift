@@ -340,7 +340,7 @@ namespace WorldBuilder.EditorTools
 
         static int Trees(Transform g, Dictionary<string, Mesh> meshes)
         {
-            var t = Terrain.activeTerrain;
+            var t = KirimalaBlockoutBuilder.EstateTerrain();
             if (t == null) return 0;
             Vector2[] spots = { new Vector2(6, 5.5f), new Vector2(14, 11.5f), new Vector2(25, 8.5f), new Vector2(48, 8.5f),
                                 new Vector2(55, 14.5f), new Vector2(8, 20.5f), new Vector2(22, 23.5f), new Vector2(53, 26.5f),
@@ -386,12 +386,20 @@ namespace WorldBuilder.EditorTools
         /// </summary>
         static void Backdrop(Transform env, Dictionary<string, Mesh> meshes)
         {
-            var t = Terrain.activeTerrain;
-            float EdgeH(float x, float z)
+            var estate = KirimalaBlockoutBuilder.EstateTerrain();
+            var jungle = KirimalaExpansionBuilder.JungleTerrain();
+            float Sample(Terrain t, float x, float z) => t.SampleHeight(new Vector3(x, 0, z)) + t.transform.position.y;
+
+            // Playable areas: the hills sink 3 m under these and rise from their edges
+            var areas = new List<Rect> { Rect.MinMaxRect(0, 0, 60, 40), Rect.MinMaxRect(10, 39.5f, 50, 76), KirimalaExpansionBuilder.RoadArea };
+            if (jungle != null) { areas.Add(KirimalaExpansionBuilder.JungleArea); areas.Add(KirimalaExpansionBuilder.CompoundArea); }
+            float Surface(float x, float z)
             {
-                if (z <= 40f && t != null) return t.SampleHeight(new Vector3(Mathf.Clamp(x, 0, 60), 0, Mathf.Clamp(z, 0, 40))) + t.transform.position.y;
+                if (jungle != null && z < 0f) return Sample(jungle, Mathf.Clamp(x, -20f, 80f), Mathf.Max(z, -64f));
+                if (z <= 40f && x >= 0f && x <= 60f && estate != null) return Sample(estate, x, Mathf.Max(z, 0f));
                 return Ground;
             }
+
             var mesh = MeshFor(meshes, "Backdrop_Hills", () =>
             {
                 const float half = 200f, step = 4.5f;   // ~15.8k triangles: under the audit limit, fog hides the facets
@@ -400,20 +408,24 @@ namespace WorldBuilder.EditorTools
                 for (int j = 0; j <= n; j++)
                 for (int i = 0; i <= n; i++)
                 {
-                    float x = 30f - half + i * step, z = 38f - half + j * step;
-                    bool onTerrain = x > 0.5f && x < 59.5f && z > 0.5f && z < 39.5f;
-                    bool onFoundation = x > 10.5f && x < 49.5f && z > 39.5f && z < 75.5f;
-                    float cx = Mathf.Clamp(x, 0, 60), cz = Mathf.Clamp(z, 0, 76);
-                    float d = Vector2.Distance(new Vector2(x, z), new Vector2(cx, cz));
+                    float x = 30f - half + i * step, z = 8f - half + j * step;
+                    // Nearest playable area: inside it the hills drop out of sight, outside they rise with distance
+                    float d = float.MaxValue; Vector2 c = Vector2.zero; bool inside = false;
+                    foreach (var a in areas)
+                    {
+                        var p = new Vector2(Mathf.Clamp(x, a.xMin, a.xMax), Mathf.Clamp(z, a.yMin, a.yMax));
+                        float dist = Vector2.Distance(new Vector2(x, z), p);
+                        if (x > a.xMin + 0.5f && x < a.xMax - 0.5f && z > a.yMin + 0.5f && z < a.yMax - 0.5f) inside = true;
+                        if (dist < d) { d = dist; c = p; }
+                    }
                     float h;
-                    if (onTerrain) h = EdgeH(x, z) - 3f;
-                    else if (onFoundation) h = Ground - 3f;
+                    if (inside) h = Surface(x, z) - 3f;
                     else
                     {
                         float rise = (1f - Mathf.Exp(-d / 35f)) * 32f;
                         float hills = Mathf.PerlinNoise(x * 0.012f + 3f, z * 0.012f + 9f) * 1.6f - 0.3f;
                         float ripple = (Mathf.PerlinNoise(x * 0.05f, z * 0.05f) - 0.5f) * 3f * Mathf.Clamp01(d / 20f);
-                        h = EdgeH(cx, cz) - 0.05f + rise * Mathf.Max(0.2f, hills) + ripple;
+                        h = Surface(c.x, c.y) - 0.05f + rise * Mathf.Max(0.2f, hills) + ripple;
                     }
                     v.Add(new Vector3(x, h, z)); uv.Add(new Vector2(x, z));
                 }
@@ -451,10 +463,26 @@ namespace WorldBuilder.EditorTools
                 w.transform.position = c;
                 w.GetComponent<BoxCollider>().size = s;
             }
+            if (KirimalaExpansionBuilder.JungleTerrain() != null)
+            {
+                foreach (var (c, size) in KirimalaExpansionBuilder.BoundWalls()) Wall(c, size);
+                return;
+            }
             Wall(new Vector3(30, 15, -0.5f), new Vector3(62, 40, 1));
             Wall(new Vector3(30, 15, 76.5f), new Vector3(62, 40, 1));
             Wall(new Vector3(-0.5f, 15, 38), new Vector3(1, 40, 78));
             Wall(new Vector3(60.5f, 15, 38), new Vector3(1, 40, 78));
+        }
+
+        /// <summary>Called by the expansion builder: the hills and bounds follow the new playable areas.</summary>
+        internal static void RebuildBackdropAndBounds()
+        {
+            var envRoot = LevelBakeTool.FindRoot(LevelBakeTool.EnvironmentRoot);
+            if (envRoot == null || !LoadMaterials()) return;
+            var meshes = new Dictionary<string, Mesh>();
+            Backdrop(envRoot.transform, meshes);
+            Bounds();
+            SaveMeshes(meshes);
         }
 
         static void Atmosphere()
