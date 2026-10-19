@@ -87,6 +87,29 @@ namespace WorldBuilder.EditorTools
                             StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic;
 
                 var r = go.GetComponent<MeshRenderer>();
+                if (r != null && go.name.StartsWith("Veg_"))
+                {
+                    // Jungle vegetation and rocks: hundreds of lumpy meshes. Lit by light probes
+                    // (no lightmap space, faster bakes); still hidden by occlusion culling.
+                    Undo.RecordObject(r, "Set GI mode");
+                    r.receiveGI = ReceiveGI.LightProbes;
+                    probeLit++;
+                    Undo.RecordObject(go, "Mark static");
+                    GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic |
+                                                               StaticEditorFlags.OccludeeStatic | StaticEditorFlags.ReflectionProbeStatic);
+                    continue;
+                }
+                if (r != null && go.name.StartsWith("Backdrop_"))
+                {
+                    // Distant scenery (hundreds of metres across): lit by light probes so it
+                    // takes no lightmap space, and never an occluder.
+                    Undo.RecordObject(r, "Set GI mode");
+                    r.receiveGI = ReceiveGI.LightProbes;
+                    probeLit++;
+                    Undo.RecordObject(go, "Mark static");
+                    GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic);
+                    continue;
+                }
                 if (r != null)
                 {
                     float size = MaxExtent(r.bounds);

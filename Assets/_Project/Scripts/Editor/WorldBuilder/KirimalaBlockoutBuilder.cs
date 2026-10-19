@@ -37,7 +37,7 @@ namespace WorldBuilder.EditorTools
         // Footpath through the estate (X, Z), bottom to top
         internal static readonly Vector2[] Path =
         {
-            new Vector2(30f, 5f), new Vector2(18.3f, 12.7f), new Vector2(40f, 22.3f),
+            new Vector2(30f, 0f), new Vector2(30f, 5f), new Vector2(18.3f, 12.7f), new Vector2(40f, 22.3f),
             new Vector2(30f, 32.7f), new Vector2(30f, 40f)
         };
 
@@ -75,6 +75,7 @@ namespace WorldBuilder.EditorTools
             // Re-apply textured surfaces if they have been built before (rebuilding the
             // blockout would otherwise put the grey MB_ materials back).
             KirimalaSurfaceBuilder.ApplyIfBuilt();
+            KirimalaPropsBuilder.ApplyIfBuilt();
 
             EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             LevelBakeTool.MarkEnvironmentStatic();
@@ -123,10 +124,12 @@ namespace WorldBuilder.EditorTools
             Box("Foundation", yard, 10, 0, 40, 50, Ground, 76, floorMat);
             Box("EstateRoad", yard, 0, 0, 44, 10, Ground, 48, floorMat);
 
-            // 2 m fence. South side has the pedestrian gate (X 28-32), west side the main gate (Z 44-48).
-            WallX("Fence_South", yard, 40f, 10f, 50f, Ground, 2f, 0.2f, new[] { new Vector3(28f, 32f, 2f) });
+            // 2 m fence. South side has the pedestrian gate (X 28-32, locked) and a collapsed section
+            // (X 46.5-48.5) where the player sneaks in; west side the main gate (Z 44-48).
+            WallX("Fence_South", yard, 40f, 10f, 50f, Ground, 2f, 0.2f,
+                  new[] { new Vector3(28f, 32f, 2f), new Vector3(46.5f, 48.5f, 2f) });
             WallZ("Fence_West", yard, 10f, 40f, 52f, Ground, 2f, 0.2f, new[] { new Vector3(44f, 48f, 2f) });
-            WallZ("Fence_East", yard, 50f, 40f, 52f, Ground, 2f, 0.2f, null);
+            // No east fence any more: the yard opens into the east compound (Build Kirimala Expansion).
 
             // Main gate: closed until all three generators run (Systems Engineer makes it open)
             Box("Gate_Main", dynamic, 9.85f, Ground, 44, 10.15f, Ground + 2.5f, 48, accentMat);
@@ -146,9 +149,10 @@ namespace WorldBuilder.EditorTools
             // Outer walls. South wall: loading door X 16-22 (4 m tall), storeroom door X 42-46 (3 m tall).
             WallX("Wall_South", f, 52f, 10f, 50f, Ground, h, Wall,
                   new[] { new Vector3(16f, 22f, 4f), new Vector3(42f, 46f, 3f) });
-            WallX("Wall_North", f, 76f, 10f, 50f, Ground, h, Wall, null);
+            // North wall: back door onto the service lane. East wall: storeroom side door to the east compound.
+            WallX("Wall_North", f, 76f, 10f, 50f, Ground, h, Wall, new[] { new Vector3(25.2f, 27f, DoorH) });
             WallZ("Wall_West", f, 10f, 52f, 76f, Ground, h, Wall, null);
-            WallZ("Wall_East", f, 50f, 52f, 76f, Ground, h, Wall, null);
+            WallZ("Wall_East", f, 50f, 52f, 76f, Ground, h, Wall, new[] { new Vector3(55f, 57f, DoorH) });
 
             // Inner wall between rolling floor and storeroom/boiler: two doors
             WallZ("Wall_Inner_X36", f, 36f, 52f, 76f, Ground, h, Wall,
@@ -233,7 +237,9 @@ namespace WorldBuilder.EditorTools
             Box("Generator_G2", dynamic, 14.25f, LoftY, 72.5f, 15.75f, LoftY + 1.2f, 73.5f, accentMat);
             Box("Generator_G3", dynamic, 45.25f, Ground, 71.5f, 46.75f, Ground + 1.2f, 72.5f, accentMat);
 
-            Marker("Spawn_Player", spawns, new Vector3(30f, Height(terrain, 30f, 5f) + 0.1f, 5f), 3);
+            // The player starts at the jungle camp once the expansion is built, otherwise at the estate.
+            var start = KirimalaExpansionBuilder.PlayerStart() ?? new Vector3(30f, Height(terrain, 30f, 5f) + 0.1f, 5f);
+            Marker("Spawn_Player", spawns, start, 3);
             Marker("Spawn_Enemy_Loft", spawns, new Vector3(12f, LoftY + 0.1f, 74f), 6);
             Marker("Spawn_Enemy_Boiler", spawns, new Vector3(48f, Ground + 0.1f, 64f), 6);
             Marker("Spawn_Enemy_Storeroom", spawns, new Vector3(48f, Ground + 0.1f, 54f), 6);
@@ -341,6 +347,14 @@ namespace WorldBuilder.EditorTools
             mat.color = color;
             EditorUtility.SetDirty(mat);
             return mat;
+        }
+
+        /// <summary>The estate terrain (there are two terrains once the jungle is built).</summary>
+        internal static Terrain EstateTerrain()
+        {
+            foreach (var t in Object.FindObjectsByType<Terrain>(FindObjectsInactive.Exclude))
+                if (t.name == "Terrain_Estate") return t;
+            return Terrain.activeTerrain;
         }
 
         static float Height(TerrainData t, float x, float z) =>

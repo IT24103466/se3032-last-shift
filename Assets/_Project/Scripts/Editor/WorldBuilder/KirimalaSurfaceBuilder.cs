@@ -100,6 +100,9 @@ namespace WorldBuilder.EditorTools
             Apply();
         }
 
+        /// <summary>Box meshes with metric UVs, shared with the other builders (call Save() when done).</summary>
+        internal static MeshCache BoxCache() => new MeshCache(MeshAsset);
+
         /// <summary>Called by the blockout builder: re-applies surfaces only if they exist already.</summary>
         public static void ApplyIfBuilt()
         {
@@ -118,6 +121,8 @@ namespace WorldBuilder.EditorTools
             foreach (var r in env.GetComponentsInChildren<MeshRenderer>(true))
             {
                 var surface = Pick(r.transform);
+                // Anything else already using one of the surfaces still gets metric-UV boxes
+                if (surface == null) surface = mats.FirstOrDefault(kv => kv.Value != null && kv.Value == r.sharedMaterial).Key;
                 if (surface == null || mats[surface] == null) continue;
 
                 var mf = r.GetComponent<MeshFilter>();
@@ -232,7 +237,7 @@ namespace WorldBuilder.EditorTools
 
         static int PaintTerrain()
         {
-            var terrain = Terrain.activeTerrain;
+            var terrain = KirimalaBlockoutBuilder.EstateTerrain();
             if (terrain == null) return 0;
             if (layers == null)
             {
@@ -271,7 +276,7 @@ namespace WorldBuilder.EditorTools
 
         // ------------------------------------------------------------------ metric-UV box meshes
 
-        class MeshCache
+        internal class MeshCache
         {
             readonly string path;
             readonly Dictionary<string, Mesh> meshes = new Dictionary<string, Mesh>();

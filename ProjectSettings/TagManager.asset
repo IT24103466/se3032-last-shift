@@ -10,6 +10,8 @@ TagManager:
   - Hidden_Area_3
   - Cube_Spawn_Point_1
   - Cube_Spawn_Point_2
+  - Vaultable
+  - HideSpot
   layers:
   - Default
   - TransparentFX
@@ -56,3 +58,4 @@ TagManager:
   - Light Layer 5
   - Light Layer 6
   - Light Layer 7
+  m_MigratedRenderPipelines: []
