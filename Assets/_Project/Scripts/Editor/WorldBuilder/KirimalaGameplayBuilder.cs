@@ -112,6 +112,34 @@ namespace WorldBuilder.EditorTools
             Enemy("Worker", factory, new Vector3(41f, Ground, 57f), null, 0, 3f);
             Enemy("Worker", factory, new Vector3(67f, Ground, 58f), null, 0, 6f);
 
+            // Stone piles to refill the slingshot along the route
+            var piles = Group(gameplay, "PebblePiles");
+            var stone = M("Pebble", new Color(0.42f, 0.4f, 0.37f));
+            int pileCount = 0;
+            void Pile(Vector3 p)
+            {
+                var pile = new GameObject("PebblePile").transform;
+                pile.SetParent(piles, false);
+                pile.position = p;
+                var rng = new System.Random(pileCount * 31 + 7);
+                for (int i = 0; i < 9; i++)
+                {
+                    float a = i * 2.4f, r = 0.05f + 0.035f * i;
+                    P(pile, "Stone", PrimitiveType.Sphere, new Vector3(Mathf.Cos(a) * r * 0.6f, 0.03f + (i < 3 ? 0.05f : 0f), Mathf.Sin(a) * r * 0.6f),
+                      new Vector3(0.09f, 0.06f, 0.08f) * (0.8f + (float)rng.NextDouble() * 0.5f), stone);
+                }
+                var col = pile.gameObject.AddComponent<BoxCollider>();
+                col.center = new Vector3(0f, 0.08f, 0f); col.size = new Vector3(0.45f, 0.18f, 0.45f);
+                pile.gameObject.AddComponent<PebblePile>();
+                pileCount++;
+            }
+            foreach (var p in new[] { new Vector2(10.5f, -54.5f), new Vector2(29f, -26f), new Vector2(57.5f, -19.5f), new Vector2(31.5f, -4f), new Vector2(40f, 22.5f), new Vector2(47.5f, 37.5f) })
+                Pile(Outdoor(p));
+            Pile(new Vector3(24f, Ground, 44.5f));      // yard
+            Pile(new Vector3(62f, Ground, 58.5f));      // east compound
+            Pile(new Vector3(28f, LoftY, 69f));         // loft
+            Pile(new Vector3(42f, Ground, 64f));        // boiler room
+
             // Triggers and tea bags
             AddOnce<AlarmZone>("Trigger_Alarm_Premises");
             AddOnce<ExitZone>("Trigger_Exit_MainGate");
@@ -165,6 +193,9 @@ namespace WorldBuilder.EditorTools
             hp.max = 120f; hp.regenDelay = 4f; hp.regenPerSecond = 7f;
             var pc = root.AddComponent<PlayerController>();
             root.AddComponent<PlayerCombat>();
+            var sling = root.AddComponent<PlayerSlingshot>();
+            sling.pebbleMaterial = M("Pebble", new Color(0.42f, 0.4f, 0.37f));
+            sling.trailMaterial = M("PebbleTrail", new Color(1f, 0.9f, 0.7f), 1.5f);
 
             var eyes = new GameObject("Eyes");
             eyes.transform.SetParent(root.transform, false);
@@ -186,13 +217,36 @@ namespace WorldBuilder.EditorTools
             // First-person stick and hand
             var vm = new GameObject("Viewmodel").transform;
             vm.SetParent(eyes.transform, false);
-            vm.localPosition = new Vector3(0.36f, -0.38f, 0.55f);
-            vm.localRotation = Quaternion.Euler(40f, -18f, -28f);   // club resting forward over the shoulder line
+            vm.localPosition = new Vector3(0.34f, -0.34f, 0.5f);
+            vm.localRotation = Quaternion.Euler(30f, -10f, 48f);    // club angled up and across the view, like it's held ready
             S(vm, "Fist", "Player", new Sculpt().Ell(V(0f, 0f, 0f), V(0.045f, 0.05f, 0.058f))
                 .Ell(V(-0.03f, 0.02f, 0.03f), V(0.016f, 0.03f, 0.016f), 0.015f)
                 .Cone(V(0f, -0.02f, -0.04f), V(0f, -0.09f, -0.2f), 0.036f, 0.04f, 0.03f), M("Skin", new Color(0.42f, 0.27f, 0.17f)), 0.007f, shadows: false);
             S(vm, "Sleeve", "Player", new Sculpt().Cone(V(0f, -0.08f, -0.18f), V(0f, -0.14f, -0.42f), 0.05f, 0.06f), Cloth("NimalShirt", new Color(0.2f, 0.28f, 0.42f)), 0.01f, shadows: false);
-            P(vm, "Stick", PrimitiveType.Cylinder, new Vector3(0f, 0.26f, 0.04f), new Vector3(0.042f, 0.3f, 0.042f), M("Wood", new Color(0.36f, 0.24f, 0.14f)), new Vector3(-15f, 0f, 0f), false);
+            P(vm, "Stick", PrimitiveType.Cylinder, new Vector3(0f, 0.2f, 0.02f), new Vector3(0.04f, 0.23f, 0.04f), M("Wood", new Color(0.36f, 0.24f, 0.14f)), new Vector3(-15f, 0f, 0f), false);
+
+            // The slingshot, held out in the left hand (the band is a LineRenderer the script stretches)
+            var slingVm = new GameObject("Slingshot").transform;
+            slingVm.SetParent(eyes.transform, false);
+            slingVm.localPosition = new Vector3(-0.1f, -0.2f, 0.45f);
+            slingVm.localRotation = Quaternion.Euler(-8f, 4f, 0f);
+            var wood = M("SlingWood", new Color(0.45f, 0.3f, 0.17f));
+            S(slingVm, "Fork", "Slingshot", new Sculpt()
+                .Cone(V(0f, -0.13f, 0f), V(0f, -0.01f, 0f), 0.014f, 0.016f, 0.02f)
+                .Cone(V(0f, -0.01f, 0f), V(-0.05f, 0.07f, 0f), 0.014f, 0.011f, 0.025f)
+                .Cone(V(0f, -0.01f, 0f), V(0.05f, 0.07f, 0f), 0.014f, 0.011f, 0.025f), wood, 0.004f, shadows: false);
+            S(slingVm, "Hand", "Slingshot", new Sculpt().Ell(V(0f, -0.08f, -0.005f), V(0.04f, 0.045f, 0.045f))
+                .Ell(V(0.03f, -0.06f, 0.02f), V(0.013f, 0.025f, 0.013f), 0.012f)
+                .Cone(V(0f, -0.1f, -0.03f), V(-0.02f, -0.2f, -0.22f), 0.033f, 0.038f, 0.03f), M("Skin", new Color(0.42f, 0.27f, 0.17f)), 0.006f, shadows: false);
+            Pivot(slingVm, "TipL", new Vector3(-0.05f, 0.075f, 0f));
+            Pivot(slingVm, "TipR", new Vector3(0.05f, 0.075f, 0f));
+            var pouch = Pivot(slingVm, "Pouch", new Vector3(0f, 0.07f, -0.01f));
+            P(pouch, "Leather", PrimitiveType.Cube, Vector3.zero, new Vector3(0.03f, 0.018f, 0.02f), M("Leather", new Color(0.28f, 0.17f, 0.1f)), shadows: false);
+            var line = slingVm.gameObject.AddComponent<LineRenderer>();
+            line.useWorldSpace = false; line.positionCount = 3; line.widthMultiplier = 0.006f;
+            line.sharedMaterial = M("Rubber", new Color(0.2f, 0.12f, 0.08f));
+            line.shadowCastingMode = ShadowCastingMode.Off;
+            line.SetPositions(new[] { new Vector3(-0.05f, 0.075f, 0f), new Vector3(0f, 0.07f, -0.01f), new Vector3(0.05f, 0.075f, 0f) });
             return root;
         }
 

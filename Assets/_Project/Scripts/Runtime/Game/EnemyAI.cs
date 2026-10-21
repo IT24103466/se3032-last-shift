@@ -44,6 +44,31 @@ namespace LastShift
         bool alerted;
 
         public bool Chasing => state == State.Chase || state == State.Charge;
+
+        static readonly System.Collections.Generic.List<EnemyAI> all = new System.Collections.Generic.List<EnemyAI>();
+        void OnEnable() => all.Add(this);
+        void OnDisable() => all.Remove(this);
+
+        /// <summary>A sound at a point (a pebble landing): enemies in range go to look; deer bolt.</summary>
+        public static void MakeNoise(Vector3 pos, float radius)
+        {
+            foreach (var e in all.ToArray())
+                if (e != null && Vector3.Distance(e.transform.position, pos) < radius) e.HearNoise(pos);
+        }
+
+        void HearNoise(Vector3 pos)
+        {
+            if (state == State.Dead || player == null) return;
+            switch (kind)
+            {
+                case EnemyKind.Deer: StartFlee(); break;
+                case EnemyKind.Elephant: break;   // unbothered
+                default:
+                    if (state == State.Chase || state == State.Stunned) return;
+                    lastKnown = pos; state = State.Search; stateTimer = 5f;
+                    break;
+            }
+        }
         public string DisplayName => kind.ToString();
         public string StateName => state.ToString();
 

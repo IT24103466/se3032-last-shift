@@ -5,7 +5,7 @@ using WorldBuilder.Testing;
 namespace LastShift
 {
     /// <summary>
-    /// Nimal fights with a wooden stick: left click swings it. A hit damages and knocks back
+    /// Nimal also carries a wooden stick for close range: right click swings it. A hit damages and knocks back
     /// whatever is in front (people, animals) and breaks barricades. Swinging costs stamina.
     /// </summary>
     [RequireComponent(typeof(PlayerController))]
@@ -33,10 +33,10 @@ namespace LastShift
         {
             var mouse = Mouse.current;
             bool playing = GameManager.Instance == null || GameManager.Instance.IsPlaying;
-            if (viewmodel != null) viewmodel.gameObject.SetActive(!pc.InLocker);
+            if (viewmodel != null) viewmodel.gameObject.SetActive(!pc.InLocker && swingT >= 0f);   // the stick only comes out to swing
             if (mouse == null || !playing || pc.Health.Dead || pc.InLocker) return;
 
-            if (mouse.leftButton.wasPressedThisFrame && Time.time >= nextSwing && pc.Stamina > 2f
+            if (mouse.rightButton.wasPressedThisFrame && Time.time >= nextSwing && pc.Stamina > 2f
                 && Cursor.lockState == CursorLockMode.Locked)
             {
                 nextSwing = Time.time + cooldown;

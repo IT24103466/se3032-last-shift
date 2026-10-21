@@ -30,6 +30,7 @@ namespace LastShift
         string toast, loseReason;
         GUIStyle box, big, title, body, small, center;
         bool debugAI;
+        PlayerSlingshot sling;
         EnemyAI[] enemies = new EnemyAI[0];
         Texture2D white;
 
@@ -157,6 +158,9 @@ namespace LastShift
 
         public void OnPlayerHit(EnemyAI by) { }
 
+        float hitMarkerUntil;
+        public void HitMarker() => hitMarkerUntil = Time.unscaledTime + 0.25f;
+
         public void OnEnemyDown(EnemyAI e)
         {
             knockedOut++;
@@ -263,6 +267,19 @@ namespace LastShift
             else if (player.Crouched) Chip("CROUCHING", new Color(0.2f, 0.2f, 0.2f, 0.75f));
             // Crosshair, prompt, search progress
             if (!player.InLocker) GUI.Label(new Rect(w / 2 - 10, h / 2 - 12, 20, 24), "+", big);
+            if (Time.unscaledTime < hitMarkerUntil) GUI.Label(new Rect(w / 2 - 20, h / 2 - 14, 40, 28), "x", new GUIStyle(big) { normal = { textColor = new Color(1f, 0.4f, 0.3f) } });
+            // Slingshot: pebbles left and how far the band is drawn
+            if (sling == null) sling = player.GetComponent<PlayerSlingshot>();
+            if (sling != null)
+            {
+                Fill(new Rect(w - 196, h - 66, 180, 50), new Color(0, 0, 0, 0.55f));
+                GUI.Label(new Rect(w - 196, h - 66, 180, 50), $"PEBBLES  {sling.ammo}/{sling.maxAmmo}", center);
+                if (sling.Drawing)
+                {
+                    Fill(new Rect(w / 2 - 40, h / 2 + 22, 80, 6), new Color(0, 0, 0, 0.6f));
+                    Fill(new Rect(w / 2 - 39, h / 2 + 23, 78 * sling.DrawAmount, 4), new Color(1f, 0.85f, 0.4f));
+                }
+            }
             if (!string.IsNullOrEmpty(player.Prompt)) GUI.Label(new Rect(w / 2 - 300, h * 0.58f, 600, 30), player.Prompt, center);
             if (player.SearchProgress > 0f)
             {
@@ -297,8 +314,8 @@ namespace LastShift
                 "He has to get it back before morning: through the jungle (watch for tigers, and keep away from the old elephant), " +
                 "up through the tea, over the factory fence, and past the security guards and the night-shift workers.", body);
             GUI.Label(new Rect(x, h * 0.58f, cw, 120),
-                "WASD move   ·   Shift sprint   ·   Space jump   ·   C crouch (hide in bushes)   ·   Left click swing your stick\n" +
-                "E use doors, search bags (hold), hide in lockers   ·   F torch (helps you see, but helps them see you)   ·   Esc pause", small);
+                "WASD move  ·  Shift sprint  ·  Space jump  ·  C crouch (hide in bushes)  ·  Left click (hold) shoot the slingshot  ·  Right click stick\n" +
+                "E use doors, search bags (hold), pick up stones, hide in lockers  ·  F torch (helps you see, but helps them see you)  ·  Esc pause\nTip: a pebble landing near a guard makes him go and look: use it to slip past", small);
             GUI.Label(new Rect(x, h * 0.70f, cw, 30), "Demo checkpoints: F1 jungle camp · F2 stream · F3 estate · F4 fence breach · F5 warehouse · F6 main gate", small);
             GUI.Label(new Rect(x, h * 0.78f, cw, 40), "Press ENTER to begin", big);
         }

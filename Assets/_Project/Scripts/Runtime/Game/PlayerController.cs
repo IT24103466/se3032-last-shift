@@ -182,11 +182,19 @@ namespace LastShift
         void Interact(Keyboard kb)
         {
             Prompt = null;
-            TeaBag bag = null; GreyboxInteractable thing = null;
+            TeaBag bag = null; GreyboxInteractable thing = null; PebblePile pile = null;
             if (Physics.Raycast(eyes.position, eyes.forward, out var hit, 2.6f, ~(1 << 2), QueryTriggerInteraction.Ignore))
             {
                 bag = hit.collider.GetComponentInParent<TeaBag>();
-                if (bag == null) thing = hit.collider.GetComponentInParent<GreyboxInteractable>();
+                pile = hit.collider.GetComponentInParent<PebblePile>();
+                if (bag == null && pile == null) thing = hit.collider.GetComponentInParent<GreyboxInteractable>();
+            }
+            if (pile != null)
+            {
+                Prompt = "E  Pick up pebbles";
+                var sling = GetComponent<PlayerSlingshot>();
+                if (kb.eKey.wasPressedThisFrame && sling != null) pile.Take(sling);
+                return;
             }
 
             // Tea bags: hold E to rummage through
