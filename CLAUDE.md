@@ -38,3 +38,9 @@ I am the **World Builder** (Student 1): level layout, lighting, texturing, NavMe
 - Art direction: whitewashed walls with green trim, red corrugated roof, rusted metal, wooden loft floors, tea chests ("CEYLON TEA"), trilingual signs (Sinhala/Tamil/English). Cold blue ambient plus warm sodium lamps. Mostly baked lighting (Shadowmask), light probes for moving objects.
 - Respectful setting: no combat in religious sites, enemies are only robots.
 - Commit messages: `type(area): what changed`, e.g. `feat(env): ...`, `perf(lighting): ...`, `fix(nav): ...`.
+
+## Gameplay (playable build)
+- Story: Nimal dropped his wedding ring into one of the tea bags loaded at Kirimala today. Tonight he sneaks in to find it before the lorry leaves at dawn. The ring is in a random one of the 5 tea bags each run.
+- Scripts: `Assets/_Project/Scripts/Runtime/Game/` (namespace LastShift): PlayerController (move, sprint/stamina, crouch, jump, hide, lockers, use), PlayerCombat (stick melee, knockback), Health, EnemyAI (Tiger, Deer, Elephant, Guard, Worker on the NavMesh), CreatureAnimator (procedural animation), TeaBag, AlarmZone, ExitZone, GameManager (objectives, alarm, win/lose, HUD, pause; F9 AI debug view).
+- Built by Tools > World Builder > Build Kirimala Gameplay (Player + Characters): primitive-built character prefabs in `Assets/_Project/Prefabs/Characters/`, placed under AGENTS and GAMEPLAY.
+- Controls: WASD, mouse, Shift sprint, Space jump, C crouch, left click hit, E use (hold on tea bags), F torch, Esc pause, F1-F6 demo checkpoints, F9 AI debug, R restart after win/lose.

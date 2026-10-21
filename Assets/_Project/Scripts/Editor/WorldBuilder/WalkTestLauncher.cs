@@ -38,6 +38,11 @@ namespace WorldBuilder.EditorTools
 
         static void SpawnWalker()
         {
+            if (Object.FindAnyObjectByType<LastShift.PlayerController>() != null)
+            {
+                Debug.Log("[World Builder] The level has the game's player now: playing the game instead of the walk test.");
+                return;
+            }
             var marker = GameObject.Find("Spawn_Player");
             Vector3 pos = marker != null ? marker.transform.position : new Vector3(30f, 2f, 5f);
             if (marker == null) Debug.LogWarning("[World Builder] No Spawn_Player marker found; starting at (30, 2, 5).");

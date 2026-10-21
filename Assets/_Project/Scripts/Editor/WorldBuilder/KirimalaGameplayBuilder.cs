@@ -1,0 +1,584 @@
+using System.Collections.Generic;
+using System.Linq;
+using LastShift;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
+
+namespace WorldBuilder.EditorTools
+{
+    /// <summary>
+    /// Tools > World Builder > Build Kirimala Gameplay.
+    ///
+    /// Makes the game playable: builds the characters out of primitives (no imported models
+    /// needed) and saves them as prefabs, then places them in Level_01:
+    ///   Player (Nimal)       first-person, stick, torch                     -> at Spawn_Player (jungle camp)
+    ///   3 tigers, 4 deer, 1 elephant                                         -> jungle
+    ///   5 security guards (patrol routes, torches), 4 night-shift workers    -> factory premises
+    ///   GameManager (objectives, ring, alarm, HUD)                           -> GAMEPLAY
+    /// It also wires the alarm/exit triggers and the tea bags, switches the overview camera off,
+    /// and puts Level_01 first in the Build Settings. Re-running replaces everything it made.
+    /// </summary>
+    public static class KirimalaGameplayBuilder
+    {
+        const string MatFolder = "Assets/_Project/Art/Characters/Materials";
+        const string PrefabFolder = "Assets/_Project/Prefabs/Characters";
+        const float Ground = 8f, LoftY = 12.5f;
+        static readonly Dictionary<string, Material> mats = new Dictionary<string, Material>();
+
+        [MenuItem("Tools/World Builder/Build Kirimala Gameplay (Player + Characters)", priority = 87)]
+        public static void Build()
+        {
+            var scene = SceneManager.GetActiveScene();
+            if (GameObject.Find("Spawn_Player") == null || GameObject.Find("Trigger_Alarm_Premises") == null)
+            {
+                EditorUtility.DisplayDialog("Kirimala Gameplay", "Open Level_01 and run Build Kirimala Expansion first.", "OK");
+                return;
+            }
+            EnsureFolder(MatFolder);
+            EnsureFolder(PrefabFolder);
+            EnsureFolder("Assets/_Project/Art/Characters/Meshes");
+            mats.Clear();
+            built.Clear();
+            texCache.Clear();
+            bank = new MeshBank("Assets/_Project/Art/Characters/Meshes/Kirimala_Characters.asset");
+
+            var prefabs = new Dictionary<string, GameObject>
+            {
+                ["Player"] = Save(BuildPlayer()),
+                ["Tiger"] = Save(BuildTiger()),
+                ["Deer"] = Save(BuildDeer()),
+                ["Elephant"] = Save(BuildElephant()),
+                ["Guard"] = Save(BuildHuman("Guard", EnemyKind.Guard)),
+                ["Worker"] = Save(BuildHuman("Worker", EnemyKind.Worker)),
+            };
+            bank.Save();
+
+            LevelBakeTool.CreateHierarchy();
+            Physics.SyncTransforms();
+            var gameplay = Fresh(LevelBakeTool.FindRoot(LevelBakeTool.GameplayRoot).transform, "Kirimala_Gameplay");
+            var agents = Fresh(LevelBakeTool.FindRoot(LevelBakeTool.AgentsRoot).transform, "Kirimala_Characters");
+
+            // Game manager
+            var gmGo = new GameObject("GameManager");
+            gmGo.transform.SetParent(gameplay, false);
+            var gm = gmGo.AddComponent<GameManager>();
+            gm.alarmMusic = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Audio/Background_Music_Action.prefab");
+
+            // Player at the jungle camp, facing up the trail
+            var spawn = GameObject.Find("Spawn_Player").transform;
+            var player = (GameObject)PrefabUtility.InstantiatePrefab(prefabs["Player"], gameplay);
+            player.transform.SetPositionAndRotation(spawn.position + Vector3.up * 0.05f, Quaternion.Euler(0f, 35f, 0f));
+            PrefabUtility.RecordPrefabInstancePropertyModifications(player.transform);
+
+            // The overview camera would fight the player's camera
+            var main = GameObject.Find("Main Camera");
+            if (main != null && main.GetComponent<Camera>() != null) { Undo.RecordObject(main, "Disable overview camera"); main.SetActive(false); }
+
+            // Jungle animals
+            int n = 0;
+            GameObject Enemy(string key, Transform parent, Vector3 p, Transform route = null, int wp = 0, float wander = 10f)
+            {
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[key], parent);
+                go.name = $"{key}_{++n:00}";
+                go.transform.SetPositionAndRotation(Snap(p), Quaternion.Euler(0f, (n * 73) % 360, 0f));
+                var ai = go.GetComponent<EnemyAI>();
+                ai.patrolRoute = route; ai.startWaypoint = wp; ai.wanderRadius = wander;
+                PrefabUtility.RecordPrefabInstancePropertyModifications(ai);
+                PrefabUtility.RecordPrefabInstancePropertyModifications(go.transform);
+                return go;
+            }
+            var jungle = Group(agents, "Jungle");
+            foreach (var p in new[] { new Vector2(44f, -52f), new Vector2(63f, -30f), new Vector2(14f, -17f) })
+                Enemy("Tiger", jungle, Outdoor(p), wander: 12f);
+            foreach (var p in new[] { new Vector2(20f, -28f), new Vector2(23f, -26f), new Vector2(52f, -10f), new Vector2(-6f, -42f) })
+                Enemy("Deer", jungle, Outdoor(p), wander: 8f);
+            Enemy("Elephant", jungle, Outdoor(new Vector2(44f, -29f)), wander: 7f);
+
+            // Factory people
+            var factory = Group(agents, "Factory");
+            Transform R(string name) { var g = GameObject.Find(name); return g != null ? g.transform : null; }
+            Enemy("Guard", factory, new Vector3(12.3f, Ground, 49.5f), R("Route_Yard_Compound"), 0);
+            Enemy("Guard", factory, new Vector3(64f, Ground, 46f), R("Route_Yard_Compound"), 3);
+            Enemy("Guard", factory, new Vector3(58f, Ground, 70.6f), null, 0, 5f);
+            Enemy("Guard", factory, new Vector3(18f, Ground, 78f), R("Route_BackLane"), 0);
+            Enemy("Guard", factory, new Vector3(15f, Ground, 53.5f), R("Route_Factory"), 0);
+            Enemy("Worker", factory, new Vector3(26f, Ground, 57.5f), null, 0, 6f);
+            Enemy("Worker", factory, new Vector3(25f, LoftY, 70f), null, 0, 6f);
+            Enemy("Worker", factory, new Vector3(41f, Ground, 57f), null, 0, 3f);
+            Enemy("Worker", factory, new Vector3(67f, Ground, 58f), null, 0, 6f);
+
+            // Triggers and tea bags
+            AddOnce<AlarmZone>("Trigger_Alarm_Premises");
+            AddOnce<ExitZone>("Trigger_Exit_MainGate");
+            var objectives = GameObject.Find("Objectives");
+            int bags = 0;
+            if (objectives != null)
+                foreach (Transform b in objectives.transform)
+                {
+                    var bag = b.GetComponent<TeaBag>();
+                    if (bag == null) bag = Undo.AddComponent<TeaBag>(b.gameObject);
+                    bag.place = b.name.Substring(b.name.LastIndexOf('_') + 1);
+                    bags++;
+                }
+
+            // Level_01 is the game: first scene in the build
+            var list = EditorBuildSettings.scenes.Where(s => s.path != scene.path).ToList();
+            list.Insert(0, new EditorBuildSettingsScene(scene.path, true));
+            EditorBuildSettings.scenes = list.ToArray();
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[World Builder] Gameplay built: player, 3 tigers, 4 deer, 1 elephant, 5 guards, 4 workers, {bags} tea bags, " +
+                      "GameManager. Press Play to play the game.");
+        }
+
+        // ------------------------------------------------------------------ placement
+
+        static Vector3 Outdoor(Vector2 xz)
+        {
+            if (Physics.Raycast(new Vector3(xz.x, 80f, xz.y), Vector3.down, out var hit, 200f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+                return hit.point;
+            return new Vector3(xz.x, 0f, xz.y);
+        }
+
+        static Vector3 Snap(Vector3 p) => NavMesh.SamplePosition(p, out var hit, 4f, NavMesh.AllAreas) ? hit.position : p;
+
+        static void AddOnce<T>(string name) where T : Component
+        {
+            var go = GameObject.Find(name);
+            if (go != null && go.GetComponent<T>() == null) Undo.AddComponent<T>(go);
+        }
+
+        // ------------------------------------------------------------------ characters
+
+        static GameObject BuildPlayer()
+        {
+            var root = new GameObject("Player") { tag = "Player" };
+            var cc = root.AddComponent<CharacterController>();
+            cc.height = 1.8f; cc.radius = 0.3f; cc.center = new Vector3(0f, 0.9f, 0f); cc.stepOffset = 0.4f; cc.slopeLimit = 45f;
+            var hp = root.AddComponent<Health>();
+            hp.max = 120f; hp.regenDelay = 4f; hp.regenPerSecond = 7f;
+            var pc = root.AddComponent<PlayerController>();
+            root.AddComponent<PlayerCombat>();
+
+            var eyes = new GameObject("Eyes");
+            eyes.transform.SetParent(root.transform, false);
+            eyes.transform.localPosition = new Vector3(0f, 1.65f, 0f);
+            eyes.tag = "MainCamera";
+            var cam = eyes.AddComponent<Camera>();
+            cam.nearClipPlane = 0.05f; cam.fieldOfView = 70f;
+            var data = cam.GetUniversalAdditionalCameraData();
+            data.renderPostProcessing = true;
+            data.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+            eyes.AddComponent<AudioListener>();
+
+            var torch = new GameObject("Torch").AddComponent<Light>();
+            torch.transform.SetParent(eyes.transform, false);
+            torch.type = LightType.Spot; torch.spotAngle = 55f; torch.range = 22f; torch.intensity = 5f;
+            torch.color = new Color(1f, 0.95f, 0.85f); torch.shadows = LightShadows.Soft; torch.enabled = false;
+            pc.eyes = eyes.transform; pc.torch = torch;
+
+            // First-person stick and hand
+            var vm = new GameObject("Viewmodel").transform;
+            vm.SetParent(eyes.transform, false);
+            vm.localPosition = new Vector3(0.36f, -0.38f, 0.55f);
+            vm.localRotation = Quaternion.Euler(40f, -18f, -28f);   // club resting forward over the shoulder line
+            S(vm, "Fist", "Player", new Sculpt().Ell(V(0f, 0f, 0f), V(0.045f, 0.05f, 0.058f))
+                .Ell(V(-0.03f, 0.02f, 0.03f), V(0.016f, 0.03f, 0.016f), 0.015f)
+                .Cone(V(0f, -0.02f, -0.04f), V(0f, -0.09f, -0.2f), 0.036f, 0.04f, 0.03f), M("Skin", new Color(0.42f, 0.27f, 0.17f)), 0.007f, shadows: false);
+            S(vm, "Sleeve", "Player", new Sculpt().Cone(V(0f, -0.08f, -0.18f), V(0f, -0.14f, -0.42f), 0.05f, 0.06f), Cloth("NimalShirt", new Color(0.2f, 0.28f, 0.42f)), 0.01f, shadows: false);
+            P(vm, "Stick", PrimitiveType.Cylinder, new Vector3(0f, 0.26f, 0.04f), new Vector3(0.042f, 0.3f, 0.042f), M("Wood", new Color(0.36f, 0.24f, 0.14f)), new Vector3(-15f, 0f, 0f), false);
+            return root;
+        }
+
+        // Shorthand for sculpt points
+        static Vector3 V(float x, float y, float z) => new Vector3(x, y, z);
+        static (Vector3, float) Pt(float x, float y, float z, float r) => (new Vector3(x, y, z), r);
+
+        static GameObject BuildHuman(string name, EnemyKind kind)
+        {
+            bool guard = kind == EnemyKind.Guard;
+            var root = Root(name, kind, new Vector3(0f, 0.9f, 0f), 0.3f, 1.8f, 1, 0.35f, 1.8f);
+            var anim = root.GetComponent<CreatureAnimator>(); anim.stride = 35f; anim.cadence = 2.6f; anim.lunge = 0.35f;
+            var m = Model(root);
+            Material skin = M("Skin", new Color(0.42f, 0.27f, 0.17f)), dark = M("Black", new Color(0.04f, 0.04f, 0.05f)),
+                     hair = M("Hair", new Color(0.05f, 0.04f, 0.035f)), shoe = M("Shoe", new Color(0.09f, 0.07f, 0.06f));
+            Material shirt = guard ? Cloth("GuardKhaki", new Color(0.58f, 0.52f, 0.36f)) : Cloth("WorkerShirt", new Color(0.34f, 0.47f, 0.4f));
+            Material lower = guard ? Cloth("GuardTrousers", new Color(0.16f, 0.18f, 0.25f)) : Cloth("WorkerSarong", new Color(0.5f, 0.13f, 0.17f));
+            Material hat = guard ? Cloth("GuardCap", new Color(0.1f, 0.12f, 0.22f)) : Cloth("WhiteCloth", new Color(0.88f, 0.86f, 0.8f));
+
+            // Torso: chest, waist and shoulders melted together
+            S(m, "Torso", name, new Sculpt()
+                .Ell(V(0f, 1.36f, 0.005f), V(0.2f, 0.17f, 0.115f))
+                .Cone(V(0f, 1.06f, 0f), V(0f, 1.3f, 0f), 0.14f, 0.165f, 0.08f)
+                .Cone(V(-0.17f, 1.45f, 0f), V(0.17f, 1.45f, 0f), 0.075f, 0.075f, 0.08f)
+                .Axis(V(0f, 1f, 0f), V(0f, 1.6f, 0f), Vector3.forward), shirt, 0.02f);
+            if (guard)
+            {
+                S(m, "Hips", name, new Sculpt().Ell(V(0f, 0.98f, 0f), V(0.17f, 0.12f, 0.115f)).Cone(V(0f, 0.98f, 0f), V(0f, 1.1f, 0f), 0.15f, 0.142f, 0.06f), lower, 0.02f);
+                S(m, "Belt", name, new Sculpt().Ell(V(0f, 1.08f, 0f), V(0.163f, 0.028f, 0.122f)), dark, 0.012f);
+                S(m, "Badge", name, new Sculpt().Ell(V(0.09f, 1.44f, 0.115f), V(0.022f, 0.026f, 0.008f)), M("Brass", new Color(0.85f, 0.65f, 0.2f)), 0.006f);
+            }
+            else
+                S(m, "Sarong", name, new Sculpt().Cone(V(0f, 1.1f, 0f), V(0f, 0.48f, 0f), 0.155f, 0.168f, 0.05f).Axis(V(0f, 1.1f, 0f), V(0f, 0.4f, 0f), Vector3.forward), lower, 0.022f);
+
+            // Head: neck, skull, jaw, nose, ears
+            var head = Pivot(m, "Head", new Vector3(0f, 1.6f, 0f));
+            S(head, "Face", "Human", new Sculpt()
+                .Cone(V(0f, -0.07f, -0.005f), V(0f, 0.07f, 0f), 0.056f, 0.054f)
+                .Ell(V(0f, 0.16f, 0f), V(0.095f, 0.118f, 0.108f), 0.04f)
+                .Ell(V(0f, 0.09f, 0.03f), V(0.078f, 0.075f, 0.082f), 0.05f)
+                .Cone(V(0f, 0.15f, 0.1f), V(0f, 0.105f, 0.122f), 0.013f, 0.02f, 0.02f)
+                .Ell(V(-0.097f, 0.14f, 0f), V(0.017f, 0.032f, 0.022f), 0.015f)
+                .Ell(V(0.097f, 0.14f, 0f), V(0.017f, 0.032f, 0.022f), 0.015f), skin, 0.011f);
+            foreach (float sx in new[] { -1f, 1f })
+                P(head, "Eye", PrimitiveType.Sphere, new Vector3(sx * 0.036f, 0.165f, 0.099f), new Vector3(0.024f, 0.02f, 0.014f), dark);
+            if (guard)
+            {
+                S(head, "Cap", "Guard", new Sculpt().Cone(V(0f, 0.2f, -0.005f), V(0f, 0.27f, 0f), 0.108f, 0.118f, 0.02f)
+                    .Ell(V(0f, 0.205f, 0.1f), V(0.085f, 0.012f, 0.065f), 0.02f), hat, 0.011f);
+                S(head, "Moustache", "Guard", new Sculpt().Ell(V(0f, 0.093f, 0.104f), V(0.034f, 0.009f, 0.012f)), hair, 0.005f);
+            }
+            else
+            {
+                S(head, "HeadCloth", "Worker", new Sculpt().Ell(V(0f, 0.2f, -0.005f), V(0.105f, 0.08f, 0.116f))
+                    .Ell(V(0f, 0.17f, -0.1f), V(0.05f, 0.04f, 0.045f), 0.03f), hat, 0.011f);
+            }
+
+            foreach (var (side, sx) in new[] { ("L", -1f), ("R", 1f) })
+            {
+                // Legs: thigh to ankle, with a shoe
+                var leg = Pivot(m, "Leg_" + side, new Vector3(sx * 0.095f, 0.92f, 0f));
+                S(leg, "Leg", name, new Sculpt().Chain(0.04f, Pt(0f, 0.02f, 0f, 0.083f), Pt(0f, -0.42f, 0.015f, 0.058f), Pt(0f, -0.8f, -0.005f, 0.044f))
+                    .Axis(V(0f, 0f, 0f), V(0f, -0.85f, 0f), Vector3.forward), guard ? lower : skin, 0.018f);
+                S(leg, "Shoe", "Human", new Sculpt().Cone(V(0f, -0.84f, -0.025f), V(0f, -0.865f, 0.09f), 0.047f, 0.04f, 0.03f)
+                    .Ell(V(0f, -0.875f, 0.03f), V(0.05f, 0.02f, 0.09f), 0.02f), shoe, 0.011f);
+
+                // Arms: sleeve, forearm, hand
+                var arm = Pivot(m, "Arm_" + side, new Vector3(sx * 0.235f, 1.46f, 0f));
+                if (guard)
+                    S(arm, "Sleeve", name + side, new Sculpt().Chain(0.03f, Pt(0f, 0f, 0f, 0.06f), Pt(sx * 0.02f, -0.29f, 0f, 0.047f), Pt(sx * 0.025f, -0.52f, 0.02f, 0.039f)), shirt, 0.014f);
+                else
+                {
+                    S(arm, "Sleeve", name + side, new Sculpt().Chain(0.03f, Pt(0f, 0f, 0f, 0.062f), Pt(sx * 0.015f, -0.19f, 0f, 0.055f)), shirt, 0.014f);
+                    S(arm, "Forearm", "Worker" + side, new Sculpt().Chain(0.03f, Pt(sx * 0.012f, -0.16f, 0f, 0.043f), Pt(sx * 0.02f, -0.3f, 0f, 0.041f), Pt(sx * 0.025f, -0.52f, 0.02f, 0.033f)), skin, 0.013f);
+                }
+                S(arm, "Hand", "Human" + side, new Sculpt().Ell(V(sx * 0.028f, -0.6f, 0.025f), V(0.032f, 0.048f, 0.026f))
+                    .Ell(V(sx * 0.005f, -0.57f, 0.05f), V(0.013f, 0.024f, 0.013f), 0.015f), skin, 0.008f);
+                if (side == "R")
+                {
+                    if (guard) P(arm, "Baton", PrimitiveType.Cylinder, new Vector3(0.03f, -0.62f, 0.19f), new Vector3(0.045f, 0.22f, 0.045f), dark, new Vector3(90f, 0f, 0f));
+                    else P(arm, "Pole", PrimitiveType.Cylinder, new Vector3(0.03f, -0.62f, 0.3f), new Vector3(0.04f, 0.4f, 0.04f), M("Wood", new Color(0.36f, 0.24f, 0.14f)), new Vector3(80f, 0f, 0f));
+                }
+            }
+
+            if (guard)
+            {
+                // Torch beam: guards are easy to spot at night (and they light you up)
+                var beam = new GameObject("Flashlight").AddComponent<Light>();
+                beam.transform.SetParent(head, false);
+                beam.transform.localPosition = new Vector3(0.12f, 0.1f, 0.15f);
+                beam.transform.localRotation = Quaternion.Euler(12f, 0f, 0f);
+                beam.type = LightType.Spot; beam.spotAngle = 45f; beam.range = 14f; beam.intensity = 3f;
+                beam.color = new Color(1f, 0.95f, 0.85f); beam.shadows = LightShadows.None;
+            }
+            else
+            {
+                // Night-shift workers carry a kerosene lantern: you can see them coming
+                var holder = Pivot(m.Find("Arm_L"), "Lantern", new Vector3(-0.03f, -0.74f, 0.06f));   // swings with the arm
+                P(holder, "LanternGlass", PrimitiveType.Cylinder, Vector3.zero, new Vector3(0.1f, 0.08f, 0.1f), M("LanternGlow", new Color(1f, 0.6f, 0.25f), 4f), shadows: false);
+                P(holder, "LanternTop", PrimitiveType.Cylinder, new Vector3(0f, 0.1f, 0f), new Vector3(0.07f, 0.02f, 0.07f), dark);
+                var lantern = new GameObject("LanternLight").AddComponent<Light>();
+                lantern.transform.SetParent(holder, false);
+                lantern.transform.localPosition = new Vector3(-0.12f, 0f, 0.15f);   // a little away from the body: no hot spot on the sarong
+                lantern.type = LightType.Point; lantern.range = 5f; lantern.intensity = 1.4f;
+                lantern.color = new Color(1f, 0.65f, 0.3f); lantern.shadows = LightShadows.None;
+            }
+            return root;
+        }
+
+        static GameObject BuildTiger()
+        {
+            var root = Root("Tiger", EnemyKind.Tiger, new Vector3(0f, 0.8f, 0.05f), 0.4f, 2.1f, 2, 0.5f, 1.1f);
+            var anim = root.GetComponent<CreatureAnimator>(); anim.stride = 38f; anim.cadence = 2.1f; anim.lunge = 0.8f;
+            var m = Model(root);
+            Material fur = FurMat("TigerFur", "Tiger_Fur"), dark = M("Black", new Color(0.04f, 0.04f, 0.05f)),
+                     eye = M("EyeGlowYellow", new Color(1f, 0.85f, 0.2f), 3f), white = M("FurWhite", new Color(0.92f, 0.9f, 0.84f));
+
+            // Heavy, low body: deep chest, long barrel, strong hips, thick neck
+            S(m, "Body", "Tiger", new Sculpt()
+                .Ell(V(0f, 0.82f, 0.42f), V(0.28f, 0.32f, 0.45f))
+                .Cone(V(0f, 0.8f, 0.35f), V(0f, 0.78f, -0.5f), 0.28f, 0.26f, 0.14f)
+                .Ell(V(0f, 0.8f, -0.58f), V(0.25f, 0.29f, 0.33f), 0.14f)
+                .Cone(V(0f, 0.92f, 0.62f), V(0f, 0.96f, 0.9f), 0.22f, 0.19f, 0.12f)
+                .Axis(V(0f, 0.8f, -0.95f), V(0f, 0.8f, 1f), Vector3.up), fur, 0.028f);
+
+            var head = Pivot(m, "Head", new Vector3(0f, 0.97f, 0.92f));
+            S(head, "Head", "Tiger", new Sculpt()
+                .Ell(V(0f, 0.06f, 0.11f), V(0.22f, 0.2f, 0.22f))
+                .Ell(V(0f, -0.02f, 0.13f), V(0.27f, 0.14f, 0.17f), 0.08f)
+                .Ell(V(0f, -0.03f, 0.32f), V(0.12f, 0.1f, 0.12f), 0.07f)
+                .Ell(V(-0.14f, 0.23f, 0.03f), V(0.06f, 0.065f, 0.032f), 0.03f)
+                .Ell(V(0.14f, 0.23f, 0.03f), V(0.06f, 0.065f, 0.032f), 0.03f)
+                .Axis(V(0f, 0f, -0.12f), V(0f, 0f, 0.45f), Vector3.up), fur, 0.014f);
+            S(head, "Muzzle", "Tiger", new Sculpt().Ell(V(0f, -0.065f, 0.35f), V(0.1f, 0.07f, 0.09f)), white, 0.01f);
+            S(head, "Nose", "Tiger", new Sculpt().Ell(V(0f, 0.01f, 0.44f), V(0.04f, 0.028f, 0.022f)), dark, 0.006f);
+            foreach (float sx in new[] { -1f, 1f })
+                P(head, "Eye", PrimitiveType.Sphere, new Vector3(sx * 0.09f, 0.09f, 0.305f), Vector3.one * 0.042f, eye, shadows: false);
+
+            foreach (var (n, x, z, front) in new[] { ("FL", -0.16f, 0.5f, true), ("FR", 0.16f, 0.5f, true), ("BL", -0.16f, -0.6f, false), ("BR", 0.16f, -0.6f, false) })
+            {
+                var leg = Pivot(m, "Leg_" + n, new Vector3(x, 0.7f, z));
+                var sc = front
+                    ? new Sculpt().Chain(0.05f, Pt(0f, 0.05f, 0f, 0.13f), Pt(0f, -0.32f, 0.03f, 0.09f), Pt(0f, -0.6f, 0f, 0.072f))
+                    : new Sculpt().Chain(0.05f, Pt(0f, 0.05f, 0f, 0.15f), Pt(0f, -0.26f, -0.07f, 0.095f), Pt(0f, -0.6f, 0f, 0.068f));
+                sc.Ell(V(0f, -0.64f, 0.05f), V(0.085f, 0.05f, 0.1f), 0.05f).Axis(V(0f, 0f, 0f), V(0f, -0.7f, 0f), Vector3.forward);
+                S(leg, "Leg", front ? "TigerFront" : "TigerBack", sc, fur, 0.016f);
+            }
+            var tail = Pivot(m, "Tail", new Vector3(0f, 0.88f, -0.88f));
+            S(tail, "Tail", "Tiger", new Sculpt().Chain(0.03f, Pt(0f, 0f, 0f, 0.065f), Pt(0f, -0.15f, -0.28f, 0.055f), Pt(0f, -0.4f, -0.5f, 0.047f),
+                Pt(0f, -0.55f, -0.68f, 0.043f), Pt(0f, -0.5f, -0.88f, 0.04f)).Axis(V(0f, 0f, 0f), V(0f, -0.5f, -0.88f), Vector3.up), fur, 0.014f);
+            return root;
+        }
+
+        static GameObject BuildDeer()
+        {
+            var root = Root("Deer", EnemyKind.Deer, new Vector3(0f, 1.1f, 0f), 0.3f, 1.3f, 2, 0.4f, 1.6f);
+            var anim = root.GetComponent<CreatureAnimator>(); anim.stride = 38f; anim.cadence = 2.4f;
+            var m = Model(root);
+            Material coat = FurMat("DeerCoat", "Deer_Coat"), dark = M("Black", new Color(0.04f, 0.04f, 0.05f)),
+                     light = M("DeerLight", new Color(0.88f, 0.82f, 0.7f)), antler = M("Antler", new Color(0.62f, 0.54f, 0.42f)),
+                     eye = M("EyeGlowGreen", new Color(0.5f, 1f, 0.6f), 1.5f);
+
+            S(m, "Body", "Deer", new Sculpt()
+                .Ell(V(0f, 1.0f, -0.05f), V(0.21f, 0.26f, 0.52f))
+                .Ell(V(0f, 1.03f, 0.3f), V(0.2f, 0.27f, 0.26f), 0.1f)
+                .Ell(V(0f, 1.0f, -0.42f), V(0.2f, 0.25f, 0.22f), 0.1f)
+                .Cone(V(0f, 1.12f, 0.4f), V(0f, 1.48f, 0.6f), 0.12f, 0.08f, 0.08f)
+                .Axis(V(0f, 1.05f, -0.6f), V(0f, 1.05f, 0.7f), Vector3.up), coat, 0.022f);
+
+            var head = Pivot(m, "Head", new Vector3(0f, 1.54f, 0.64f));
+            S(head, "Head", "Deer", new Sculpt()
+                .Ell(V(0f, 0.03f, 0.03f), V(0.075f, 0.08f, 0.1f))
+                .Cone(V(0f, 0.01f, 0.08f), V(0f, -0.04f, 0.22f), 0.055f, 0.03f, 0.04f)
+                .Ell(V(-0.085f, 0.09f, -0.03f), V(0.05f, 0.022f, 0.028f), 0.02f)
+                .Ell(V(0.085f, 0.09f, -0.03f), V(0.05f, 0.022f, 0.028f), 0.02f)
+                .Axis(V(0f, 0f, -0.1f), V(0f, 0f, 0.25f), Vector3.up), coat, 0.009f);
+            S(head, "Nose", "Deer", new Sculpt().Ell(V(0f, -0.035f, 0.232f), V(0.025f, 0.02f, 0.015f)), dark, 0.005f);
+            var antlers = new Sculpt();
+            foreach (float sx in new[] { -1f, 1f })
+            {
+                antlers.Chain(0.01f, Pt(sx * 0.035f, 0.09f, 0f, 0.014f), Pt(sx * 0.1f, 0.3f, -0.05f, 0.011f), Pt(sx * 0.13f, 0.45f, 0.02f, 0.008f));
+                antlers.Chain(0.01f, Pt(sx * 0.07f, 0.2f, -0.025f, 0.01f), Pt(sx * 0.06f, 0.32f, 0.07f, 0.007f));
+                P(head, "Eye", PrimitiveType.Sphere, new Vector3(sx * 0.06f, 0.05f, 0.08f), Vector3.one * 0.028f, eye, shadows: false);
+            }
+            S(head, "Antlers", "Deer", antlers, antler, 0.007f);
+
+            foreach (var (n, x, z, front) in new[] { ("FL", -0.1f, 0.34f, true), ("FR", 0.1f, 0.34f, true), ("BL", -0.1f, -0.36f, false), ("BR", 0.1f, -0.36f, false) })
+            {
+                var leg = Pivot(m, "Leg_" + n, new Vector3(x, 0.84f, z));
+                S(leg, "Leg", front ? "DeerFront" : "DeerBack", new Sculpt()
+                    .Chain(0.04f, Pt(0f, 0.04f, 0f, front ? 0.075f : 0.085f), Pt(0f, -0.38f, front ? 0.02f : -0.06f, 0.045f), Pt(0f, -0.8f, 0f, 0.03f))
+                    .Axis(V(0f, 0f, 0f), V(0f, -0.82f, 0f), Vector3.forward), coat, 0.011f);
+                S(leg, "Hoof", "Deer", new Sculpt().Ell(V(0f, -0.82f, 0.012f), V(0.032f, 0.024f, 0.04f)), dark, 0.006f);
+            }
+            var tail = Pivot(m, "Tail", new Vector3(0f, 1.12f, -0.55f));
+            S(tail, "Tail", "Deer", new Sculpt().Ell(V(0f, -0.03f, -0.02f), V(0.035f, 0.07f, 0.025f)), light, 0.008f);
+            return root;
+        }
+
+        static GameObject BuildElephant()
+        {
+            var root = Root("Elephant", EnemyKind.Elephant, new Vector3(0f, 2.2f, 0.3f), 1f, 3.8f, 2, 1f, 3.2f);
+            var anim = root.GetComponent<CreatureAnimator>(); anim.stride = 22f; anim.cadence = 1.2f; anim.lunge = 1f;
+            var m = Model(root);
+            Material skin = FurMat("ElephantSkin", "Elephant_Skin"), earSkin = FurMat("ElephantEar", "Elephant_Skin", new Color(0.82f, 0.78f, 0.78f)),
+                     ivory = M("Ivory", new Color(0.9f, 0.87f, 0.78f)), dark = M("Black", new Color(0.04f, 0.04f, 0.05f));
+
+            S(m, "Body", "Elephant", new Sculpt()
+                .Ell(V(0f, 2.2f, 0f), V(0.95f, 0.92f, 1.3f))
+                .Ell(V(0f, 2.35f, 0.65f), V(0.9f, 0.95f, 0.7f), 0.35f)
+                .Ell(V(0f, 2.25f, -0.75f), V(0.85f, 0.88f, 0.65f), 0.35f)
+                .Axis(V(0f, 2.3f, -1.5f), V(0f, 2.3f, 1.5f), Vector3.up), skin, 0.06f);
+
+            var head = Pivot(m, "Head", new Vector3(0f, 2.65f, 1.4f));
+            S(head, "Head", "Elephant", new Sculpt()
+                .Ell(V(0f, 0.05f, 0.35f), V(0.68f, 0.75f, 0.6f))
+                .Ell(V(0f, 0.42f, 0.42f), V(0.5f, 0.36f, 0.42f), 0.2f)
+                .Cone(V(0f, -0.3f, 0.72f), V(0f, -0.55f, 0.94f), 0.4f, 0.3f, 0.25f)
+                .Axis(V(0f, 0f, 0f), V(0f, 0f, 1f), Vector3.up), skin, 0.035f);
+            S(head, "Ears", "Elephant", new Sculpt().Ell(V(-0.74f, -0.05f, 0.12f), V(0.07f, 0.7f, 0.58f)).Ell(V(0.74f, -0.05f, 0.12f), V(0.07f, 0.7f, 0.58f), 0f)
+                .Axis(V(0f, -0.75f, 0f), V(0f, 0.65f, 0f), Vector3.forward), earSkin, 0.025f);
+            var tusks = new Sculpt();
+            foreach (float sx in new[] { -1f, 1f })
+            {
+                tusks.Chain(0.02f, Pt(sx * 0.3f, -0.48f, 0.78f, 0.08f), Pt(sx * 0.33f, -0.85f, 1.1f, 0.06f), Pt(sx * 0.3f, -0.85f, 1.4f, 0.035f));
+                P(head, "Eye", PrimitiveType.Sphere, new Vector3(sx * 0.5f, 0.15f, 0.73f), Vector3.one * 0.075f, dark);
+            }
+            S(head, "Tusks", "Elephant", tusks, ivory, 0.02f);
+            var trunk = Pivot(head, "Trunk", new Vector3(0f, -0.45f, 0.98f));
+            S(trunk, "Trunk", "Elephant", new Sculpt().Chain(0.06f, Pt(0f, 0f, 0f, 0.26f), Pt(0f, -0.5f, 0.1f, 0.21f), Pt(0f, -1f, 0.12f, 0.16f),
+                Pt(0f, -1.35f, 0.25f, 0.13f), Pt(0f, -1.45f, 0.42f, 0.11f)).Axis(V(0f, 0f, 0f), V(0f, -1.45f, 0.3f), Vector3.forward), skin, 0.03f);
+
+            foreach (var (n, x, z) in new[] { ("FL", -0.55f, 0.75f), ("FR", 0.55f, 0.75f), ("BL", -0.55f, -0.75f), ("BR", 0.55f, -0.75f) })
+            {
+                var leg = Pivot(m, "Leg_" + n, new Vector3(x, 1.6f, z));
+                S(leg, "Leg", "Elephant", new Sculpt().Cone(V(0f, 0.15f, 0f), V(0f, -1.42f, 0f), 0.33f, 0.29f)
+                    .Ell(V(0f, -1.5f, 0.03f), V(0.31f, 0.12f, 0.33f), 0.1f).Axis(V(0f, 0f, 0f), V(0f, -1.6f, 0f), Vector3.forward), skin, 0.04f);
+            }
+            var tail = Pivot(m, "Tail", new Vector3(0f, 2.5f, -1.38f));
+            S(tail, "Tail", "Elephant", new Sculpt().Chain(0.02f, Pt(0f, 0f, 0f, 0.06f), Pt(0f, -0.5f, -0.15f, 0.04f), Pt(0f, -0.85f, -0.12f, 0.03f)), skin, 0.015f);
+            S(tail, "Tuft", "Elephant", new Sculpt().Ell(V(0f, -0.95f, -0.12f), V(0.05f, 0.08f, 0.05f)), dark, 0.012f);
+            return root;
+        }
+
+        // ------------------------------------------------------------------ sculpted parts & materials
+
+        static MeshBank bank;
+        static readonly Dictionary<string, Mesh> built = new Dictionary<string, Mesh>();
+        static readonly Dictionary<string, Texture2D> texCache = new Dictionary<string, Texture2D>();
+
+        /// <summary>A sculpted part. Meshes are shared by key (left and right legs of the same shape, etc.).</summary>
+        static GameObject S(Transform parent, string name, string owner, Sculpt sculpt, Material mat, float cell, bool shadows = true)
+        {
+            string key = $"{owner}_{name}";
+            if (!built.TryGetValue(key, out var mesh))
+            {
+                mesh = bank.Add(sculpt.Build(key, cell));
+                built[key] = mesh;
+            }
+            var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+            go.transform.SetParent(parent, false);
+            go.GetComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.GetComponent<MeshRenderer>();
+            r.sharedMaterial = mat;
+            if (!shadows) r.shadowCastingMode = ShadowCastingMode.Off;
+            return go;
+        }
+
+        /// <summary>Fabric: a plain colour over a subtle woven texture.</summary>
+        static Material Cloth(string name, Color c)
+        {
+            var m = M(name, c);
+            if (!texCache.TryGetValue("Fabric", out var tex)) texCache["Fabric"] = tex = CreatureTextures.Get("Fabric");
+            m.SetTexture("_BaseMap", tex);
+            m.SetTextureScale("_BaseMap", new Vector2(3f, 3f));
+            m.SetFloat("_Smoothness", 0.12f);
+            return m;
+        }
+
+        /// <summary>Fur or skin with a generated texture (wraps around the part, 1 repeat per metre).</summary>
+        static Material FurMat(string name, string texture, Color? tint = null)
+        {
+            var m = M(name, tint ?? Color.white);
+            if (!texCache.TryGetValue(texture, out var tex)) texCache[texture] = tex = CreatureTextures.Get(texture);
+            m.SetTexture("_BaseMap", tex);
+            m.SetTextureScale("_BaseMap", Vector2.one);
+            m.SetFloat("_Smoothness", 0.18f);
+            return m;
+        }
+
+        // ------------------------------------------------------------------ building blocks
+
+        static GameObject Root(string name, EnemyKind kind, Vector3 colCentre, float colRadius, float colHeight, int colDir, float agentRadius, float agentHeight)
+        {
+            var root = new GameObject(name);
+            var col = root.AddComponent<CapsuleCollider>();
+            col.center = colCentre; col.radius = colRadius; col.height = colHeight; col.direction = colDir;
+            var agent = root.AddComponent<NavMeshAgent>();
+            agent.radius = agentRadius; agent.height = agentHeight; agent.baseOffset = 0f;
+            agent.obstacleAvoidanceType = ObstacleAvoidanceType.MedQualityObstacleAvoidance;
+            root.AddComponent<Health>();
+            root.AddComponent<EnemyAI>().kind = kind;
+            root.AddComponent<CreatureAnimator>();
+            return root;
+        }
+
+        static Transform Model(GameObject root)
+        {
+            var m = new GameObject("Model").transform;
+            m.SetParent(root.transform, false);
+            return m;
+        }
+
+        static Transform Pivot(Transform parent, string name, Vector3 pos)
+        {
+            var t = new GameObject(name).transform;
+            t.SetParent(parent, false);
+            t.localPosition = pos;
+            return t;
+        }
+
+        static GameObject P(Transform parent, string name, PrimitiveType type, Vector3 pos, Vector3 scale, Material mat, Vector3 euler = default, bool shadows = true)
+        {
+            var go = GameObject.CreatePrimitive(type);
+            go.name = name;
+            Object.DestroyImmediate(go.GetComponent<Collider>());   // the root capsule is the only collider
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = pos;
+            go.transform.localRotation = Quaternion.Euler(euler);
+            go.transform.localScale = scale;
+            var r = go.GetComponent<MeshRenderer>();
+            r.sharedMaterial = mat;
+            if (!shadows) r.shadowCastingMode = ShadowCastingMode.Off;
+            return go;
+        }
+
+        static Material M(string name, Color c, float emission = 0f)
+        {
+            if (mats.TryGetValue(name, out var m)) return m;
+            string path = $"{MatFolder}/M_Char_{name}.mat";
+            m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(m, path); }
+            m.SetColor("_BaseColor", c);
+            m.SetFloat("_Smoothness", 0.22f);
+            if (emission > 0f)
+            {
+                m.EnableKeyword("_EMISSION");
+                m.SetColor("_EmissionColor", c * emission);
+                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            }
+            EditorUtility.SetDirty(m);
+            mats[name] = m;
+            return m;
+        }
+
+        static GameObject Save(GameObject go)
+        {
+            string path = $"{PrefabFolder}/{go.name}.prefab";
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, path);
+            Object.DestroyImmediate(go);
+            return prefab;
+        }
+
+        static Transform Group(Transform parent, string name)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            return go.transform;
+        }
+
+        static Transform Fresh(Transform parent, string name)
+        {
+            var old = parent.Find(name);
+            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+            var go = new GameObject(name);
+            Undo.RegisterCreatedObjectUndo(go, "Kirimala gameplay");
+            go.transform.SetParent(parent, false);
+            return go.transform;
+        }
+
+        static void EnsureFolder(string path)
+        {
+            if (AssetDatabase.IsValidFolder(path)) return;
+            int slash = path.LastIndexOf('/');
+            EnsureFolder(path.Substring(0, slash));
+            AssetDatabase.CreateFolder(path.Substring(0, slash), path.Substring(slash + 1));
+        }
+    }
+}

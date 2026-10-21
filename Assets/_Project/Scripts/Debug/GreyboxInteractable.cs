@@ -32,6 +32,14 @@ namespace WorldBuilder.Testing
             closedRot = transform.localRotation;
         }
 
+        public bool IsOpen => open;
+
+        /// <summary>Opens a door without the lock check (guards have keys; AI opening doors on its path).</summary>
+        public void ForceOpen()
+        {
+            if (kind == GreyboxKind.SwingDoor || kind == GreyboxKind.SlideDoor) open = true;
+        }
+
         /// <summary>Called by the walk-test player (E). Returns a message to show on screen.</summary>
         public string Interact()
         {
