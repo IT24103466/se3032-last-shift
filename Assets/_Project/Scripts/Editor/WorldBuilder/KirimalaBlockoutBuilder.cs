@@ -75,6 +75,7 @@ namespace WorldBuilder.EditorTools
             // Re-apply textured surfaces if they have been built before (rebuilding the
             // blockout would otherwise put the grey MB_ materials back).
             KirimalaSurfaceBuilder.ApplyIfBuilt();
+            KirimalaPropsBuilder.ApplyIfBuilt();
 
             EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             LevelBakeTool.MarkEnvironmentStatic();
