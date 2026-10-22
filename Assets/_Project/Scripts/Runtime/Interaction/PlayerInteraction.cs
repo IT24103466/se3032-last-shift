@@ -117,7 +117,13 @@ namespace LastShift.Runtime.Interaction
                 }
             }
 
-            // 4. Update state and notify listeners
+            // 4. Reject candidates that cannot currently be interacted with
+            if (candidate != null && !candidate.CanInteract)
+            {
+                candidate = null;
+            }
+
+            // 5. Update state and notify listeners
             if (candidate != CurrentInteractable)
             {
                 if (CurrentInteractable != null)
@@ -243,8 +249,16 @@ namespace LastShift.Runtime.Interaction
 
             if (CurrentInteractable != null && CurrentInteractable.CanInteract)
             {
-                CurrentInteractable.Interact(gameObject);
-                OnInteracted?.Invoke(CurrentInteractable);
+                IInteractable interactable = CurrentInteractable;
+                interactable.Interact(gameObject);
+                OnInteracted?.Invoke(interactable);
+
+                // If target became unavailable from the interaction (e.g. single-use), clear immediately
+                if (!interactable.CanInteract && CurrentInteractable == interactable)
+                {
+                    CurrentInteractable = null;
+                    OnInteractableLost?.Invoke();
+                }
             }
         }
 
