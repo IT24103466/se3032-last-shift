@@ -137,6 +137,51 @@ namespace LastShift.EditorTools
                 prop.transform.rotation = Quaternion.identity;
             }
 
+            // 10. Objective Coordinator & 3 Estate Generators Test
+            if (genPrefab != null && doorPrefab != null)
+            {
+                var g1 = (GameObject)PrefabUtility.InstantiatePrefab(genPrefab);
+                g1.name = "Generator_G1";
+                g1.transform.position = new Vector3(-4f, 0.6f, 6.5f);
+                g1.transform.rotation = Quaternion.identity;
+
+                var g2 = (GameObject)PrefabUtility.InstantiatePrefab(genPrefab);
+                g2.name = "Generator_G2";
+                g2.transform.position = new Vector3(0f, 0.6f, 6.5f);
+                g2.transform.rotation = Quaternion.identity;
+
+                var g3 = (GameObject)PrefabUtility.InstantiatePrefab(genPrefab);
+                g3.name = "Generator_G3";
+                g3.transform.position = new Vector3(4f, 0.6f, 6.5f);
+                g3.transform.rotation = Quaternion.identity;
+
+                var exitGate = (GameObject)PrefabUtility.InstantiatePrefab(doorPrefab);
+                exitGate.name = "Exit_Gate";
+                exitGate.transform.position = new Vector3(0f, 0f, 10f);
+                exitGate.transform.rotation = Quaternion.identity;
+
+                var exitDoorComp = exitGate.GetComponent<DoorInteractable>();
+                if (exitDoorComp != null)
+                {
+                    exitDoorComp.SetLocked(true);
+                }
+
+                var objectiveGo = new GameObject("EstateObjectiveManager");
+                var objManager = objectiveGo.AddComponent<EstateObjectiveManager>();
+
+                var g1Comp = g1.GetComponent<GeneratorInteractable>();
+                var g2Comp = g2.GetComponent<GeneratorInteractable>();
+                var g3Comp = g3.GetComponent<GeneratorInteractable>();
+
+                if (g1Comp != null) objManager.RegisterGenerator(g1Comp);
+                if (g2Comp != null) objManager.RegisterGenerator(g2Comp);
+                if (g3Comp != null) objManager.RegisterGenerator(g3Comp);
+                if (exitDoorComp != null) objManager.SetExitDoor(exitDoorComp);
+
+                var progressUiGo = new GameObject("ObjectiveProgressUI");
+                progressUiGo.AddComponent<ObjectiveProgressUI>();
+            }
+
             // Save scene
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.Refresh();

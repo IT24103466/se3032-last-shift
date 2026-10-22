@@ -50,6 +50,8 @@ namespace LastShift.Runtime.Interaction
         [Header("Events")]
         [Tooltip("Event fired when the generator is successfully activated.")]
         [SerializeField] private UnityEvent<GameObject> _onActivated;
+        public UnityEvent<GameObject> OnActivated => _onActivated;
+        public event System.Action<GeneratorInteractable> OnRestored;
 
         private MaterialPropertyBlock _propBlock;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -105,6 +107,7 @@ namespace LastShift.Runtime.Interaction
 
             Debug.Log($"[GeneratorInteractable] Generator '{name}' restored by '{(interactor != null ? interactor.name : "Player")}'!");
             _onActivated?.Invoke(interactor);
+            OnRestored?.Invoke(this);
         }
 
         /// <summary>

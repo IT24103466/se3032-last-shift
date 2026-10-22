@@ -194,6 +194,18 @@ namespace LastShift.Runtime.Interaction
             _isLocked = locked;
         }
 
+        public void Unlock()
+        {
+            _isLocked = false;
+            Debug.Log($"[DoorInteractable] Door '{name}' unlocked.");
+        }
+
+        public void Lock()
+        {
+            _isLocked = true;
+            Debug.Log($"[DoorInteractable] Door '{name}' locked.");
+        }
+
         public bool IsMoving()
         {
             Transform target = _hingeTransform != null ? _hingeTransform : transform;
