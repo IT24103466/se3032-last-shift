@@ -12,6 +12,7 @@ namespace StarterAssets
 		public Vector2 look;
 		public bool jump;
 		public bool sprint;
+		public bool interact;
 
 		[Header("Movement Settings")]
 		public bool analogMovement;
@@ -20,12 +21,7 @@ namespace StarterAssets
 		public bool cursorLocked = true;
 		public bool cursorInputForLook = true;
 
-
-
 #if ENABLE_INPUT_SYSTEM
-		
-
-		
 		public void OnMove(InputValue value)
 		{
 			MoveInput(value.Get<Vector2>());
@@ -48,15 +44,18 @@ namespace StarterAssets
 		{
 			SprintInput(value.isPressed);
 		}
+
+		public void OnInteract(InputValue value)
+		{
+			InteractInput(value.isPressed);
+		}
 #endif
 
-			private void Awake()
-	{
-		SetCursorState(cursorLocked);
-		Cursor.visible = false;
-
-		
-	}
+		private void Awake()
+		{
+			SetCursorState(cursorLocked);
+			Cursor.visible = false;
+		}
 
 		public void MoveInput(Vector2 newMoveDirection)
 		{
@@ -78,6 +77,11 @@ namespace StarterAssets
 			sprint = newSprintState;
 		}
 
+		public void InteractInput(bool newInteractState)
+		{
+			interact = newInteractState;
+		}
+
 		private void OnApplicationFocus(bool hasFocus)
 		{
 			SetCursorState(cursorLocked);
@@ -87,9 +91,6 @@ namespace StarterAssets
 		{
 			Cursor.lockState = newState ? CursorLockMode.Locked : CursorLockMode.None;
 			Cursor.visible = !newState;  
-			
-
 		}
 	}
-	
 }
