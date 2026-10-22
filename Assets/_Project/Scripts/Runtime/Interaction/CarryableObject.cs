@@ -66,8 +66,8 @@ namespace LastShift.Runtime.Interaction
 
         private void Awake()
         {
-            _rb = GetComponent<Rigidbody>();
-            _colliders = GetComponentsInChildren<Collider>();
+            if (_rb == null) _rb = GetComponent<Rigidbody>();
+            if (_colliders == null || _colliders.Length == 0) _colliders = GetComponentsInChildren<Collider>();
 
             if (_rb != null && _rb.mass <= 1f)
             {
@@ -104,6 +104,9 @@ namespace LastShift.Runtime.Interaction
         public void OnPickedUp(GameObject carrier, Transform holdSocket)
         {
             if (_isCarried) return;
+            if (_rb == null) _rb = GetComponent<Rigidbody>();
+            if (_rb == null) return;
+            if (_colliders == null || _colliders.Length == 0) _colliders = GetComponentsInChildren<Collider>();
 
             _isCarried = true;
             _carrier = carrier;
@@ -155,6 +158,8 @@ namespace LastShift.Runtime.Interaction
         public void OnReleased(bool wasThrown, Vector3 throwVelocity)
         {
             if (!_isCarried) return;
+            if (_rb == null) _rb = GetComponent<Rigidbody>();
+            if (_rb == null) return;
 
             transform.SetParent(null, true);
 
@@ -216,6 +221,11 @@ namespace LastShift.Runtime.Interaction
 
         private void SetCollisionsWithCarrier(bool ignore)
         {
+            if (_colliders == null || _colliders.Length == 0)
+            {
+                _colliders = GetComponentsInChildren<Collider>();
+            }
+
             if (_colliders == null || _carrierColliders == null) return;
 
             for (int i = 0; i < _colliders.Length; i++)
@@ -237,8 +247,11 @@ namespace LastShift.Runtime.Interaction
         private IEnumerator RestoreCarrierCollisionsRoutine(float delay)
         {
             yield return new WaitForSeconds(delay);
-            SetCollisionsWithCarrier(false);
-            _carrierColliders = null;
+            if (this != null)
+            {
+                SetCollisionsWithCarrier(false);
+                _carrierColliders = null;
+            }
         }
 
         private void OnCollisionEnter(Collision collision)

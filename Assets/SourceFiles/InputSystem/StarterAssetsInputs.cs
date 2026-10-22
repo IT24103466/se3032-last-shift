@@ -13,6 +13,8 @@ namespace StarterAssets
 		public bool jump;
 		public bool sprint;
 		public bool interact;
+		public bool throwAction;
+		public bool dropAction;
 
 		[Header("Movement Settings")]
 		public bool analogMovement;
@@ -49,6 +51,16 @@ namespace StarterAssets
 		{
 			InteractInput(value.isPressed);
 		}
+
+		public void OnThrow(InputValue value)
+		{
+			ThrowInput(value.isPressed);
+		}
+
+		public void OnDrop(InputValue value)
+		{
+			DropInput(value.isPressed);
+		}
 #endif
 
 		private void Awake()
@@ -80,6 +92,16 @@ namespace StarterAssets
 		public void InteractInput(bool newInteractState)
 		{
 			interact = newInteractState;
+		}
+
+		public void ThrowInput(bool newThrowState)
+		{
+			throwAction = newThrowState;
+		}
+
+		public void DropInput(bool newDropState)
+		{
+			dropAction = newDropState;
 		}
 
 		private void OnApplicationFocus(bool hasFocus)
