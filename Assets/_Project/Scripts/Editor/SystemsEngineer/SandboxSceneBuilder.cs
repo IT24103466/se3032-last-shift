@@ -14,6 +14,7 @@ namespace LastShift.EditorTools
     {
         private const string ScenePath = "Assets/_Project/Scenes/Sandbox/Sandbox_SystemsEngineer.unity";
         private const string GeneratorPrefabPath = "Assets/_Project/Prefabs/Interactables/Generator_Interactable.prefab";
+        private const string DoorPrefabPath = "Assets/_Project/Prefabs/Interactables/Door_Interactable.prefab";
         private const string PlayerPrefabPath = "Assets/Prefabs/PlayerRobot.prefab";
 
         [MenuItem("Tools/Systems Engineer/Setup Sandbox Scene", priority = 100)]
@@ -97,6 +98,16 @@ namespace LastShift.EditorTools
                 gen2.name = "Generator_Behind_Wall";
                 gen2.transform.position = new Vector3(7f, 0.6f, 3.5f);
                 gen2.transform.rotation = Quaternion.identity;
+            }
+
+            // 7. Door Example
+            var doorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DoorPrefabPath);
+            if (doorPrefab != null)
+            {
+                var door = (GameObject)PrefabUtility.InstantiatePrefab(doorPrefab);
+                door.name = "Door_Interactable";
+                door.transform.position = new Vector3(-4f, 0f, 3.5f);
+                door.transform.rotation = Quaternion.identity;
             }
 
             // Save scene
