@@ -117,8 +117,8 @@ namespace LastShift.Runtime.Interaction
                 }
             }
 
-            // 4. Reject candidates that cannot currently be interacted with
-            if (candidate != null && !candidate.CanInteract)
+            // 4. Reject candidates that cannot currently be interacted with or are invalid
+            if (candidate != null && (!candidate.CanInteract || !IsValid(candidate)))
             {
                 candidate = null;
             }
@@ -247,19 +247,26 @@ namespace LastShift.Runtime.Interaction
             }
             _lastInteractedFrame = Time.frameCount;
 
-            if (CurrentInteractable != null && CurrentInteractable.CanInteract)
+            if (IsValid(CurrentInteractable) && CurrentInteractable.CanInteract)
             {
                 IInteractable interactable = CurrentInteractable;
                 interactable.Interact(gameObject);
                 OnInteracted?.Invoke(interactable);
 
                 // If target became unavailable from the interaction (e.g. single-use), clear immediately
-                if (!interactable.CanInteract && CurrentInteractable == interactable)
+                if ((!IsValid(interactable) || !interactable.CanInteract) && CurrentInteractable == interactable)
                 {
                     CurrentInteractable = null;
                     OnInteractableLost?.Invoke();
                 }
             }
+        }
+
+        private static bool IsValid(IInteractable interactable)
+        {
+            if (interactable == null) return false;
+            if (interactable is UnityEngine.Object uObj && uObj == null) return false;
+            return true;
         }
 
         private void OnDrawGizmosSelected()

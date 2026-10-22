@@ -46,7 +46,7 @@ namespace LastShift.Runtime.Interaction
             if (_playerInteraction == null)
             {
 #if UNITY_6000_3_OR_NEWER
-                _playerInteraction = FindFirstObjectByType<PlayerInteraction>();
+                _playerInteraction = FindAnyObjectByType<PlayerInteraction>();
 #else
                 _playerInteraction = FindObjectOfType<PlayerInteraction>();
 #endif
@@ -60,7 +60,7 @@ namespace LastShift.Runtime.Interaction
             if (_playerInteraction == null)
             {
 #if UNITY_6000_3_OR_NEWER
-                _playerInteraction = FindFirstObjectByType<PlayerInteraction>();
+                _playerInteraction = FindAnyObjectByType<PlayerInteraction>();
 #else
                 _playerInteraction = FindObjectOfType<PlayerInteraction>();
 #endif
@@ -96,6 +96,23 @@ namespace LastShift.Runtime.Interaction
 
         private void Update()
         {
+            // Acquire player interaction component if player spawned dynamically
+            if (_playerInteraction == null)
+            {
+#if UNITY_6000_3_OR_NEWER
+                _playerInteraction = FindAnyObjectByType<PlayerInteraction>();
+#else
+                _playerInteraction = FindObjectOfType<PlayerInteraction>();
+#endif
+                if (_playerInteraction != null)
+                {
+                    _playerInteraction.OnInteractableFound -= HandleInteractableFound;
+                    _playerInteraction.OnInteractableFound += HandleInteractableFound;
+                    _playerInteraction.OnInteractableLost -= HandleInteractableLost;
+                    _playerInteraction.OnInteractableLost += HandleInteractableLost;
+                }
+            }
+
             // Continuously verify target validity in case CanInteract changes externally
             if (_isShowing)
             {

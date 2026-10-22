@@ -140,6 +140,10 @@ namespace LastShift.Runtime.Interaction
                 {
                     _propBlock.SetColor(BaseColorId, _activeRendererColor);
                 }
+                else
+                {
+                    _propBlock.Clear();
+                }
                 _targetRenderer.SetPropertyBlock(_propBlock);
             }
         }
