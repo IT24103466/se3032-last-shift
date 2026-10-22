@@ -16,6 +16,7 @@ namespace LastShift.EditorTools
         private const string GeneratorPrefabPath = "Assets/_Project/Prefabs/Interactables/Generator_Interactable.prefab";
         private const string DoorPrefabPath = "Assets/_Project/Prefabs/Interactables/Door_Interactable.prefab";
         private const string BarricadePrefabPath = "Assets/_Project/Prefabs/Interactables/Movable_Barricade.prefab";
+        private const string PropPrefabPath = "Assets/_Project/Prefabs/Interactables/Carryable_Prop.prefab";
         private const string PlayerPrefabPath = "Assets/Prefabs/PlayerRobot.prefab";
 
         [MenuItem("Tools/Systems Engineer/Setup Sandbox Scene", priority = 100)]
@@ -55,10 +56,14 @@ namespace LastShift.EditorTools
                 playerGo.transform.position = new Vector3(0f, 0f, 0f);
                 playerGo.transform.rotation = Quaternion.identity;
 
-                // Ensure PlayerInteraction component is attached
+                // Ensure PlayerInteraction and PlayerCarryController components are attached
                 if (!playerGo.TryGetComponent<PlayerInteraction>(out _))
                 {
                     playerGo.AddComponent<PlayerInteraction>();
+                }
+                if (!playerGo.TryGetComponent<PlayerCarryController>(out _))
+                {
+                    playerGo.AddComponent<PlayerCarryController>();
                 }
             }
             else
@@ -68,6 +73,7 @@ namespace LastShift.EditorTools
                 playerGo.name = "TestPlayer";
                 playerGo.transform.position = new Vector3(0f, 1f, 0f);
                 playerGo.AddComponent<PlayerInteraction>();
+                playerGo.AddComponent<PlayerCarryController>();
 
                 var camGo = new GameObject("MainCamera");
                 camGo.tag = "MainCamera";
@@ -119,6 +125,16 @@ namespace LastShift.EditorTools
                 barricade.name = "Movable_Barricade";
                 barricade.transform.position = new Vector3(-2f, 0.6f, 1.5f);
                 barricade.transform.rotation = Quaternion.identity;
+            }
+
+            // 9. Carryable Prop Example
+            var propPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PropPrefabPath);
+            if (propPrefab != null)
+            {
+                var prop = (GameObject)PrefabUtility.InstantiatePrefab(propPrefab);
+                prop.name = "Carryable_Prop";
+                prop.transform.position = new Vector3(2f, 0.2f, 2f);
+                prop.transform.rotation = Quaternion.identity;
             }
 
             // Save scene

@@ -1,3 +1,5 @@
+#pragma warning disable 0649
+
 using System;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -48,6 +50,7 @@ namespace LastShift.Runtime.Interaction
         public event Action<IInteractable> OnInteracted;
 
         private StarterAssetsInputs _starterInputs;
+        private PlayerCarryController _carryController;
         private Camera _mainCamera;
         private int _lastInteractedFrame = -1;
         private RaycastHit _lastHitInfo;
@@ -58,6 +61,7 @@ namespace LastShift.Runtime.Interaction
         private void Awake()
         {
             _starterInputs = GetComponent<StarterAssetsInputs>();
+            _carryController = GetComponent<PlayerCarryController>();
             _mainCamera = Camera.main;
         }
 
@@ -77,6 +81,22 @@ namespace LastShift.Runtime.Interaction
         /// </summary>
         private void PerformDetection()
         {
+            if (_carryController == null)
+            {
+                _carryController = GetComponent<PlayerCarryController>();
+            }
+
+            // Suppress external interactable detection while carrying an object
+            if (_carryController != null && _carryController.IsCarrying)
+            {
+                if (CurrentInteractable != null)
+                {
+                    CurrentInteractable = null;
+                    OnInteractableLost?.Invoke();
+                }
+                return;
+            }
+
             Vector3 origin = GetCastOrigin();
             Vector3 direction = GetCastDirection();
 
@@ -246,6 +266,18 @@ namespace LastShift.Runtime.Interaction
                 return;
             }
             _lastInteractedFrame = Time.frameCount;
+
+            // If carrying an object, delegate interact press to drop
+            if (_carryController == null)
+            {
+                _carryController = GetComponent<PlayerCarryController>();
+            }
+
+            if (_carryController != null && _carryController.IsCarrying)
+            {
+                _carryController.Drop();
+                return;
+            }
 
             if (IsValid(CurrentInteractable) && CurrentInteractable.CanInteract)
             {

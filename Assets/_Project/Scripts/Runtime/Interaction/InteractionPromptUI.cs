@@ -1,3 +1,5 @@
+#pragma warning disable 0649
+
 using UnityEngine;
 using TMPro;
 
@@ -13,6 +15,10 @@ namespace LastShift.Runtime.Interaction
         [Header("References")]
         [Tooltip("The PlayerInteraction component to monitor. If null, attempts to find one in the scene or on the player.")]
         [SerializeField] private PlayerInteraction _playerInteraction;
+
+        [Header("Carry Integration (Optional)")]
+        [Tooltip("The PlayerCarryController to monitor for carry state. If null, attempts to find one.")]
+        [SerializeField] private PlayerCarryController _carryController;
 
         [Header("UI Elements (Optional)")]
         [Tooltip("GameObject container for the prompt (e.g., panel or background). Toggled on/off with target availability.")]
@@ -49,6 +55,15 @@ namespace LastShift.Runtime.Interaction
                 _playerInteraction = FindAnyObjectByType<PlayerInteraction>();
 #else
                 _playerInteraction = FindObjectOfType<PlayerInteraction>();
+#endif
+            }
+
+            if (_carryController == null)
+            {
+#if UNITY_6000_3_OR_NEWER
+                _carryController = FindAnyObjectByType<PlayerCarryController>();
+#else
+                _carryController = FindObjectOfType<PlayerCarryController>();
 #endif
             }
 
@@ -96,7 +111,7 @@ namespace LastShift.Runtime.Interaction
 
         private void Update()
         {
-            // Acquire player interaction component if player spawned dynamically
+            // Acquire components if player spawned dynamically
             if (_playerInteraction == null)
             {
 #if UNITY_6000_3_OR_NEWER
@@ -113,7 +128,27 @@ namespace LastShift.Runtime.Interaction
                 }
             }
 
-            // Continuously verify target validity in case CanInteract changes externally
+            if (_carryController == null)
+            {
+#if UNITY_6000_3_OR_NEWER
+                _carryController = FindAnyObjectByType<PlayerCarryController>();
+#else
+                _carryController = FindObjectOfType<PlayerCarryController>();
+#endif
+            }
+
+            // 1. If player is carrying an object, display carry prompt with priority
+            if (_carryController != null && _carryController.IsCarrying)
+            {
+                string prompt = _carryController.CarryPrompt;
+                if (!_isShowing || _currentText != prompt)
+                {
+                    ShowPrompt(prompt);
+                }
+                return;
+            }
+
+            // 2. Continuously verify target validity in case CanInteract changes externally
             if (_isShowing)
             {
                 if (_playerInteraction == null ||
