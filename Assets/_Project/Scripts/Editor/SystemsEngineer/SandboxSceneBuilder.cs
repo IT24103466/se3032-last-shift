@@ -15,6 +15,7 @@ namespace LastShift.EditorTools
         private const string ScenePath = "Assets/_Project/Scenes/Sandbox/Sandbox_SystemsEngineer.unity";
         private const string GeneratorPrefabPath = "Assets/_Project/Prefabs/Interactables/Generator_Interactable.prefab";
         private const string DoorPrefabPath = "Assets/_Project/Prefabs/Interactables/Door_Interactable.prefab";
+        private const string BarricadePrefabPath = "Assets/_Project/Prefabs/Interactables/Movable_Barricade.prefab";
         private const string PlayerPrefabPath = "Assets/Prefabs/PlayerRobot.prefab";
 
         [MenuItem("Tools/Systems Engineer/Setup Sandbox Scene", priority = 100)]
@@ -108,6 +109,16 @@ namespace LastShift.EditorTools
                 door.name = "Door_Interactable";
                 door.transform.position = new Vector3(-4f, 0f, 3.5f);
                 door.transform.rotation = Quaternion.identity;
+            }
+
+            // 8. Movable Barricade Example
+            var barricadePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BarricadePrefabPath);
+            if (barricadePrefab != null)
+            {
+                var barricade = (GameObject)PrefabUtility.InstantiatePrefab(barricadePrefab);
+                barricade.name = "Movable_Barricade";
+                barricade.transform.position = new Vector3(-2f, 0.6f, 1.5f);
+                barricade.transform.rotation = Quaternion.identity;
             }
 
             // Save scene
