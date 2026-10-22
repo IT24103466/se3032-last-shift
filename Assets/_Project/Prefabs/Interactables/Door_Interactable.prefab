@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4000000000000001}
   - component: {fileID: 1140000000000001}
+  - component: {fileID: 2080000000000001}
   m_Layer: 0
   m_Name: Door_Interactable
   m_TagString: Untagged
@@ -56,6 +57,9 @@ MonoBehaviour:
   _openEulerAngles: {x: 0, y: 90, z: 0}
   _rotationSpeed: 120
   _allowReverseWhileMoving: 1
+  _navObstacle: {fileID: 2080000000000001}
+  _manageNavObstacle: 1
+  _obstacleClearAngle: 35
   _openAudio: {fileID: 0}
   _closeAudio: {fileID: 0}
   _lockedAudio: {fileID: 0}
@@ -69,6 +73,19 @@ MonoBehaviour:
   _onLockedAttempt:
     m_PersistentCalls:
       m_Calls: []
+--- !u!208 &2080000000000001
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000001}
+  m_Enabled: 1
+  m_Shape: 1
+  m_Center: {x: 0.5, y: 1.1, z: 0}
+  m_Size: {x: 1, y: 2.2, z: 0.2}
+  m_CarveOnlyStationary: 0
+  m_Carve: 1
 --- !u!1 &1000000000000002
 GameObject:
   m_ObjectHideFlags: 0

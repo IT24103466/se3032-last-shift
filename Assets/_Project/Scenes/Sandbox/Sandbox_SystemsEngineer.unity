@@ -691,6 +691,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7002}
   - component: {fileID: 7003}
+  - component: {fileID: 7016}
   m_Layer: 0
   m_Name: Door_Interactable
   m_TagString: Untagged
@@ -737,6 +738,9 @@ MonoBehaviour:
   _openEulerAngles: {x: 0, y: 90, z: 0}
   _rotationSpeed: 120
   _allowReverseWhileMoving: 1
+  _navObstacle: {fileID: 7016}
+  _manageNavObstacle: 1
+  _obstacleClearAngle: 35
   _openAudio: {fileID: 0}
   _closeAudio: {fileID: 0}
   _lockedAudio: {fileID: 0}
@@ -750,6 +754,19 @@ MonoBehaviour:
   _onLockedAttempt:
     m_PersistentCalls:
       m_Calls: []
+--- !u!208 &7016
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7001}
+  m_Enabled: 1
+  m_Shape: 1
+  m_Center: {x: 0.5, y: 1.1, z: 0}
+  m_Size: {x: 1, y: 2.2, z: 0.2}
+  m_CarveOnlyStationary: 0
+  m_Carve: 1
 --- !u!1 &7004
 GameObject:
   m_ObjectHideFlags: 0
@@ -1511,6 +1528,7 @@ GameObject:
   m_Component:
   - component: {fileID: 13002}
   - component: {fileID: 13003}
+  - component: {fileID: 13016}
   m_Layer: 0
   m_Name: Exit_Gate
   m_TagString: Untagged
@@ -1557,6 +1575,9 @@ MonoBehaviour:
   _openEulerAngles: {x: 0, y: 90, z: 0}
   _rotationSpeed: 100
   _allowReverseWhileMoving: 1
+  _navObstacle: {fileID: 13016}
+  _manageNavObstacle: 1
+  _obstacleClearAngle: 35
   _openAudio: {fileID: 0}
   _closeAudio: {fileID: 0}
   _lockedAudio: {fileID: 0}
@@ -1570,6 +1591,19 @@ MonoBehaviour:
   _onLockedAttempt:
     m_PersistentCalls:
       m_Calls: []
+--- !u!208 &13016
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13001}
+  m_Enabled: 1
+  m_Shape: 1
+  m_Center: {x: 0.5, y: 1.1, z: 0}
+  m_Size: {x: 1, y: 2.2, z: 0.2}
+  m_CarveOnlyStationary: 0
+  m_Carve: 1
 --- !u!1 &13004
 GameObject:
   m_ObjectHideFlags: 0

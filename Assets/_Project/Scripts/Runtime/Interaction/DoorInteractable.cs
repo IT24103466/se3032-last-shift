@@ -1,4 +1,7 @@
+#pragma warning disable 0649
+
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Events;
 
 namespace LastShift.Runtime.Interaction
@@ -13,7 +16,7 @@ namespace LastShift.Runtime.Interaction
 
     /// <summary>
     /// Reusable openable door component supporting hinged rotation, configurable open angles,
-    /// smooth transitions, lock states, and integration with IInteractable.
+    /// smooth transitions, lock states, NavMesh AI obstacle synchronization, and IInteractable.
     /// </summary>
     [DisallowMultipleComponent]
     public class DoorInteractable : MonoBehaviour, IInteractable
@@ -43,6 +46,16 @@ namespace LastShift.Runtime.Interaction
         [Tooltip("If true, pressing interact while moving immediately reverses the door.")]
         [SerializeField] private bool _allowReverseWhileMoving = true;
 
+        [Header("NavMesh AI Integration")]
+        [Tooltip("NavMeshObstacle that carves or uncarves the doorway for AI agents. If null, attempts to find one automatically.")]
+        [SerializeField] private NavMeshObstacle _navObstacle;
+
+        [Tooltip("If true, automatically synchronizes the NavMeshObstacle with door open/closed states.")]
+        [SerializeField] private bool _manageNavObstacle = true;
+
+        [Tooltip("Angle threshold (degrees from closed) beyond which the doorway is considered open for AI agents.")]
+        [SerializeField] private float _obstacleClearAngle = 35f;
+
         [Header("Audio Feedback")]
         [SerializeField] private AudioClip _openAudio;
         [SerializeField] private AudioClip _closeAudio;
@@ -58,6 +71,8 @@ namespace LastShift.Runtime.Interaction
         private Quaternion _closedRotation;
         private Quaternion _openRotation;
         private Quaternion _targetRotation;
+        private bool _obstacleStateSynced;
+        private bool _isObstacleCarving;
 
         public bool IsOpen => _isOpen;
         public bool IsLocked
@@ -65,6 +80,14 @@ namespace LastShift.Runtime.Interaction
             get => _isLocked;
             set => _isLocked = value;
         }
+
+        public NavMeshObstacle NavObstacle => _navObstacle;
+        public bool ManageNavObstacle
+        {
+            get => _manageNavObstacle;
+            set => _manageNavObstacle = value;
+        }
+        public bool IsDoorwayClearForAI => !_isObstacleCarving;
 
         public DoorState State
         {
@@ -112,6 +135,31 @@ namespace LastShift.Runtime.Interaction
             // Initialize rotation to match initial state
             _targetRotation = _isOpen ? _openRotation : _closedRotation;
             _hingeTransform.localRotation = _targetRotation;
+
+            InitializeNavObstacle();
+        }
+
+        private void InitializeNavObstacle()
+        {
+            if (!_manageNavObstacle) return;
+
+            if (_navObstacle == null)
+            {
+                _navObstacle = GetComponent<NavMeshObstacle>();
+                if (_navObstacle == null)
+                {
+                    _navObstacle = GetComponentInChildren<NavMeshObstacle>();
+                }
+            }
+
+            if (_navObstacle != null)
+            {
+                if (!_navObstacle.carving)
+                {
+                    _navObstacle.carving = true;
+                }
+                SyncObstacleState(immediate: true);
+            }
         }
 
         private void Update()
@@ -124,6 +172,48 @@ namespace LastShift.Runtime.Interaction
                     _targetRotation,
                     _rotationSpeed * Time.deltaTime
                 );
+
+                if (_manageNavObstacle && _navObstacle != null)
+                {
+                    SyncObstacleState();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Synchronizes the NavMeshObstacle state based on the current rotation angle.
+        /// Avoids touching the obstacle unless transitioning past the clear threshold.
+        /// </summary>
+        public void SyncObstacleState(bool immediate = false)
+        {
+            if (_navObstacle == null || !_manageNavObstacle) return;
+
+            Transform target = _hingeTransform != null ? _hingeTransform : transform;
+            float angleFromClosed = Quaternion.Angle(target.localRotation, _closedRotation);
+
+            bool shouldBeClear = angleFromClosed >= _obstacleClearAngle;
+
+            if (immediate || !_obstacleStateSynced || shouldBeClear == _isObstacleCarving)
+            {
+                if (shouldBeClear)
+                {
+                    if (_navObstacle.enabled)
+                    {
+                        _navObstacle.enabled = false;
+                    }
+                    _isObstacleCarving = false;
+                }
+                else
+                {
+                    if (!_navObstacle.enabled)
+                    {
+                        _navObstacle.enabled = true;
+                    }
+                    _navObstacle.carving = true;
+                    _isObstacleCarving = true;
+                }
+
+                _obstacleStateSynced = true;
             }
         }
 
@@ -204,6 +294,12 @@ namespace LastShift.Runtime.Interaction
         {
             _isLocked = true;
             Debug.Log($"[DoorInteractable] Door '{name}' locked.");
+        }
+
+        public void SetNavObstacle(NavMeshObstacle obstacle)
+        {
+            _navObstacle = obstacle;
+            InitializeNavObstacle();
         }
 
         public bool IsMoving()
