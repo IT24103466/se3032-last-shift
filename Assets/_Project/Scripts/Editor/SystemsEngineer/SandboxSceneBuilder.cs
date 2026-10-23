@@ -18,6 +18,7 @@ namespace LastShift.EditorTools
         private const string BarricadePrefabPath = "Assets/_Project/Prefabs/Interactables/Movable_Barricade.prefab";
         private const string PropPrefabPath = "Assets/_Project/Prefabs/Interactables/Carryable_Prop.prefab";
         private const string PlayerPrefabPath = "Assets/Prefabs/PlayerRobot.prefab";
+        private const string StarPrefabPath = "Assets/Prefabs/Collectible_Star.prefab";
 
         [MenuItem("Tools/Systems Engineer/Setup Sandbox Scene", priority = 100)]
         public static void BuildSandboxScene()
@@ -80,6 +81,19 @@ namespace LastShift.EditorTools
                 camGo.transform.SetParent(playerGo.transform, false);
                 camGo.transform.localPosition = new Vector3(0f, 0.6f, 0f);
                 camGo.AddComponent<Camera>();
+            }
+
+            // Ensure Main Camera exists in scene if PlayerRobot did not create one
+            var existingCam = GameObject.FindGameObjectWithTag("MainCamera");
+            if (existingCam == null)
+            {
+                var camGo = new GameObject("MainCamera");
+                camGo.tag = "MainCamera";
+                camGo.transform.position = new Vector3(0f, 2.0f, -3.0f);
+                camGo.transform.rotation = Quaternion.Euler(15f, 0f, 0f);
+                var cam = camGo.AddComponent<Camera>();
+                cam.nearClipPlane = 0.05f;
+                camGo.AddComponent<AudioListener>();
             }
 
             // 4. Interaction Prompt UI
@@ -180,6 +194,16 @@ namespace LastShift.EditorTools
 
                 var progressUiGo = new GameObject("ObjectiveProgressUI");
                 progressUiGo.AddComponent<ObjectiveProgressUI>();
+            }
+
+            // 11. Collectible Star (Existing Gameplay Verification)
+            var starPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(StarPrefabPath);
+            if (starPrefab != null)
+            {
+                var star = (GameObject)PrefabUtility.InstantiatePrefab(starPrefab);
+                star.name = "Collectible_Star";
+                star.transform.position = new Vector3(-1.5f, 0.8f, 2.0f);
+                star.transform.rotation = Quaternion.identity;
             }
 
             // Save scene
