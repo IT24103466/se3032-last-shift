@@ -8,16 +8,22 @@ namespace LastShift
     /// legs and arms swing with walking speed, the tail and trunk sway, the body lunges on an
     /// attack, flinches when hit, and topples over when knocked out.
     /// Parts are found by name under the "Model" child: Leg_FL/FR/BL/BR (animals), Leg_L/R and
-    /// Arm_L/R (people), Head, Tail, Trunk.
+    /// Arm_L/R (people), Head, Tail, Trunk. People with guns raise them to aim (both arms for a
+    /// long gun) and jerk back when they fire.
     /// </summary>
     public class CreatureAnimator : MonoBehaviour
     {
         public float stride = 32f, cadence = 2.4f, lunge = 0.45f;
+        [Tooltip("Set by EnemyAI while the character is fighting with a gun")]
+        public bool aiming;
+        [Tooltip("Long guns are held with both hands")]
+        public bool twoHanded;
 
         class Limb { public Transform t; public Quaternion rest; public float phase; public float scale; }
         readonly List<Limb> limbs = new List<Limb>();
-        Transform model, head, tail, trunk, armR;
-        Quaternion headRest, tailRest, trunkRest, armRRest;
+        Transform model, head, tail, trunk, armR, armL;
+        Quaternion headRest, tailRest, trunkRest, armRRest, armLRest;
+        float aimBlend, shootT = -1f;
         Vector3 modelRest, lastPos;
         float phase, speed, attackT = -1f, flinchT = -1f, dieT = -1f, roarT = -1f;
 
@@ -34,7 +40,7 @@ namespace LastShift
                     case "Leg_FR": case "Leg_BL": Add(t, Mathf.PI, 1f); break;
                     case "Leg_L": Add(t, 0f, 1f); break;
                     case "Leg_R": Add(t, Mathf.PI, 1f); break;
-                    case "Arm_L": Add(t, Mathf.PI, 0.8f); break;
+                    case "Arm_L": armL = t; armLRest = t.localRotation; Add(t, Mathf.PI, 0.8f); break;
                     case "Arm_R": armR = t; armRRest = t.localRotation; Add(t, 0f, 0.8f); break;
                     case "Head": head = t; headRest = t.localRotation; break;
                     case "Tail": tail = t; tailRest = t.localRotation; break;
@@ -50,6 +56,7 @@ namespace LastShift
         public void Flinch() => flinchT = 0f;
         public void Roar() => roarT = 0f;
         public void Die() => dieT = 0f;
+        public void Shoot() => shootT = 0f;
 
         void LateUpdate()
         {
@@ -72,6 +79,16 @@ namespace LastShift
             float amp = Mathf.Clamp01(speed / 2.5f) * stride;
             foreach (var l in limbs)
                 l.t.localRotation = l.rest * Quaternion.Euler(Mathf.Sin(phase + l.phase) * amp * l.scale, 0f, 0f);
+
+            // Gun up: arms forward (and the support hand under the barrel for a long gun); kick on each shot
+            aimBlend = Mathf.MoveTowards(aimBlend, aiming ? 1f : 0f, dt * 5f);
+            if (aimBlend > 0f)
+            {
+                float kick = 0f;
+                if (shootT >= 0f) { shootT += dt / 0.2f; kick = Mathf.Sin(Mathf.Clamp01(shootT) * Mathf.PI); if (shootT >= 1f) shootT = -1f; }
+                if (armR != null) armR.localRotation = Quaternion.Slerp(armR.localRotation, armRRest * Quaternion.Euler(-86f + 14f * kick, -6f, 0f), aimBlend);
+                if (armL != null && twoHanded) armL.localRotation = Quaternion.Slerp(armL.localRotation, armLRest * Quaternion.Euler(-78f + 10f * kick, 32f, 0f), aimBlend);
+            }
 
             float t = Time.time;
             if (tail != null) tail.localRotation = tailRest * Quaternion.Euler(0f, Mathf.Sin(t * 2.2f) * 18f, Mathf.Sin(t * 1.3f) * 6f);

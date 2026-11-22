@@ -31,6 +31,10 @@ namespace LastShift
         GUIStyle box, big, title, body, small, center;
         bool debugAI;
         PlayerSlingshot sling;
+        PlayerGun gun;
+        Vector3 lastHitFrom;
+        float hitDirUntil;
+        bool hitWasHead;
         EnemyAI[] enemies = new EnemyAI[0];
         Texture2D white;
 
@@ -156,15 +160,28 @@ namespace LastShift
             else if (Time.time - lastEscapeNag > 5f) { lastEscapeNag = Time.time; Toast("You can't leave without your ring!"); }
         }
 
-        public void OnPlayerHit(EnemyAI by) { }
+        /// <summary>The player was hurt by someone: remember where from (the HUD points that way).</summary>
+        public void OnPlayerHit(EnemyAI by)
+        {
+            if (by == null) return;
+            lastHitFrom = by.transform.position;
+            hitDirUntil = Time.unscaledTime + 1.2f;
+        }
+
+        /// <summary>Gunshots inside the factory premises give the game away.</summary>
+        public void OnPlayerGunshot()
+        {
+            if (player != null && player.transform.position.z > 39f) RaiseAlarm();
+        }
 
         float hitMarkerUntil;
-        public void HitMarker() => hitMarkerUntil = Time.unscaledTime + 0.25f;
+        public void HitMarker(bool headshot = false) { hitMarkerUntil = Time.unscaledTime + 0.25f; hitWasHead = headshot; }
 
         public void OnEnemyDown(EnemyAI e)
         {
             knockedOut++;
-            if (e.kind == EnemyKind.Guard || e.kind == EnemyKind.Worker) Toast($"{e.kind} knocked out.", 2f);
+            if (e.kind == EnemyKind.Guard || e.kind == EnemyKind.Worker) Toast($"{e.kind} down. He dropped some ammo.", 2f);
+            else if (e.kind == EnemyKind.Hunter) Toast("The hunter is down. Grab his ammo.", 2.5f);
             else if (e.kind == EnemyKind.Tiger) Toast("The tiger slinks away, beaten.", 2f);
         }
 
@@ -186,7 +203,7 @@ namespace LastShift
 
         string Objective()
         {
-            if (!reachedEstate) return "Get through the jungle to the tea estate (follow the trail north)";
+            if (!reachedEstate) return "Get through the jungle to the tea estate (follow the trail north). A hunter is out tonight";
             if (!AlarmRaised && !HasRing) return "Sneak into the factory premises: part of the fence has collapsed near the east end";
             if (!HasRing) return $"Search the tea bags for your ring ({searched}/{bags.Length})\nBags: dispatch warehouse, withering loft, storeroom, workers' line house";
             return "Escape through the main gate on the west side of the yard";
@@ -265,15 +282,67 @@ namespace LastShift
             if (AlarmRaised) Chip("ALARM", new Color(0.7f, 0.05f, 0.05f, 0.4f + 0.4f * Mathf.PingPong(Time.time * 2f, 1f)));
             if (player.Hidden) Chip("HIDDEN", new Color(0.1f, 0.35f, 0.2f, 0.85f));
             else if (player.Crouched) Chip("CROUCHING", new Color(0.2f, 0.2f, 0.2f, 0.75f));
-            // Crosshair, prompt, search progress
-            if (!player.InLocker) GUI.Label(new Rect(w / 2 - 10, h / 2 - 12, 20, 24), "+", big);
-            if (Time.unscaledTime < hitMarkerUntil) GUI.Label(new Rect(w / 2 - 20, h / 2 - 14, 40, 28), "x", new GUIStyle(big) { normal = { textColor = new Color(1f, 0.4f, 0.3f) } });
-            // Slingshot: pebbles left and how far the band is drawn
+            // Crosshair: four ticks that open up with the weapon's spread and recoil
             if (sling == null) sling = player.GetComponent<PlayerSlingshot>();
-            if (sling != null)
+            if (gun == null) gun = player.GetComponent<PlayerGun>();
+            if (!player.InLocker)
             {
-                Fill(new Rect(w - 196, h - 66, 180, 50), new Color(0, 0, 0, 0.55f));
-                GUI.Label(new Rect(w - 196, h - 66, 180, 50), $"PEBBLES  {sling.ammo}/{sling.maxAmmo}", center);
+                float gap = 5f + (gun != null && gun.OnGun ? gun.Spread * 9f : 3f);
+                Color ch = new Color(1f, 1f, 1f, 0.85f);
+                Fill(new Rect(w / 2 - gap - 9, h / 2 - 1, 9, 2), ch); Fill(new Rect(w / 2 + gap, h / 2 - 1, 9, 2), ch);
+                Fill(new Rect(w / 2 - 1, h / 2 - gap - 9, 2, 9), ch); Fill(new Rect(w / 2 - 1, h / 2 + gap, 2, 9), ch);
+                Fill(new Rect(w / 2 - 1, h / 2 - 1, 2, 2), ch);
+            }
+            if (Time.unscaledTime < hitMarkerUntil)
+            {
+                Color hc = hitWasHead ? new Color(1f, 0.25f, 0.2f) : new Color(1f, 1f, 1f);
+                var old = GUI.matrix;
+                GUIUtility.RotateAroundPivot(45f, new Vector2(Screen.width / 2f, Screen.height / 2f));   // pivot in screen pixels
+                Fill(new Rect(w / 2 - 14, h / 2 - 1.5f, 28, 3), hc); Fill(new Rect(w / 2 - 1.5f, h / 2 - 14, 3, 28), hc);
+                GUI.matrix = old;
+            }
+            // Which way the last hit came from
+            if (Time.unscaledTime < hitDirUntil)
+            {
+                Vector3 to = lastHitFrom - player.transform.position; to.y = 0f;
+                float ang = Vector3.SignedAngle(player.transform.forward, to, Vector3.up);
+                var old = GUI.matrix;
+                GUIUtility.RotateAroundPivot(ang, new Vector2(Screen.width / 2f, Screen.height / 2f));
+                float a = Mathf.Clamp01((hitDirUntil - Time.unscaledTime) / 0.6f);
+                Fill(new Rect(w / 2 - 40, h / 2 - 150, 80, 8), new Color(0.9f, 0.1f, 0.05f, 0.85f * a));
+                Fill(new Rect(w / 2 - 22, h / 2 - 160, 44, 10), new Color(0.9f, 0.1f, 0.05f, 0.85f * a));
+                GUI.matrix = old;
+            }
+            // Weapon panel: what's in hand, ammo, reloading
+            Fill(new Rect(w - 276, h - 106, 260, 90), new Color(0, 0, 0, 0.55f));
+            var ammoBig = new GUIStyle(big) { fontSize = 34, alignment = TextAnchor.MiddleRight };
+            var label = new GUIStyle(small) { alignment = TextAnchor.UpperLeft };
+            if (gun != null && gun.OnGun)
+            {
+                var g = gun.Current;
+                GUI.Label(new Rect(w - 264, h - 102, 160, 24), g.name.ToUpper(), label);
+                ammoBig.normal.textColor = g.mag == 0 ? new Color(1f, 0.35f, 0.3f) : Color.white;
+                GUI.Label(new Rect(w - 270, h - 84, 150, 50), g.mag.ToString(), ammoBig);
+                GUI.Label(new Rect(w - 116, h - 72, 100, 30), "/ " + g.reserve, new GUIStyle(center) { alignment = TextAnchor.MiddleLeft });
+                if (gun.Reloading)
+                {
+                    Fill(new Rect(w / 2 - 60, h / 2 + 34, 120, 8), new Color(0, 0, 0, 0.6f));
+                    Fill(new Rect(w / 2 - 58, h / 2 + 36, 116 * gun.ReloadProgress, 4), new Color(0.9f, 0.85f, 0.6f));
+                    GUI.Label(new Rect(w / 2 - 100, h / 2 + 44, 200, 24), "RELOADING", small);
+                }
+                else if (g.mag == 0) GUI.Label(new Rect(w / 2 - 150, h / 2 + 34, 300, 24), g.reserve > 0 ? "R  Reload" : "No ammo: switch weapon (1-3) or find an ammo box", small);
+                else if (g.mag <= g.magSize / 4) GUI.Label(new Rect(w / 2 - 100, h / 2 + 34, 200, 24), "Low ammo  (R)", small);
+            }
+            if (sling != null && gun != null && !gun.OnGun)
+            {
+                GUI.Label(new Rect(w - 264, h - 102, 160, 24), "SLINGSHOT", label);
+                GUI.Label(new Rect(w - 270, h - 84, 150, 50), sling.ammo.ToString(), ammoBig);
+                GUI.Label(new Rect(w - 116, h - 72, 100, 30), "/ " + sling.maxAmmo, new GUIStyle(center) { alignment = TextAnchor.MiddleLeft });
+            }
+            if (gun != null)
+                GUI.Label(new Rect(w - 264, h - 40, 250, 22), "1 Pistol   2 Shotgun   3 Slingshot", new GUIStyle(small) { fontSize = 12, alignment = TextAnchor.UpperLeft });
+            if (sling != null && sling.active)
+            {
                 if (sling.Drawing)
                 {
                     Fill(new Rect(w / 2 - 40, h / 2 + 22, 80, 6), new Color(0, 0, 0, 0.6f));
@@ -311,11 +380,11 @@ namespace LastShift
             GUI.Label(new Rect(x, h * 0.26f, cw, 200),
                 "This afternoon Nimal helped load the day's tea at the Kirimala factory. Tonight he noticed his wedding ring was gone: it slipped " +
                 "into one of the tea bags, and the bags leave on the lorry at dawn.\n\n" +
-                "He has to get it back before morning: through the jungle (watch for tigers, and keep away from the old elephant), " +
-                "up through the tea, over the factory fence, and past the security guards and the night-shift workers.", body);
+                "He has to get it back before morning: through the jungle (tigers, the old elephant, and a poacher with a rifle), " +
+                "up through the tea, over the factory fence, and past the armed security guards and night-shift workers.", body);
             GUI.Label(new Rect(x, h * 0.58f, cw, 120),
-                "WASD move  ·  Shift sprint  ·  Space jump  ·  C crouch (hide in bushes)  ·  Left click (hold) shoot the slingshot  ·  Right click stick\n" +
-                "E use doors, search bags (hold), pick up stones, hide in lockers  ·  F torch (helps you see, but helps them see you)  ·  Esc pause\nTip: a pebble landing near a guard makes him go and look: use it to slip past", small);
+                "WASD move  ·  Shift sprint  ·  Space jump  ·  C crouch (hide in bushes)  ·  Left click shoot  ·  R reload  ·  1 pistol  2 shotgun  3 slingshot  ·  Right click stick\n" +
+                "E use doors, search bags (hold), take ammo, hide in lockers  ·  F torch (helps you see, but helps them see you)  ·  Esc pause\nTip: gunshots are loud (shooting inside the premises sets off the alarm); a slingshot pebble lures a guard away quietly", small);
             GUI.Label(new Rect(x, h * 0.70f, cw, 30), "Demo checkpoints: F1 jungle camp · F2 stream · F3 estate · F4 fence breach · F5 warehouse · F6 main gate", small);
             GUI.Label(new Rect(x, h * 0.78f, cw, 40), "Press ENTER to begin", big);
         }

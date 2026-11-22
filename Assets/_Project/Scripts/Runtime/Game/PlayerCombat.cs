@@ -21,6 +21,7 @@ namespace LastShift
         Vector3 restPos;
 
         public System.Action<string> OnHitSomething;
+        public bool Swinging => swingT >= 0f;
 
         void Awake()
         {

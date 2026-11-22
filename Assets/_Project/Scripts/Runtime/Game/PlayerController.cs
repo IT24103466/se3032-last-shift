@@ -6,8 +6,8 @@ namespace LastShift
 {
     /// <summary>
     /// Nimal, the player: first-person movement (walk, sprint with stamina, crouch, jump),
-    /// knockback from hits, hiding (crouch in a hiding zone, or get into a locker), the torch,
-    /// and using things (doors, barricades, tea bags, lockers).
+    /// recoil and knockback from hits, hiding (crouch in a hiding zone, or get into a locker), the torch,
+    /// and using things (doors, barricades, tea bags, lockers, ammo boxes, stone piles).
     /// </summary>
     [RequireComponent(typeof(CharacterController), typeof(Health))]
     public class PlayerController : MonoBehaviour
@@ -146,6 +146,14 @@ namespace LastShift
             if (transform.position.y < -40f && GM != null) GM.Lose("You fell out of the world.");
         }
 
+        /// <summary>Gun kick: the view jumps up (and a little sideways) when a shot goes off.</summary>
+        public void AddRecoil(float up, float side)
+        {
+            pitch = Mathf.Clamp(pitch - up, -85f, 85f);
+            eyes.localEulerAngles = new Vector3(pitch, 0f, 0f);
+            transform.Rotate(0f, side, 0f);
+        }
+
         public void SpendStamina(float amount) => Stamina = Mathf.Max(0f, Stamina - amount);
 
         public void AddKnockback(Vector3 v)
@@ -182,12 +190,20 @@ namespace LastShift
         void Interact(Keyboard kb)
         {
             Prompt = null;
-            TeaBag bag = null; GreyboxInteractable thing = null; PebblePile pile = null;
+            TeaBag bag = null; GreyboxInteractable thing = null; PebblePile pile = null; AmmoBox ammo = null;
             if (Physics.Raycast(eyes.position, eyes.forward, out var hit, 2.6f, ~(1 << 2), QueryTriggerInteraction.Ignore))
             {
                 bag = hit.collider.GetComponentInParent<TeaBag>();
                 pile = hit.collider.GetComponentInParent<PebblePile>();
-                if (bag == null && pile == null) thing = hit.collider.GetComponentInParent<GreyboxInteractable>();
+                ammo = hit.collider.GetComponentInParent<AmmoBox>();
+                if (bag == null && pile == null && ammo == null) thing = hit.collider.GetComponentInParent<GreyboxInteractable>();
+            }
+            if (ammo != null)
+            {
+                Prompt = "E  Take the ammo";
+                var gun = GetComponent<PlayerGun>();
+                if (kb.eKey.wasPressedThisFrame && gun != null) ammo.Take(gun);
+                return;
             }
             if (pile != null)
             {

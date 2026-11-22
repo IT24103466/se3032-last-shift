@@ -16,9 +16,11 @@ namespace WorldBuilder.EditorTools
     ///
     /// Makes the game playable: builds the characters out of primitives (no imported models
     /// needed) and saves them as prefabs, then places them in Level_01:
-    ///   Player (Nimal)       first-person, stick, torch                     -> at Spawn_Player (jungle camp)
-    ///   3 tigers, 4 deer, 1 elephant                                         -> jungle
-    ///   5 security guards (patrol routes, torches), 4 night-shift workers    -> factory premises
+    ///   Player (Nimal)       first-person, pistol, shotgun, slingshot, stick, torch -> at Spawn_Player (jungle camp)
+    ///   3 tigers, 4 deer, 1 elephant, 1 hunter (rifle, headlamp)             -> jungle
+    ///   5 security guards (pistols, patrol routes, torches),
+    ///   4 night-shift workers (shotguns, lanterns)                           -> factory premises
+    ///   ammo crates and stone piles along the route
     ///   GameManager (objectives, ring, alarm, HUD)                           -> GAMEPLAY
     /// It also wires the alarm/exit triggers and the tea bags, switches the overview camera off,
     /// and puts Level_01 first in the Build Settings. Re-running replaces everything it made.
@@ -55,6 +57,7 @@ namespace WorldBuilder.EditorTools
                 ["Elephant"] = Save(BuildElephant()),
                 ["Guard"] = Save(BuildHuman("Guard", EnemyKind.Guard)),
                 ["Worker"] = Save(BuildHuman("Worker", EnemyKind.Worker)),
+                ["Hunter"] = Save(BuildHuman("Hunter", EnemyKind.Hunter)),
             };
             bank.Save();
 
@@ -98,6 +101,7 @@ namespace WorldBuilder.EditorTools
             foreach (var p in new[] { new Vector2(20f, -28f), new Vector2(23f, -26f), new Vector2(52f, -10f), new Vector2(-6f, -42f) })
                 Enemy("Deer", jungle, Outdoor(p), wander: 8f);
             Enemy("Elephant", jungle, Outdoor(new Vector2(44f, -29f)), wander: 7f);
+            Enemy("Hunter", jungle, Outdoor(new Vector2(46f, -40f)), wander: 14f);   // poacher working the slopes east of the trail
 
             // Factory people
             var factory = Group(agents, "Factory");
@@ -140,6 +144,32 @@ namespace WorldBuilder.EditorTools
             Pile(new Vector3(28f, LoftY, 69f));         // loft
             Pile(new Vector3(42f, Ground, 64f));        // boiler room
 
+            // Ammo crates for the pistol and shotgun, beside some of the stone piles
+            var crates = Group(gameplay, "AmmoCrates");
+            Material olive = M("AmmoCrate", new Color(0.26f, 0.31f, 0.18f)), stripe = M("AmmoStripe", new Color(0.85f, 0.68f, 0.12f));
+            void Crate(Vector3 p, int rounds, int shells)
+            {
+                var crate = new GameObject("AmmoCrate").transform;
+                crate.SetParent(crates, false);
+                crate.position = p;
+                crate.rotation = Quaternion.Euler(0f, (crates.childCount * 47) % 360, 0f);
+                P(crate, "Box", PrimitiveType.Cube, new Vector3(0f, 0.15f, 0f), new Vector3(0.55f, 0.3f, 0.34f), olive);
+                P(crate, "Lid", PrimitiveType.Cube, new Vector3(0f, 0.31f, 0f), new Vector3(0.57f, 0.03f, 0.36f), olive);
+                P(crate, "Stripe", PrimitiveType.Cube, new Vector3(0f, 0.2f, 0f), new Vector3(0.56f, 0.05f, 0.35f), stripe);
+                foreach (float sx in new[] { -1f, 1f })
+                    P(crate, "Handle", PrimitiveType.Cube, new Vector3(sx * 0.29f, 0.2f, 0f), new Vector3(0.03f, 0.04f, 0.12f), M("Black", new Color(0.04f, 0.04f, 0.05f)));
+                var col = crate.gameObject.AddComponent<BoxCollider>();
+                col.center = new Vector3(0f, 0.16f, 0f); col.size = new Vector3(0.58f, 0.33f, 0.37f);
+                var a = crate.gameObject.AddComponent<AmmoBox>();
+                a.pistolRounds = rounds; a.shells = shells;
+            }
+            foreach (var p in new[] { new Vector2(58.2f, -19.5f), new Vector2(32.2f, -4f), new Vector2(40.7f, 22.5f), new Vector2(48.2f, 37.5f) })
+                Crate(Outdoor(p), 18, 6);
+            Crate(new Vector3(24.7f, Ground, 44.5f), 18, 6);      // yard
+            Crate(new Vector3(62.7f, Ground, 58.5f), 18, 6);      // east compound
+            Crate(new Vector3(28.7f, LoftY, 69f), 12, 4);         // loft
+            Crate(new Vector3(42.7f, Ground, 64f), 12, 4);        // boiler room
+
             // Triggers and tea bags
             AddOnce<AlarmZone>("Trigger_Alarm_Premises");
             AddOnce<ExitZone>("Trigger_Exit_MainGate");
@@ -161,8 +191,8 @@ namespace WorldBuilder.EditorTools
 
             EditorSceneManager.MarkSceneDirty(scene);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[World Builder] Gameplay built: player, 3 tigers, 4 deer, 1 elephant, 5 guards, 4 workers, {bags} tea bags, " +
-                      "GameManager. Press Play to play the game.");
+            Debug.Log($"[World Builder] Gameplay built: player (pistol, shotgun, slingshot), 3 tigers, 4 deer, 1 elephant, 1 hunter, " +
+                      $"5 guards, 4 workers, {crates.childCount} ammo crates, {bags} tea bags, GameManager. Press Play to play the game.");
         }
 
         // ------------------------------------------------------------------ placement
@@ -190,7 +220,7 @@ namespace WorldBuilder.EditorTools
             var cc = root.AddComponent<CharacterController>();
             cc.height = 1.8f; cc.radius = 0.3f; cc.center = new Vector3(0f, 0.9f, 0f); cc.stepOffset = 0.4f; cc.slopeLimit = 45f;
             var hp = root.AddComponent<Health>();
-            hp.max = 120f; hp.regenDelay = 4f; hp.regenPerSecond = 7f;
+            hp.max = 150f; hp.regenDelay = 4f; hp.regenPerSecond = 8f;
             var pc = root.AddComponent<PlayerController>();
             root.AddComponent<PlayerCombat>();
             var sling = root.AddComponent<PlayerSlingshot>();
@@ -247,7 +277,69 @@ namespace WorldBuilder.EditorTools
             line.sharedMaterial = M("Rubber", new Color(0.2f, 0.12f, 0.08f));
             line.shadowCastingMode = ShadowCastingMode.Off;
             line.SetPositions(new[] { new Vector3(-0.05f, 0.075f, 0f), new Vector3(0f, 0.07f, -0.01f), new Vector3(0.05f, 0.075f, 0f) });
+
+            // Firearms (weapon 1 and 2). Each model's root has no rotation: PlayerGun animates it.
+            var gun = root.AddComponent<PlayerGun>();
+            gun.tracerMaterial = M("Tracer", new Color(1f, 0.85f, 0.5f), 4f);
+            gun.sparkMaterial = M("Spark", new Color(1f, 0.7f, 0.3f), 5f);
+            Material metal = GunMetal("GunMetal", new Color(0.11f, 0.11f, 0.12f)), steel = GunMetal("GunSteel", new Color(0.32f, 0.33f, 0.35f)),
+                     polymer = M("GunGrip", new Color(0.07f, 0.07f, 0.07f)), walnut = M("GunWood", new Color(0.33f, 0.18f, 0.09f)),
+                     skinM = M("Skin", new Color(0.42f, 0.27f, 0.17f)), sleeve = Cloth("NimalShirt", new Color(0.2f, 0.28f, 0.42f));
+
+            void Hand(Transform parent, Vector3 pos, Vector3 euler)
+            {
+                var h = Pivot(parent, "Hand", pos);
+                h.localRotation = Quaternion.Euler(euler);
+                S(h, "Fist", "Player", null, skinM, 0.007f, shadows: false);
+                S(h, "Sleeve", "Player", null, sleeve, 0.01f, shadows: false);
+            }
+
+            // Pistol: slide, frame, grip, trigger guard, sights
+            var pistol = Pivot(eyes.transform, "Pistol", new Vector3(0.15f, -0.16f, 0.36f));
+            P(pistol, "Slide", PrimitiveType.Cube, new Vector3(0f, 0.035f, 0.07f), new Vector3(0.03f, 0.033f, 0.19f), metal, shadows: false);
+            P(pistol, "Frame", PrimitiveType.Cube, new Vector3(0f, 0.007f, 0.055f), new Vector3(0.027f, 0.024f, 0.16f), polymer, shadows: false);
+            P(pistol, "Barrel", PrimitiveType.Cylinder, new Vector3(0f, 0.037f, 0.165f), new Vector3(0.012f, 0.006f, 0.012f), steel, new Vector3(90f, 0f, 0f), false);
+            P(pistol, "Grip", PrimitiveType.Cube, new Vector3(0f, -0.04f, -0.01f), new Vector3(0.026f, 0.085f, 0.04f), polymer, new Vector3(-14f, 0f, 0f), false);
+            P(pistol, "Guard", PrimitiveType.Cube, new Vector3(0f, -0.014f, 0.035f), new Vector3(0.006f, 0.022f, 0.04f), polymer, shadows: false);
+            P(pistol, "FrontSight", PrimitiveType.Cube, new Vector3(0f, 0.055f, 0.155f), new Vector3(0.004f, 0.008f, 0.006f), steel, shadows: false);
+            P(pistol, "RearSight", PrimitiveType.Cube, new Vector3(0f, 0.055f, -0.015f), new Vector3(0.022f, 0.008f, 0.006f), metal, shadows: false);
+            Hand(pistol, new Vector3(0f, -0.05f, -0.015f), new Vector3(-10f, 0f, 0f));
+            var pistolMuzzle = Pivot(pistol, "Muzzle", new Vector3(0f, 0.037f, 0.175f));
+
+            // Pump shotgun: receiver, barrel, magazine tube, sliding fore-end (pump), wooden stock
+            var shotgun = Pivot(eyes.transform, "Shotgun", new Vector3(0.14f, -0.17f, 0.3f));
+            P(shotgun, "Receiver", PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.05f), new Vector3(0.042f, 0.058f, 0.16f), metal, shadows: false);
+            P(shotgun, "Barrel", PrimitiveType.Cylinder, new Vector3(0f, 0.038f, 0.38f), new Vector3(0.022f, 0.25f, 0.022f), steel, new Vector3(90f, 0f, 0f), false);
+            P(shotgun, "Tube", PrimitiveType.Cylinder, new Vector3(0f, 0.007f, 0.33f), new Vector3(0.019f, 0.2f, 0.019f), metal, new Vector3(90f, 0f, 0f), false);
+            P(shotgun, "Bead", PrimitiveType.Sphere, new Vector3(0f, 0.052f, 0.62f), Vector3.one * 0.007f, steel, shadows: false);
+            P(shotgun, "Stock", PrimitiveType.Cube, new Vector3(0f, -0.015f, -0.14f), new Vector3(0.038f, 0.065f, 0.22f), walnut, new Vector3(8f, 0f, 0f), false);
+            P(shotgun, "Wrist", PrimitiveType.Cube, new Vector3(0f, -0.02f, -0.02f), new Vector3(0.032f, 0.05f, 0.07f), walnut, new Vector3(-20f, 0f, 0f), false);
+            var pump = Pivot(shotgun, "Pump", new Vector3(0f, 0.007f, 0.22f));
+            P(pump, "ForeEnd", PrimitiveType.Cylinder, Vector3.zero, new Vector3(0.033f, 0.065f, 0.033f), walnut, new Vector3(90f, 0f, 0f), false);
+            Hand(shotgun, new Vector3(0f, -0.045f, -0.03f), new Vector3(-20f, 0f, 0f));
+            Hand(pump, new Vector3(-0.01f, -0.03f, 0f), new Vector3(-5f, 28f, 0f));
+            var shotgunMuzzle = Pivot(shotgun, "Muzzle", new Vector3(0f, 0.038f, 0.64f));
+
+            // A faint fill light just in front of the face so the guns read against the night
+            // (range under a metre: it lights the weapon and hands, not the world)
+            var fill = new GameObject("ViewmodelLight").AddComponent<Light>();
+            fill.transform.SetParent(eyes.transform, false);
+            fill.transform.localPosition = new Vector3(0.02f, 0.12f, 0.12f);
+            fill.type = LightType.Point; fill.range = 0.9f; fill.intensity = 1.2f;
+            fill.color = new Color(0.78f, 0.84f, 1f); fill.shadows = LightShadows.None;
+
+            gun.guns[0].model = pistol; gun.guns[0].muzzle = pistolMuzzle;
+            gun.guns[1].model = shotgun; gun.guns[1].muzzle = shotgunMuzzle; gun.guns[1].pump = pump;
             return root;
+        }
+
+        /// <summary>Gun metal: dark and a little shiny.</summary>
+        static Material GunMetal(string name, Color c)
+        {
+            var m = M(name, c);
+            m.SetFloat("_Metallic", 0.75f);
+            m.SetFloat("_Smoothness", 0.55f);
+            return m;
         }
 
         // Shorthand for sculpt points
@@ -256,15 +348,18 @@ namespace WorldBuilder.EditorTools
 
         static GameObject BuildHuman(string name, EnemyKind kind)
         {
-            bool guard = kind == EnemyKind.Guard;
+            bool guard = kind == EnemyKind.Guard, hunter = kind == EnemyKind.Hunter;
+            bool trousers = guard || hunter;   // the worker wears a sarong
             var root = Root(name, kind, new Vector3(0f, 0.9f, 0f), 0.3f, 1.8f, 1, 0.35f, 1.8f);
             var anim = root.GetComponent<CreatureAnimator>(); anim.stride = 35f; anim.cadence = 2.6f; anim.lunge = 0.35f;
+            anim.twoHanded = !guard;   // the worker's shotgun and the hunter's rifle take both hands
             var m = Model(root);
             Material skin = M("Skin", new Color(0.42f, 0.27f, 0.17f)), dark = M("Black", new Color(0.04f, 0.04f, 0.05f)),
                      hair = M("Hair", new Color(0.05f, 0.04f, 0.035f)), shoe = M("Shoe", new Color(0.09f, 0.07f, 0.06f));
-            Material shirt = guard ? Cloth("GuardKhaki", new Color(0.58f, 0.52f, 0.36f)) : Cloth("WorkerShirt", new Color(0.34f, 0.47f, 0.4f));
-            Material lower = guard ? Cloth("GuardTrousers", new Color(0.16f, 0.18f, 0.25f)) : Cloth("WorkerSarong", new Color(0.5f, 0.13f, 0.17f));
-            Material hat = guard ? Cloth("GuardCap", new Color(0.1f, 0.12f, 0.22f)) : Cloth("WhiteCloth", new Color(0.88f, 0.86f, 0.8f));
+            Material shirt = guard ? Cloth("GuardKhaki", new Color(0.58f, 0.52f, 0.36f)) : hunter ? Cloth("HunterJacket", new Color(0.27f, 0.3f, 0.18f)) : Cloth("WorkerShirt", new Color(0.34f, 0.47f, 0.4f));
+            Material lower = guard ? Cloth("GuardTrousers", new Color(0.16f, 0.18f, 0.25f)) : hunter ? Cloth("HunterTrousers", new Color(0.36f, 0.31f, 0.22f)) : Cloth("WorkerSarong", new Color(0.5f, 0.13f, 0.17f));
+            Material hat = guard ? Cloth("GuardCap", new Color(0.1f, 0.12f, 0.22f)) : hunter ? Cloth("HunterHat", new Color(0.3f, 0.22f, 0.13f)) : Cloth("WhiteCloth", new Color(0.88f, 0.86f, 0.8f));
+            Material metal = GunMetal("GunMetal", new Color(0.11f, 0.11f, 0.12f)), walnut = M("GunWood", new Color(0.33f, 0.18f, 0.09f));
 
             // Torso: chest, waist and shoulders melted together
             S(m, "Torso", name, new Sculpt()
@@ -272,11 +367,13 @@ namespace WorldBuilder.EditorTools
                 .Cone(V(0f, 1.06f, 0f), V(0f, 1.3f, 0f), 0.14f, 0.165f, 0.08f)
                 .Cone(V(-0.17f, 1.45f, 0f), V(0.17f, 1.45f, 0f), 0.075f, 0.075f, 0.08f)
                 .Axis(V(0f, 1f, 0f), V(0f, 1.6f, 0f), Vector3.forward), shirt, 0.02f);
-            if (guard)
+            if (trousers)
             {
                 S(m, "Hips", name, new Sculpt().Ell(V(0f, 0.98f, 0f), V(0.17f, 0.12f, 0.115f)).Cone(V(0f, 0.98f, 0f), V(0f, 1.1f, 0f), 0.15f, 0.142f, 0.06f), lower, 0.02f);
                 S(m, "Belt", name, new Sculpt().Ell(V(0f, 1.08f, 0f), V(0.163f, 0.028f, 0.122f)), dark, 0.012f);
-                S(m, "Badge", name, new Sculpt().Ell(V(0.09f, 1.44f, 0.115f), V(0.022f, 0.026f, 0.008f)), M("Brass", new Color(0.85f, 0.65f, 0.2f)), 0.006f);
+                if (guard) S(m, "Badge", name, new Sculpt().Ell(V(0.09f, 1.44f, 0.115f), V(0.022f, 0.026f, 0.008f)), M("Brass", new Color(0.85f, 0.65f, 0.2f)), 0.006f);
+                else S(m, "Bandolier", name, new Sculpt().Cone(V(-0.16f, 1.5f, 0.11f), V(0.15f, 1.08f, 0.12f), 0.025f, 0.025f, 0.01f)
+                    .Cone(V(-0.16f, 1.5f, -0.11f), V(0.15f, 1.08f, -0.12f), 0.025f, 0.025f, 0.01f), M("Leather", new Color(0.28f, 0.17f, 0.1f)), 0.01f);
             }
             else
                 S(m, "Sarong", name, new Sculpt().Cone(V(0f, 1.1f, 0f), V(0f, 0.48f, 0f), 0.155f, 0.168f, 0.05f).Axis(V(0f, 1.1f, 0f), V(0f, 0.4f, 0f), Vector3.forward), lower, 0.022f);
@@ -298,6 +395,13 @@ namespace WorldBuilder.EditorTools
                     .Ell(V(0f, 0.205f, 0.1f), V(0.085f, 0.012f, 0.065f), 0.02f), hat, 0.011f);
                 S(head, "Moustache", "Guard", new Sculpt().Ell(V(0f, 0.093f, 0.104f), V(0.034f, 0.009f, 0.012f)), hair, 0.005f);
             }
+            else if (hunter)
+            {
+                // Wide-brimmed bush hat and a stubbly beard
+                S(head, "Hat", "Hunter", new Sculpt().Cone(V(0f, 0.2f, -0.005f), V(0f, 0.29f, 0f), 0.11f, 0.1f, 0.03f)
+                    .Ell(V(0f, 0.21f, 0f), V(0.19f, 0.014f, 0.19f), 0.02f), hat, 0.011f);
+                S(head, "Beard", "Hunter", new Sculpt().Ell(V(0f, 0.06f, 0.07f), V(0.07f, 0.045f, 0.05f)).Ell(V(0f, 0.093f, 0.104f), V(0.034f, 0.009f, 0.012f), 0.02f), hair, 0.006f);
+            }
             else
             {
                 S(head, "HeadCloth", "Worker", new Sculpt().Ell(V(0f, 0.2f, -0.005f), V(0.105f, 0.08f, 0.116f))
@@ -309,13 +413,13 @@ namespace WorldBuilder.EditorTools
                 // Legs: thigh to ankle, with a shoe
                 var leg = Pivot(m, "Leg_" + side, new Vector3(sx * 0.095f, 0.92f, 0f));
                 S(leg, "Leg", name, new Sculpt().Chain(0.04f, Pt(0f, 0.02f, 0f, 0.083f), Pt(0f, -0.42f, 0.015f, 0.058f), Pt(0f, -0.8f, -0.005f, 0.044f))
-                    .Axis(V(0f, 0f, 0f), V(0f, -0.85f, 0f), Vector3.forward), guard ? lower : skin, 0.018f);
+                    .Axis(V(0f, 0f, 0f), V(0f, -0.85f, 0f), Vector3.forward), trousers ? lower : skin, 0.018f);
                 S(leg, "Shoe", "Human", new Sculpt().Cone(V(0f, -0.84f, -0.025f), V(0f, -0.865f, 0.09f), 0.047f, 0.04f, 0.03f)
                     .Ell(V(0f, -0.875f, 0.03f), V(0.05f, 0.02f, 0.09f), 0.02f), shoe, 0.011f);
 
                 // Arms: sleeve, forearm, hand
                 var arm = Pivot(m, "Arm_" + side, new Vector3(sx * 0.235f, 1.46f, 0f));
-                if (guard)
+                if (trousers)
                     S(arm, "Sleeve", name + side, new Sculpt().Chain(0.03f, Pt(0f, 0f, 0f, 0.06f), Pt(sx * 0.02f, -0.29f, 0f, 0.047f), Pt(sx * 0.025f, -0.52f, 0.02f, 0.039f)), shirt, 0.014f);
                 else
                 {
@@ -326,12 +430,47 @@ namespace WorldBuilder.EditorTools
                     .Ell(V(sx * 0.005f, -0.57f, 0.05f), V(0.013f, 0.024f, 0.013f), 0.015f), skin, 0.008f);
                 if (side == "R")
                 {
-                    if (guard) P(arm, "Baton", PrimitiveType.Cylinder, new Vector3(0.03f, -0.62f, 0.19f), new Vector3(0.045f, 0.22f, 0.045f), dark, new Vector3(90f, 0f, 0f));
-                    else P(arm, "Pole", PrimitiveType.Cylinder, new Vector3(0.03f, -0.62f, 0.3f), new Vector3(0.04f, 0.4f, 0.04f), M("Wood", new Color(0.36f, 0.24f, 0.14f)), new Vector3(80f, 0f, 0f));
+                    // The gun lies along the arm (barrel pointing down the arm, past the hand), so when
+                    // the arm comes up to aim the barrel points at the target. Local +Z is "up" then.
+                    var g = Pivot(arm, "Gun", new Vector3(0.03f, -0.6f, 0.03f));
+                    if (guard)
+                    {
+                        P(g, "Slide", PrimitiveType.Cube, new Vector3(0f, -0.08f, 0.03f), new Vector3(0.03f, 0.18f, 0.034f), metal);
+                        P(g, "Grip", PrimitiveType.Cube, new Vector3(0f, 0f, -0.01f), new Vector3(0.027f, 0.04f, 0.08f), dark);
+                        Pivot(g, "Muzzle", new Vector3(0f, -0.18f, 0.03f));
+                    }
+                    else if (hunter)
+                    {
+                        P(g, "Barrel", PrimitiveType.Cylinder, new Vector3(0f, -0.38f, 0.04f), new Vector3(0.017f, 0.3f, 0.017f), metal);
+                        P(g, "Receiver", PrimitiveType.Cube, new Vector3(0f, -0.04f, 0.04f), new Vector3(0.034f, 0.2f, 0.05f), metal);
+                        P(g, "Scope", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, 0.09f), new Vector3(0.03f, 0.09f, 0.03f), dark);
+                        P(g, "Stock", PrimitiveType.Cube, new Vector3(0f, 0.15f, 0.01f), new Vector3(0.04f, 0.3f, 0.07f), walnut);
+                        P(g, "Fore", PrimitiveType.Cube, new Vector3(0f, -0.25f, 0.025f), new Vector3(0.038f, 0.2f, 0.04f), walnut);
+                        Pivot(g, "Muzzle", new Vector3(0f, -0.69f, 0.04f));
+                    }
+                    else
+                    {
+                        foreach (float bx in new[] { -0.012f, 0.012f })
+                            P(g, "Barrel", PrimitiveType.Cylinder, new Vector3(bx, -0.3f, 0.035f), new Vector3(0.022f, 0.25f, 0.022f), metal);
+                        P(g, "Stock", PrimitiveType.Cube, new Vector3(0f, 0.12f, 0.005f), new Vector3(0.04f, 0.26f, 0.06f), walnut);
+                        P(g, "Fore", PrimitiveType.Cube, new Vector3(0f, -0.14f, 0.015f), new Vector3(0.04f, 0.14f, 0.035f), walnut);
+                        Pivot(g, "Muzzle", new Vector3(0f, -0.56f, 0.035f));
+                    }
                 }
             }
 
-            if (guard)
+            if (hunter)
+            {
+                // Headlamp: a narrow beam that gives the hunter away in the dark jungle
+                var lamp = new GameObject("Headlamp").AddComponent<Light>();
+                lamp.transform.SetParent(head, false);
+                lamp.transform.localPosition = new Vector3(0f, 0.21f, 0.12f);
+                lamp.transform.localRotation = Quaternion.Euler(10f, 0f, 0f);
+                lamp.type = LightType.Spot; lamp.spotAngle = 32f; lamp.range = 22f; lamp.intensity = 3f;
+                lamp.color = new Color(1f, 0.97f, 0.88f); lamp.shadows = LightShadows.None;
+                P(head, "LampBulb", PrimitiveType.Sphere, new Vector3(0f, 0.21f, 0.115f), Vector3.one * 0.03f, M("LampGlow", new Color(1f, 0.95f, 0.8f), 4f), shadows: false);
+            }
+            else if (guard)
             {
                 // Torch beam: guards are easy to spot at night (and they light you up)
                 var beam = new GameObject("Flashlight").AddComponent<Light>();
