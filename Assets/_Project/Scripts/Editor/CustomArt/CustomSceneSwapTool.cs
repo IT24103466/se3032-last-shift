@@ -21,7 +21,21 @@ namespace CustomArt.EditorTools
         const string EnvPrefabs = "Assets/_Project/Prefabs/Environment_Custom";
 
         [MenuItem("Tools/Custom Art/Swap Open Scene Enemies To Custom")]
-        public static void SwapEnemies()
+        static void MenuEnemies()
+        {
+            if (!SceneGuard.Confirm("Swap enemies")) return;
+            int n = SwapEnemies();
+            Debug.Log($"[Custom Art] Swapped {n} enemies to their *_Custom prefabs in the open scene(s). Save the scene yourself if you want to keep it.");
+        }
+
+        [MenuItem("Tools/Custom Art/Swap Open Scene Tea Rows To Custom")]
+        static void MenuTeaRows()
+        {
+            if (!SceneGuard.Confirm("Swap tea rows")) return;
+            Debug.Log($"[Custom Art] Swapped {SwapTeaRows()} tea row placeholders.");
+        }
+
+        public static int SwapEnemies()
         {
             int n = 0;
             var list = new List<EnemyAI>(Object.FindObjectsByType<EnemyAI>(FindObjectsInactive.Include));
@@ -45,8 +59,8 @@ namespace CustomArt.EditorTools
                 Undo.DestroyObjectImmediate(old);
                 n++;
             }
-            EditorSceneManager.MarkAllScenesDirty();
-            Debug.Log($"[Custom Art] Swapped {n} enemies to their *_Custom prefabs in the open scene(s). Save the scene yourself if you want to keep it.");
+            SceneGuard.MarkDirty();
+            return n;
         }
 
         static string KindName(EnemyAI ai)
@@ -59,12 +73,11 @@ namespace CustomArt.EditorTools
             return null;
         }
 
-        [MenuItem("Tools/Custom Art/Swap Open Scene Tea Rows To Custom")]
-        public static void SwapTeaRows()
+        public static int SwapTeaRows()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{EnvPrefabs}/TeaRow_Estate_01.prefab");
             var holder = GameObject.Find("TeaRows_Placeholder");
-            if (prefab == null || holder == null) { Debug.LogWarning("[Custom Art] TeaRows_Placeholder or the tea row prefab was not found."); return; }
+            if (prefab == null || holder == null) { Debug.LogWarning("[Custom Art] TeaRows_Placeholder or the tea row prefab was not found."); return 0; }
             var kids = new List<Transform>();
             foreach (Transform t in holder.transform) kids.Add(t);
             int n = 0;
@@ -81,8 +94,8 @@ namespace CustomArt.EditorTools
                 Undo.DestroyObjectImmediate(t.gameObject);
                 n++;
             }
-            EditorSceneManager.MarkAllScenesDirty();
-            Debug.Log($"[Custom Art] Swapped {n} tea row placeholders.");
+            SceneGuard.MarkDirty();
+            return n;
         }
     }
 }

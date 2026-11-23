@@ -43,6 +43,26 @@ Each `*_Custom` prefab is a **copy of the original enemy prefab** with only the 
 - `TeaBag_Custom` keeps the structure of the greybox bag: root pivot on the floor, child `Sack` (mesh + collider), child `Tag` (orange emissive box), and the `LastShift.TeaBag` component. `TeaBag.Search()` squashes `Sack` and hides `Tag`, so it works unchanged; `hasRing` and `place` are set by the gameplay builder as before. It does not carry `GreyboxInteractable` (the Systems Engineer is replacing that).
 - Everything else is a plain prefab: drop it in.
 
+## 2b. Scene tools (Tools > Custom Art), all undoable (one Ctrl+Z per menu item), safe to re-run, and they ask first when the open scene is not under `Scenes/Sandbox/`
+| Menu item | What it does |
+|---|---|
+| Swap Open Scene Enemies To Custom | enemies -> `*_Custom` prefabs (position, rotation, parent, name, EnemyAI values copied) |
+| Swap Open Scene Tea Rows To Custom | boxes under `TeaRows_Placeholder` -> `TeaRow_Estate_01` |
+| Swap Open Scene Props To Custom | `Cover_Crate*`, `Crate_Camp/Ruin`, `TeaChest`, `OilDrum`, `Vault_Pallets`, `Vault_Log`: the placeholder object stays (name, tag `Vaultable`, collider, components, parent) with its renderer switched off and a child `CustomArt_Visual` holding the custom mesh (tiled to fill the same box). `TeaBag` objectives: the whole object is replaced by `TeaBag_Custom` (same name/position/rotation/parent, `TeaBag` and `GreyboxInteractable` values copied). Re-run does nothing (already-swapped objects are skipped). |
+| Restore Placeholder Props | deletes the `CustomArt_Visual` children and switches the placeholder renderers back on (tea bags: Ctrl+Z) |
+| Place Custom Nature In Open Scene | rocks, ferns, hide bushes and the 3 tree crowns under ONE parent `CustomArt_Nature` (inside `--- ENVIRONMENT ---/Props`), terrain height + slope, fixed seed 20261123. Keeps clear of the footpath, trail, stream, doors/lockers/barricades, HideSpot/alarm/exit triggers, spawns, existing trees/rocks and solid colliders. Re-run rebuilds the same group (no duplicates). Hide bushes are visual only: they do not add HideSpot triggers. |
+| Remove Custom Nature | deletes `CustomArt_Nature` in one step |
+| Swap Everything To Custom | all of the above in one undo step |
+
+### First-person hands (new)
+The builder gives every weapon the same blob mesh (`Player_Fist` + `Player_Sleeve`) as the player's hand. `Art/Characters/Custom/FPHands_Custom.fbx` replaces it with three real hands (3,684 tris each, one 2048 atlas, URP Lit, material `Materials/M_FPHands_Custom`): fingers wrapped round the grip with knuckles, creases and nails, a thumb, a back of hand with tendons and veins, hairy forearm and a rolled shirt sleeve with hem stitching.
+| Mesh | Used for | Modelled in the frame of |
+|---|---|---|
+| `GripR` (right hand) | club, pistol grip, shotgun wrist | grip axis +Y (club: stick axis; pistol: the grip box, tilted -14 deg; shotgun: the wrist, tilted -20 deg, scaled 0.92) |
+| `ForeL` (left hand) | pump fore-end | the `Pump` pivot, barrel axis +Z |
+| `SlingL` (left hand) | slingshot handle | the `Slingshot` pivot, handle axis +Y |
+Tools: `Tools > Custom Art > Build Custom Hands` (import settings + material, once), `Swap Open Scene Player Hands To Custom` (adds a `CustomArt_Hand` child under each hand pivot and switches the old `Fist`/`Sleeve` renderers off; the new hand moves with the pump and every other animation), `Restore Placeholder Hands`. Undoable, re-run safe, asks first outside `Scenes/Sandbox/`. Regenerate with `BlenderSource/human/scripts/run_fphands.sh` (about 6.5 min). The KirimalaGameplayBuilder regenerates the blob hands every run, so run the swap after it.
+
 ## 3. How it was made (so it can be changed)
 `BlenderSource/human/scripts/run_human.sh <Kind>` (characters; `CHAR_MOD=tiger|animals2|props` for animals/props, props also `ATLAS=1024 BAKE_SIZE=1024 PROP=1`), `rocks.py`, `BlenderSource/tree/scripts/tree2.py`, `BlenderSource/tea/scripts/tea.py` and `veg.py`. Parametric lofted parts are sampled twice (game mesh and a ~200k-face high-poly with folds, pockets, pores, wrinkles), baked per part in Cycles (normal, colour, roughness/metal, AO) into one atlas, composed in numpy and exported as FBX. In Unity: `Tools > Custom Art > Build Custom Characters`, `Build Custom Environment Prefabs`, `Build Sandbox Scene` (editor scripts in `Assets/_Project/Scripts/Editor/CustomArt/`, a tiny sandbox-only runtime helper `Scripts/Runtime/Sandbox/SandboxWalker.cs`).
 Blender -> Unity axes: Blender (x, y, z) becomes Unity (-x, z, -y); characters are modelled facing -Y.
