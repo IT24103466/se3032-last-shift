@@ -114,3 +114,26 @@ def test_lookout_does_not_start_a_duel_at_range():
     assert "reflex" not in cmd["why"]            # 11 m away, outside his 6 m engage range
     cmd = look.decide(dict(dt=0.5, alarm=True, noises=[], guard=dict(pos=[23, 59], hp=80, ammo=2, reloading=False), player_visible=True, player_pos=[23, 63], clear_shot=True))
     assert cmd["mode"] == "engage"               # cornered at 4 m
+
+
+def test_confined_person_never_walks_outside_the_factory():
+    zg = default_graph()
+    protected = {zg.names[i] for i in range(zg.n) if zg.protected[i]}
+    for role in ("sentinel", "tea_keeper", "lookout"):
+        b = GuardBrain(None, zg, role=role, agent_id="c", confined=True, post="rolling")
+        base = dict(dt=0.5, alarm=True, noises=[], guard=dict(pos=[23, 59], hp=80, ammo=2, reloading=False), player_visible=False)
+        for i in range(40):
+            if i == 10:                                   # he is seen out in the yard, then lost
+                base = dict(base, player_visible=True, player_pos=[40, 46], clear_shot=False)
+            if i == 11:
+                base = dict(base, player_visible=False)
+            cmd = b.decide(base)
+            if cmd["mode"] == "goto":
+                assert cmd["zone"] in protected, (role, cmd["zone"], cmd["why"])
+
+
+def test_blocked_shot_makes_him_move_for_a_line():
+    zg = default_graph()
+    w = GuardBrain(None, zg, role="tea_keeper", agent_id="w", confined=True, post="storeroom")
+    cmd = w.decide(dict(dt=0.5, alarm=True, noises=[], guard=dict(pos=[43, 57], hp=80, ammo=2, reloading=False), player_visible=True, player_pos=[43, 54], clear_shot=False))
+    assert cmd["mode"] == "goto" and cmd["target"] == [43, 54] and "no clear shot" in cmd["why"]

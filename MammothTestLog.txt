@@ -1,0 +1,279 @@
+==== session start 12:50:32
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=41 aggro=19 leash=83 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL
+==== session start 12:52:09
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=41 aggro=20 leash=91 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL
+    0.0 STATUS mammoth=(30,-14) act=Patrol inTerritory=True campDist=46 dPlayer=46 playerHp=150 shots=0 attacks=0
+    5.1 STATUS mammoth=(23,-9) act=Patrol inTerritory=True campDist=49 dPlayer=49 playerHp=150 shots=0 attacks=0
+   10.1 STATUS mammoth=(15,-6) act=Patrol inTerritory=True campDist=49 dPlayer=42 playerHp=150 shots=0 attacks=0
+   14.2 [MammothAI] belief Lost -> Uncertain (confidence 0.15, peak 0.11)
+   15.1 STATUS mammoth=(23,-5) act=Patrol inTerritory=True campDist=52 dPlayer=39 playerHp=150 shots=0 attacks=0
+   19.8 [MammothAI] belief Uncertain -> Lost (confidence 0.15, peak 0.12)
+   20.1 STATUS mammoth=(31,-3) act=Patrol inTerritory=True campDist=57 dPlayer=36 playerHp=150 shots=0 attacks=0
+   25.1 STATUS mammoth=(35,-8) act=Patrol inTerritory=True campDist=54 dPlayer=27 playerHp=128 shots=0 attacks=0
+   30.1 STATUS mammoth=(35,-11) act=Patrol inTerritory=True campDist=52 dPlayer=27 playerHp=106 shots=0 attacks=0
+   32.4 [MammothAI] SPOTTED player at 24 m
+   32.5 [MammothAI] belief Uncertain -> Observed (confidence 0.80, peak 0.77)
+   32.7 [MammothAI] LOST sight of player (last seen (16.78, 0.93, 6.70))
+   32.9 [MammothAI] SPOTTED player at 24 m
+   35.1 STATUS mammoth=(34,-4) act=Patrol inTerritory=True campDist=57 dPlayer=25 playerHp=106 shots=0 attacks=0
+   40.1 STATUS mammoth=(33,-2) act=Patrol inTerritory=True campDist=58 dPlayer=28 playerHp=106 shots=0 attacks=0
+   41.7 [MammothAI] LOST sight of player (last seen (29.08, 6.73, 27.17))
+   41.7 [MammothAI] belief Observed -> Recent (confidence 0.55, peak 0.64)
+   45.1 STATUS mammoth=(40,-2) act=Patrol inTerritory=True campDist=62 dPlayer=38 playerHp=106 shots=0 attacks=0
+   47.3 [MammothAI] belief Nearby -> Uncertain (confidence 0.24, peak 0.21)
+   50.1 STATUS mammoth=(46,-2) act=Patrol inTerritory=True campDist=65 dPlayer=43 playerHp=106 shots=0 attacks=0
+   50.7 [MammothAI] HEARD Gunshot ~43 m away (strength 0.39, +/-6 m)
+   50.7 [MammothAI] decision Patrol -> InvestigateSound (u 0.50 vs 0.25; belief Uncertain, conf 0.25)
+   52.0 [MammothAI] decision InvestigateSound -> TrackLastKnown (u 0.27 vs 0.00; belief Nearby, conf 0.17)
+   52.3 [MammothAI] belief Nearby -> Lost (confidence 0.15, peak 0.14)
+   53.2 [MammothAI] HEARD Gunshot ~43 m away (strength 0.39, +/-6 m)
+   54.7 [MammothAI] HEARD Gunshot ~43 m away (strength 0.39, +/-6 m)
+   55.1 STATUS mammoth=(30,-4) act=TrackLastKnown inTerritory=True campDist=55 dPlayer=43 playerHp=106 shots=0 attacks=0
+   56.1 [MammothAI] HEARD Gunshot ~43 m away (strength 0.39, +/-6 m)
+   57.5 [MammothAI] decision TrackLastKnown -> Patrol (u 0.25 vs 0.20; belief Nearby, conf 0.21)
+   58.2 [MammothAI] HEARD Gunshot ~43 m away (strength 0.39, +/-6 m)
+   59.4 [MammothAI] HEARD Gunshot ~43 m away (strength 0.39, +/-6 m)
+   60.2 STATUS mammoth=(30,-4) act=Patrol inTerritory=True campDist=55 dPlayer=43 playerHp=101 shots=0 attacks=0
+   61.8 [MammothAI] HEARD Gunshot ~45 m away (strength 0.36, +/-7 m)
+   63.1 [MammothAI] HEARD Gunshot ~47 m away (strength 0.33, +/-7 m)
+   63.3 [MammothAI] HEARD Gunshot ~47 m away (strength 0.33, +/-7 m)
+   63.6 [MammothAI] HEARD Gunshot ~47 m away (strength 0.32, +/-7 m)
+   63.9 [MammothAI] HEARD Gunshot ~48 m away (strength 0.32, +/-7 m)
+   65.2 STATUS mammoth=(23,-10) act=Patrol inTerritory=True campDist=48 dPlayer=50 playerHp=101 shots=0 attacks=0
+   65.2 [MammothAI] HEARD Gunshot ~50 m away (strength 0.29, +/-7 m)
+   70.2 STATUS mammoth=(22,-8) act=Patrol inTerritory=True campDist=49 dPlayer=48 playerHp=78 shots=0 attacks=0
+   71.7 [MammothAI] decision Patrol -> Search (u 0.33 vs 0.25; belief Nearby, conf 0.21)
+   72.8 [MammothAI] belief Nearby -> Lost (confidence 0.15, peak 0.17)
+   74.8 [MammothAI] decision Search -> Patrol (u 0.25 vs 0.14; belief Lost, conf 0.10)
+   75.2 STATUS mammoth=(25,-17) act=Patrol inTerritory=True campDist=42 dPlayer=56 playerHp=52 shots=0 attacks=0
+   75.6 [MammothAI] HEARD Gunshot ~57 m away (strength 0.19, +/-9 m)
+   75.9 [MammothAI] HEARD Gunshot ~57 m away (strength 0.18, +/-9 m)
+   76.2 [MammothAI] HEARD Gunshot ~58 m away (strength 0.18, +/-9 m)
+   76.5 [MammothAI] HEARD Gunshot ~58 m away (strength 0.17, +/-9 m)
+   76.8 [MammothAI] HEARD Gunshot ~58 m away (strength 0.17, +/-9 m)
+   78.0 [MammothAI] decision Patrol -> Search (u 0.53 vs 0.25; belief Nearby, conf 0.44)
+   78.0 [MammothAI] HEARD Gunshot ~60 m away (strength 0.14, +/-9 m)
+   78.4 [MammothAI] HEARD Gunshot ~59 m away (strength 0.15, +/-9 m)
+   78.7 [MammothAI] HEARD Gunshot ~58 m away (strength 0.17, +/-9 m)
+   79.1 [MammothAI] HEARD Gunshot ~57 m away (strength 0.18, +/-9 m)
+   79.4 [MammothAI] HEARD Gunshot ~56 m away (strength 0.20, +/-8 m)
+   80.2 STATUS mammoth=(33,-15) act=Search inTerritory=True campDist=47 dPlayer=54 playerHp=44 shots=0 attacks=0
+   80.2 [MammothAI] HEARD Gunshot ~54 m away (strength 0.23, +/-8 m)
+   80.5 [MammothAI] HEARD Gunshot ~53 m away (strength 0.24, +/-8 m)
+   83.2 [MammothAI] HEARD Gunshot ~46 m away (strength 0.35, +/-7 m)
+   83.7 [MammothAI] belief Nearby -> Lost (confidence 0.15, peak 0.11)
+   85.0 [MammothAI] HEARD Gunshot ~45 m away (strength 0.36, +/-7 m)
+   85.2 STATUS mammoth=(29,-6) act=Search inTerritory=True campDist=54 dPlayer=45 playerHp=27 shots=0 attacks=0
+   85.5 [MammothAI] HEARD Gunshot ~45 m away (strength 0.36, +/-7 m)
+   85.9 [MammothAI] HEARD Gunshot ~45 m away (strength 0.36, +/-7 m)
+   86.3 [MammothAI] HEARD Gunshot ~45 m away (strength 0.36, +/-7 m)
+   86.7 [MammothAI] HEARD Gunshot ~45 m away (strength 0.36, +/-7 m)
+   87.1 [MammothAI] HEARD Gunshot ~45 m away (strength 0.35, +/-7 m)
+   88.6 [MammothAI] HEARD Gunshot ~46 m away (strength 0.34, +/-7 m)
+   88.8 [MammothAI] HEARD Gunshot ~47 m away (strength 0.33, +/-7 m)
+   89.2 [MammothAI] HEARD Gunshot ~47 m away (strength 0.33, +/-7 m)
+   89.5 [MammothAI] HEARD Gunshot ~47 m away (strength 0.33, +/-7 m)
+   90.2 STATUS mammoth=(17,-4) act=Search inTerritory=True campDist=51 dPlayer=46 playerHp=24 shots=0 attacks=0
+   93.5 [MammothAI] HEARD Gunshot ~46 m away (strength 0.34, +/-7 m)
+   95.2 STATUS mammoth=(24,-13) act=Search inTerritory=True campDist=45 dPlayer=52 playerHp=24 shots=0 attacks=0
+  100.2 STATUS mammoth=(30,-14) act=Search inTerritory=True campDist=46 dPlayer=53 playerHp=24 shots=0 attacks=0
+  101.2 [MammothAI] HEARD Gunshot ~51 m away (strength 0.28, +/-8 m)
+  103.3 [MammothAI] HEARD Gunshot ~47 m away (strength 0.33, +/-7 m)
+  103.5 [MammothAI] decision Search -> InvestigateSound (u 0.49 vs 0.37; belief Nearby, conf 0.20)
+  103.7 [MammothAI] belief Nearby -> Lost (confidence 0.13, peak 0.13)
+  103.8 [MammothAI] decision InvestigateSound -> Patrol (u 0.25 vs 0.00; belief Lost, conf 0.13)
+  105.2 STATUS mammoth=(36,-8) act=Patrol inTerritory=True campDist=54 dPlayer=47 playerHp=24 shots=0 attacks=0
+  106.2 [MammothAI] HEARD Gunshot ~47 m away (strength 0.32, +/-7 m)
+  108.8 [MammothAI] HEARD Gunshot ~47 m away (strength 0.32, +/-7 m)
+  108.8 [MammothAI] belief Lost -> Nearby (confidence 0.17, peak 0.23)
+  110.2 STATUS mammoth=(45,-6) act=Patrol inTerritory=True campDist=61 dPlayer=47 playerHp=24 shots=0 attacks=0
+  115.2 STATUS mammoth=(37,-4) act=Patrol inTerritory=True campDist=59 dPlayer=51 playerHp=24 shots=0 attacks=0
+  120.2 STATUS mammoth=(29,-2) act=Patrol inTerritory=True campDist=57 dPlayer=59 playerHp=24 shots=0 attacks=0
+  122.1 [MammothAI] HEARD Gunshot ~60 m away (strength 0.14, +/-9 m)
+  122.7 [MammothAI] HEARD Gunshot ~61 m away (strength 0.13, +/-9 m)
+  122.9 [MammothAI] HEARD Gunshot ~61 m away (strength 0.13, +/-9 m)
+  123.1 [MammothAI] decision Patrol -> InvestigateSound (u 0.46 vs 0.25; belief Lost, conf 0.11)
+  123.2 [MammothAI] HEARD Gunshot ~62 m away (strength 0.12, +/-9 m)
+  124.1 [MammothAI] HEARD Gunshot ~64 m away (strength 0.09, +/-10 m)
+  124.4 [MammothAI] HEARD Gunshot ~64 m away (strength 0.09, +/-10 m)
+  124.4 [MammothAI] belief Lost -> Nearby (confidence 0.24, peak 0.36)
+  124.7 [MammothAI] HEARD Gunshot ~64 m away (strength 0.08, +/-10 m)
+  125.0 [MammothAI] HEARD Gunshot ~65 m away (strength 0.07, +/-10 m)
+  125.2 STATUS mammoth=(21,-9) act=InvestigateSound inTerritory=True campDist=48 dPlayer=66 playerHp=24 shots=0 attacks=0
+  125.4 [MammothAI] decision InvestigateSound -> Search (u 0.54 vs 0.44; belief Nearby, conf 0.30)
+  128.5 [MammothAI] decision Search -> InvestigateSound (u 0.36 vs 0.15; belief Lost, conf 0.09)
+  130.2 STATUS mammoth=(33,-5) act=InvestigateSound inTerritory=True campDist=55 dPlayer=72 playerHp=24 shots=0 attacks=0
+  134.6 [MammothAI] decision InvestigateSound -> Patrol (u 0.25 vs 0.00; belief Lost, conf 0.14)
+  135.3 STATUS mammoth=(15,-4) act=Patrol inTerritory=True campDist=51 dPlayer=72 playerHp=24 shots=0 attacks=0
+==== session start 13:03:12
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=41 aggro=20 leash=81 (F10 reveals)
+    0.0 STATUS mammoth=(30,-14) act=Patrol inTerritory=True campDist=46 dPlayer=62 playerHp=400 shots=0 attacks=0
+    0.5 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+    0.5 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL
+    5.0 STATUS mammoth=(36,-8) act=Patrol inTerritory=True campDist=55 dPlayer=55 playerHp=400 shots=0 attacks=0
+   10.0 STATUS mammoth=(38,-11) act=Patrol inTerritory=True campDist=53 dPlayer=58 playerHp=389 shots=0 attacks=0
+   15.0 STATUS mammoth=(38,-20) act=Patrol inTerritory=True campDist=46 dPlayer=67 playerHp=389 shots=0 attacks=0
+   20.0 STATUS mammoth=(34,-14) act=Patrol inTerritory=True campDist=48 dPlayer=62 playerHp=389 shots=0 attacks=0
+   21.2 [MammothAI] belief Lost -> Uncertain (confidence 0.15, peak 0.11)
+   25.0 STATUS mammoth=(30,-6) act=Patrol inTerritory=True campDist=53 dPlayer=54 playerHp=389 shots=0 attacks=0
+   30.0 STATUS mammoth=(28,-3) act=Patrol inTerritory=True campDist=56 dPlayer=51 playerHp=389 shots=0 attacks=0
+   31.1 [MammothAI] belief Lost -> Uncertain (confidence 0.15, peak 0.12)
+   35.1 STATUS mammoth=(27,-12) act=Patrol inTerritory=True campDist=47 dPlayer=60 playerHp=389 shots=0 attacks=0
+   40.1 STATUS mammoth=(25,-16) act=Patrol inTerritory=True campDist=42 dPlayer=65 playerHp=389 shots=0 attacks=0
+   45.1 STATUS mammoth=(22,-8) act=Patrol inTerritory=True campDist=49 dPlayer=58 playerHp=389 shots=0 attacks=0
+   50.1 STATUS mammoth=(16,-6) act=Patrol inTerritory=True campDist=49 dPlayer=58 playerHp=385 shots=0 attacks=0
+   55.1 STATUS mammoth=(9,-2) act=Patrol inTerritory=True campDist=53 dPlayer=59 playerHp=365 shots=0 attacks=0
+   55.8 [MammothAI] decision Patrol -> ReturnHome (u 0.31 vs 0.25; belief Uncertain, conf 0.16)
+   58.8 [MammothAI] decision ReturnHome -> Patrol (u 0.25 vs 0.11; belief Uncertain, conf 0.21)
+   60.1 STATUS mammoth=(21,-10) act=Patrol inTerritory=True campDist=47 dPlayer=60 playerHp=321 shots=0 attacks=0
+   65.1 STATUS mammoth=(20,-6) act=Patrol inTerritory=True campDist=51 dPlayer=57 playerHp=310 shots=0 attacks=0
+   70.1 STATUS mammoth=(26,-4) act=Patrol inTerritory=True campDist=54 dPlayer=53 playerHp=303 shots=0 attacks=0
+   75.1 STATUS mammoth=(35,-2) act=Patrol inTerritory=True campDist=59 dPlayer=50 playerHp=303 shots=0 attacks=0
+   80.1 STATUS mammoth=(43,-2) act=Patrol inTerritory=True campDist=63 dPlayer=49 playerHp=303 shots=0 attacks=0
+   85.1 STATUS mammoth=(47,-2) act=Patrol inTerritory=True campDist=66 dPlayer=49 playerHp=303 shots=0 attacks=0
+   90.1 STATUS mammoth=(47,-2) act=Patrol inTerritory=True campDist=66 dPlayer=49 playerHp=303 shots=0 attacks=0
+   92.8 [MammothAI] belief Uncertain -> Lost (confidence 0.15, peak 0.11)
+   95.1 STATUS mammoth=(45,-4) act=Patrol inTerritory=True campDist=63 dPlayer=51 playerHp=303 shots=0 attacks=0
+  100.1 STATUS mammoth=(38,-9) act=Patrol inTerritory=True campDist=54 dPlayer=57 playerHp=303 shots=0 attacks=0
+==== session start 13:05:36
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 6/16.
+    0.0 [Sanjula] Mammoth ready at (27.48, -1.49, -13.06). notice=41 aggro=19 leash=85 (F10 reveals)
+    0.0 STATUS mammoth=(27,-13) act=Patrol inTerritory=True campDist=46 dPlayer=61 playerHp=600 shots=0 attacks=0
+    0.4 [MammothAI] tactical graph ready: 25 reachable waypoints of 34 candidates
+    0.4 [MammothAI] planner self-check: home->farthest (42 m straight) A* cost 56.8 (4 waypoints, 6 expanded) vs Dijkstra 56.8 -> OPTIMAL
+    5.0 STATUS mammoth=(21,-7) act=Patrol inTerritory=True campDist=50 dPlayer=57 playerHp=596 shots=0 attacks=0
+    9.8 [MammothAI] belief Lost -> Uncertain (confidence 0.15, peak 0.14)
+   10.0 STATUS mammoth=(20,-9) act=Patrol inTerritory=True campDist=47 dPlayer=60 playerHp=586 shots=0 attacks=0
+   15.0 STATUS mammoth=(24,-17) act=Patrol inTerritory=True campDist=41 dPlayer=67 playerHp=582 shots=0 attacks=0
+   20.0 STATUS mammoth=(26,-22) act=Patrol inTerritory=True campDist=37 dPlayer=71 playerHp=578 shots=0 attacks=0
+   25.0 STATUS mammoth=(26,-22) act=Patrol inTerritory=True campDist=38 dPlayer=70 playerHp=578 shots=0 attacks=0
+   30.1 STATUS mammoth=(25,-13) act=Patrol inTerritory=True campDist=45 dPlayer=62 playerHp=578 shots=0 attacks=0
+   35.1 STATUS mammoth=(21,-12) act=Patrol inTerritory=True campDist=45 dPlayer=62 playerHp=578 shots=0 attacks=0
+   40.1 STATUS mammoth=(19,-14) act=Patrol inTerritory=True campDist=42 dPlayer=65 playerHp=578 shots=0 attacks=0
+   45.1 STATUS mammoth=(13,-10) act=Patrol inTerritory=True campDist=45 dPlayer=63 playerHp=578 shots=0 attacks=0
+   50.1 STATUS mammoth=(6,-5) act=Patrol inTerritory=True campDist=50 dPlayer=62 playerHp=578 shots=0 attacks=0
+   51.1 [MammothAI] belief Uncertain -> Lost (confidence 0.15, peak 0.12)
+   55.1 STATUS mammoth=(6,-11) act=Patrol inTerritory=True campDist=44 dPlayer=67 playerHp=578 shots=0 attacks=0
+   60.1 STATUS mammoth=(9,-16) act=Patrol inTerritory=True campDist=39 dPlayer=70 playerHp=578 shots=0 attacks=0
+   65.1 STATUS mammoth=(17,-11) act=Patrol inTerritory=True campDist=45 dPlayer=63 playerHp=578 shots=0 attacks=0
+   70.1 STATUS mammoth=(20,-14) act=Patrol inTerritory=True campDist=43 dPlayer=71 playerHp=578 shots=0 attacks=0
+   75.1 STATUS mammoth=(28,-19) act=Patrol inTerritory=True campDist=41 dPlayer=74 playerHp=578 shots=0 attacks=0
+   80.1 STATUS mammoth=(27,-22) act=Patrol inTerritory=True campDist=38 dPlayer=78 playerHp=578 shots=0 attacks=0
+   85.1 STATUS mammoth=(22,-25) act=Patrol inTerritory=True campDist=33 dPlayer=81 playerHp=578 shots=0 attacks=0
+   90.1 STATUS mammoth=(19,-24) act=Patrol inTerritory=True campDist=33 dPlayer=81 playerHp=578 shots=0 attacks=0
+   95.1 STATUS mammoth=(18,-22) act=Patrol inTerritory=True campDist=34 dPlayer=80 playerHp=578 shots=0 attacks=0
+  100.1 STATUS mammoth=(13,-16) act=Patrol inTerritory=True campDist=40 dPlayer=76 playerHp=578 shots=0 attacks=0
+  105.1 STATUS mammoth=(6,-10) act=Patrol inTerritory=True campDist=45 dPlayer=74 playerHp=578 shots=0 attacks=0
+  110.2 STATUS mammoth=(14,-14) act=Patrol inTerritory=True campDist=41 dPlayer=74 playerHp=578 shots=0 attacks=0
+==== session start 13:12:25
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 7/16.
+    0.0 [Sanjula] Mammoth ready at (32.81, -0.72, -20.22). notice=36 aggro=23 leash=92 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 27 reachable waypoints of 30 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 72.1 (6 waypoints, 12 expanded) vs Dijkstra 72.1 -> OPTIMAL
+    0.3 STATUS mammoth=(33,-20) act=Patrol inTerritory=True campDist=42 dPlayer=75 playerHp=600 shots=0 attacks=0
+    5.3 STATUS mammoth=(41,-16) act=Patrol inTerritory=True campDist=50 dPlayer=70 playerHp=600 shots=0 attacks=0
+   10.4 STATUS mammoth=(46,-10) act=Patrol inTerritory=True campDist=59 dPlayer=64 playerHp=596 shots=0 attacks=0
+   15.4 STATUS mammoth=(47,-5) act=Patrol inTerritory=True campDist=63 dPlayer=59 playerHp=589 shots=0 attacks=0
+   20.4 STATUS mammoth=(47,-4) act=Patrol inTerritory=True campDist=64 dPlayer=58 playerHp=582 shots=0 attacks=0
+   21.1 [MammothAI] decision Patrol -> ReturnHome (u 0.31 vs 0.25; belief Lost, conf 0.03)
+   24.2 [MammothAI] decision ReturnHome -> Patrol (u 0.25 vs 0.08; belief Lost, conf 0.07)
+   25.4 STATUS mammoth=(36,-16) act=Patrol inTerritory=True campDist=48 dPlayer=70 playerHp=571 shots=0 attacks=0
+   30.4 STATUS mammoth=(33,-20) act=Patrol inTerritory=True campDist=42 dPlayer=75 playerHp=571 shots=0 attacks=0
+   35.4 STATUS mammoth=(41,-16) act=Patrol inTerritory=True campDist=50 dPlayer=70 playerHp=571 shots=0 attacks=0
+   40.4 STATUS mammoth=(39,-13) act=Patrol inTerritory=True campDist=52 dPlayer=67 playerHp=571 shots=0 attacks=0
+   45.4 STATUS mammoth=(33,-7) act=Patrol inTerritory=True campDist=53 dPlayer=62 playerHp=571 shots=0 attacks=0
+   50.4 STATUS mammoth=(36,-6) act=Patrol inTerritory=True campDist=56 dPlayer=61 playerHp=571 shots=0 attacks=0
+   50.6 [MammothAI] belief Lost -> Uncertain (confidence 0.15, peak 0.13)
+   55.4 STATUS mammoth=(38,-7) act=Patrol inTerritory=True campDist=56 dPlayer=61 playerHp=571 shots=0 attacks=0
+   57.1 [MammothAI] belief Lost -> Uncertain (confidence 0.16, peak 0.13)
+   60.4 STATUS mammoth=(31,-10) act=Patrol inTerritory=True campDist=50 dPlayer=65 playerHp=571 shots=0 attacks=0
+   65.4 STATUS mammoth=(32,-11) act=Patrol inTerritory=True campDist=50 dPlayer=66 playerHp=571 shots=0 attacks=0
+   70.5 STATUS mammoth=(32,-11) act=Patrol inTerritory=True campDist=49 dPlayer=66 playerHp=571 shots=0 attacks=0
+==== session start 13:14:29
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (31.87, -0.64, -20.95). notice=37 aggro=21 leash=83 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 26 reachable waypoints of 30 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 55.3 (4 waypoints, 5 expanded) vs Dijkstra 55.3 -> OPTIMAL
+==== session start 13:15:06
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 6/16.
+    0.0 [Sanjula] Mammoth ready at (24.97, -1.16, -15.47). notice=39 aggro=18 leash=94 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 29 reachable waypoints of 32 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (61 m straight) A* cost 79.7 (6 waypoints, 11 expanded) vs Dijkstra 79.7 -> OPTIMAL
+    0.3 STATUS mammoth=(25,-15) act=Patrol inTerritory=True campDist=43 dPlayer=72 playerHp=600 shots=0 attacks=0
+    5.3 STATUS mammoth=(21,-8) act=Patrol inTerritory=True campDist=49 dPlayer=65 playerHp=600 shots=0 attacks=0
+   10.4 STATUS mammoth=(13,-4) act=Patrol inTerritory=True campDist=51 dPlayer=65 playerHp=596 shots=0 attacks=0
+   15.4 STATUS mammoth=(16,-2) act=Patrol inTerritory=True campDist=54 dPlayer=62 playerHp=582 shots=0 attacks=0
+   16.2 [MammothAI] belief Lost -> Uncertain (confidence 0.15, peak 0.13)
+   20.4 STATUS mammoth=(16,-2) act=Patrol inTerritory=True campDist=54 dPlayer=62 playerHp=571 shots=0 attacks=0
+   25.4 STATUS mammoth=(14,-4) act=Patrol inTerritory=True campDist=51 dPlayer=65 playerHp=568 shots=0 attacks=0
+   30.4 STATUS mammoth=(16,-7) act=Patrol inTerritory=True campDist=48 dPlayer=67 playerHp=568 shots=0 attacks=0
+   35.4 STATUS mammoth=(20,-14) act=Patrol inTerritory=True campDist=43 dPlayer=71 playerHp=568 shots=0 attacks=0
+   40.4 STATUS mammoth=(23,-16) act=Patrol inTerritory=True campDist=41 dPlayer=73 playerHp=568 shots=0 attacks=0
+   45.4 STATUS mammoth=(23,-16) act=Patrol inTerritory=True campDist=41 dPlayer=73 playerHp=551 shots=0 attacks=0
+   50.4 STATUS mammoth=(26,-11) act=Patrol inTerritory=True campDist=47 dPlayer=67 playerHp=531 shots=0 attacks=0
+   55.4 STATUS mammoth=(31,-4) act=Patrol inTerritory=True campDist=56 dPlayer=59 playerHp=512 shots=0 attacks=0
+   60.4 STATUS mammoth=(27,-7) act=Patrol inTerritory=True campDist=51 dPlayer=63 playerHp=505 shots=0 attacks=0
+   65.4 STATUS mammoth=(19,-12) act=Patrol inTerritory=True campDist=44 dPlayer=70 playerHp=501 shots=0 attacks=0
+   70.4 STATUS mammoth=(23,-8) act=Patrol inTerritory=True campDist=49 dPlayer=66 playerHp=501 shots=0 attacks=0
+   75.4 STATUS mammoth=(29,-10) act=Patrol inTerritory=True campDist=49 dPlayer=70 playerHp=573 shots=0 attacks=0
+   80.4 STATUS mammoth=(35,-14) act=Patrol inTerritory=True campDist=49 dPlayer=73 playerHp=548 shots=0 attacks=0
+   85.5 STATUS mammoth=(31,-18) act=Patrol inTerritory=True campDist=43 dPlayer=78 playerHp=537 shots=0 attacks=0
+   90.5 STATUS mammoth=(29,-14) act=Patrol inTerritory=True campDist=46 dPlayer=73 playerHp=530 shots=0 attacks=0
+   95.7 STATUS mammoth=(26,-13) act=Patrol inTerritory=True campDist=45 dPlayer=73 playerHp=526 shots=0 attacks=0
+==== session start 13:21:11
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=39 aggro=19 leash=91 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL
+    0.3 STATUS mammoth=(30,-14) act=Patrol inTerritory=True campDist=46 dPlayer=69 playerHp=600 shots=0 attacks=0
+    5.3 STATUS mammoth=(34,-22) act=Patrol inTerritory=True campDist=42 dPlayer=76 playerHp=600 shots=0 attacks=0
+   10.3 STATUS mammoth=(39,-21) act=Patrol inTerritory=True campDist=46 dPlayer=75 playerHp=585 shots=0 attacks=0
+   15.4 STATUS mammoth=(45,-14) act=Patrol inTerritory=True campDist=55 dPlayer=68 playerHp=566 shots=0 attacks=0
+   20.4 STATUS mammoth=(38,-9) act=Patrol inTerritory=True campDist=55 dPlayer=63 playerHp=547 shots=0 attacks=0
+   24.6 [MammothAI] belief Lost -> Uncertain (confidence 0.16, peak 0.11)
+   25.4 STATUS mammoth=(36,-10) act=Patrol inTerritory=True campDist=53 dPlayer=64 playerHp=536 shots=0 attacks=0
+   30.4 STATUS mammoth=(38,-18) act=Patrol inTerritory=True campDist=47 dPlayer=73 playerHp=504 shots=0 attacks=0
+   30.8 [MammothAI] belief Uncertain -> Lost (confidence 0.15, peak 0.14)
+   35.4 STATUS mammoth=(33,-22) act=Patrol inTerritory=True campDist=41 dPlayer=76 playerHp=456 shots=0 attacks=0
+   40.4 STATUS mammoth=(29,-26) act=Patrol inTerritory=True campDist=35 dPlayer=81 playerHp=424 shots=0 attacks=0
+   41.6 [MammothAI] belief Uncertain -> Lost (confidence 0.15, peak 0.13)
+   45.4 STATUS mammoth=(29,-27) act=Patrol inTerritory=True campDist=35 dPlayer=82 playerHp=384 shots=0 attacks=0
+   50.4 STATUS mammoth=(26,-18) act=Patrol inTerritory=True campDist=41 dPlayer=74 playerHp=352 shots=0 attacks=0
+   55.4 STATUS mammoth=(23,-10) act=Patrol inTerritory=True campDist=48 dPlayer=67 playerHp=312 shots=0 attacks=0
+   60.4 STATUS mammoth=(17,-4) act=Patrol inTerritory=True campDist=52 dPlayer=64 playerHp=280 shots=0 attacks=0
+   62.5 [MammothAI] belief Lost -> Uncertain (confidence 0.16, peak 0.11)
+   65.4 STATUS mammoth=(25,-4) act=Patrol inTerritory=True campDist=54 dPlayer=61 playerHp=240 shots=0 attacks=0
+   70.4 STATUS mammoth=(34,-3) act=Patrol inTerritory=True campDist=58 dPlayer=58 playerHp=200 shots=0 attacks=0
+   75.4 STATUS mammoth=(42,-2) act=Patrol inTerritory=True campDist=62 dPlayer=56 playerHp=184 shots=0 attacks=0
+   80.4 STATUS mammoth=(40,-4) act=Patrol inTerritory=True campDist=60 dPlayer=58 playerHp=152 shots=0 attacks=0
+   85.4 STATUS mammoth=(32,-9) act=Patrol inTerritory=True campDist=52 dPlayer=64 playerHp=128 shots=0 attacks=0
+   90.5 STATUS mammoth=(38,-13) act=Patrol inTerritory=True campDist=51 dPlayer=67 playerHp=104 shots=0 attacks=0
+   95.5 STATUS mammoth=(39,-14) act=Patrol inTerritory=True campDist=51 dPlayer=68 playerHp=64 shots=0 attacks=0
+==== session start 13:23:51
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=37 aggro=26 leash=81 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL
+    0.3 STATUS mammoth=(30,-14) act=Patrol inTerritory=True campDist=46 dPlayer=69 playerHp=600 shots=0 attacks=0
+    5.3 STATUS mammoth=(39,-13) act=Patrol inTerritory=True campDist=52 dPlayer=67 playerHp=582 shots=0 attacks=0
+   10.3 STATUS mammoth=(40,-14) act=Patrol inTerritory=True campDist=52 dPlayer=68 playerHp=503 shots=0 attacks=0
+   12.8 [MammothAI] belief Lost -> Uncertain (confidence 0.16, peak 0.12)
+   15.3 STATUS mammoth=(32,-18) act=Patrol inTerritory=True campDist=44 dPlayer=73 playerHp=451 shots=0 attacks=0
+   20.3 STATUS mammoth=(31,-24) act=Patrol inTerritory=True campDist=39 dPlayer=79 playerHp=407 shots=0 attacks=0
+   23.0 [MammothAI] belief Uncertain -> Lost (confidence 0.15, peak 0.18)
+   25.3 STATUS mammoth=(37,-31) act=Patrol inTerritory=True campDist=37 dPlayer=85 playerHp=373 shots=0 attacks=0
+   27.2 [MammothAI] belief Lost -> Uncertain (confidence 0.15, peak 0.17)
+   30.3 STATUS mammoth=(37,-22) act=Patrol inTerritory=True campDist=43 dPlayer=76 playerHp=346 shots=0 attacks=0
+   35.3 STATUS mammoth=(37,-13) act=Patrol inTerritory=True campDist=51 dPlayer=67 playerHp=248 shots=0 attacks=0
+   40.4 STATUS mammoth=(44,-15) act=Patrol inTerritory=True campDist=53 dPlayer=69 playerHp=142 shots=0 attacks=0
+   45.4 STATUS mammoth=(41,-15) act=Patrol inTerritory=True campDist=51 dPlayer=69 playerHp=36 shots=0 attacks=0
+   50.4 STATUS mammoth=(32,-13) act=Patrol inTerritory=True campDist=48 dPlayer=68 playerHp=0 shots=0 attacks=0
+   55.4 STATUS mammoth=(24,-12) act=Patrol inTerritory=True campDist=46 dPlayer=69 playerHp=0 shots=0 attacks=0
+   58.6 [MammothAI] decision Patrol -> ReturnHome (u 0.50 vs 0.25; belief Uncertain, conf 0.18)

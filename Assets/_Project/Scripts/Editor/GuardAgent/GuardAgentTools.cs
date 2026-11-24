@@ -65,6 +65,28 @@ namespace GuardAgentTools
             return e.transform.position.x < 35f && e.transform.position.z < 54f ? AgentRole.Gatekeeper : AgentRole.Sentinel;
         }
 
+        /// <summary>The interior garrison: who waits inside the factory building, at which post, and (for those who start outside) where they are moved to.
+        /// NaN = he already stands inside and is not moved. Gatekeepers are not listed: they hold the yard and the gate.</summary>
+        static readonly Dictionary<string, (string post, float x, float z)> Garrison = new Dictionary<string, (string, float, float)>
+        {
+            { "Guard_14", ("rolling", float.NaN, 0f) }, { "Worker_15", ("rolling", float.NaN, 0f) }, { "Worker_16", ("loft", float.NaN, 0f) }, { "Worker_17", ("storeroom", float.NaN, 0f) },
+            { "Guard_12", ("rolling", 18f, 60f) },      // was in the warehouse
+            { "Guard_13", ("boiler", 44f, 70f) },       // was on the back lane
+            { "Worker_18", ("boiler", 40f, 66f) },      // was in the line houses
+        };
+
+        static void PlaceInside(EnemyAI e, float x, float z)
+        {
+            if (!NavMesh.SamplePosition(new Vector3(x, 9f, z), out var hit, 6f, NavMesh.AllAreas)) { Debug.LogWarning($"[Guard Agent] no NavMesh near ({x},{z}) for {e.name}"); return; }
+            Undo.RecordObject(e.transform, "Place inside");
+            e.transform.position = hit.position;
+            var agent = e.GetComponent<NavMeshAgent>();
+            if (agent != null && agent.enabled && agent.isOnNavMesh) agent.Warp(hit.position);
+            Undo.RecordObject(e, "Place inside");
+            e.patrolRoute = null;                 // the stock AI (used only when the brain is off) now wanders around his new post instead of walking back outside
+            e.wanderRadius = 5f;
+        }
+
         [MenuItem("Tools/Guard Agent/Attach Agents To Everyone In The Factory")]
         public static void AttachAll()
         {
@@ -77,8 +99,16 @@ namespace GuardAgentTools
                 if (b == null) { b = Undo.AddComponent<GuardAgentBridge>(e.gameObject); added++; }
                 else if (b.role != role) { Undo.RecordObject(b, "Set agent role"); updated++; }
                 b.role = role; b.useRolePreset = true;
+                Undo.RecordObject(b, "Garrison");
+                if (Garrison.TryGetValue(e.name, out var g))
+                {
+                    b.stayInside = true; b.postZone = g.post;
+                    if (!float.IsNaN(g.x)) PlaceInside(e, g.x, g.z);
+                }
+                else { b.stayInside = false; b.postZone = ""; }
+                if (b.toughness < 2f) b.toughness = 2.5f;
                 EditorUtility.SetDirty(b);
-                lines.Add($"{e.name} ({e.kind}) -> {role}");
+                lines.Add($"{e.name} ({e.kind}) -> {role}{(b.stayInside ? ", stays inside at " + b.postZone : ", outside")}, toughness x{b.toughness}");
             }
             if (!Application.isPlaying && (added > 0 || updated > 0)) EditorSceneManager.MarkAllScenesDirty();
             Debug.Log($"[Guard Agent] agents attached: {added} new, {updated} role changes.\n" + string.Join("\n", lines) +

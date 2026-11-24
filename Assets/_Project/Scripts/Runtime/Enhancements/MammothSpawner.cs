@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -9,25 +11,69 @@ namespace LastShift
         static readonly Vector2[] Candidates =
         {
             new Vector2(16,-33), new Vector2(14,-30), new Vector2(20,-34), new Vector2(10,-36),
-            new Vector2(24,-24), new Vector2(14,-22), new Vector2(34,-26), new Vector2(6,-28)
+            new Vector2(24,-24), new Vector2(14,-22), new Vector2(34,-26), new Vector2(6,-28),
+            new Vector2(30,-14), new Vector2(46,-22), new Vector2(40,-34), new Vector2(58,-18)
         };
 
-        void Start()
+        /// <summary>Spawn is retried (NavMesh / scene objects may not be ready on the first frame) so a mammoth exists in EVERY session.</summary>
+        IEnumerator Start()
+        {
+            const int attempts = 40;
+            for (int i = 1; i <= attempts; i++)
+            {
+                yield return null;
+                if (FindObjectsByType<MammothAI>().Length > 0) yield break;     // exactly one mammoth per session
+                if (SafeTrySpawn(i == attempts)) { Debug.Log($"[Sanjula] Mammoth spawned (attempt {i}), connectivity {lastLinks}/16."); yield break; }
+                yield return new WaitForSeconds(0.25f);
+            }
+            Debug.LogError("[Sanjula] The mammoth could not be spawned after " + attempts + " attempts.");
+        }
+
+        int lastLinks;
+        bool SafeTrySpawn(bool lastChance)
+        {
+            try { return TrySpawn(lastChance); }
+            catch (System.Exception e) { Debug.LogWarning("[Sanjula] spawn attempt failed, retrying: " + e.Message); return false; }
+        }
+
+        bool TrySpawn(bool lastChance)
         {
             EnemyAI src = null;
             foreach (var e in FindObjectsByType<EnemyAI>(FindObjectsInactive.Include))
                 if (e.kind == EnemyKind.Elephant) { src = e; break; }
-            if (src == null) { Debug.LogWarning("[Sanjula] No Elephant to clone - mammoth skipped."); return; }
+            if (src == null) { if (lastChance) Debug.LogWarning("[Sanjula] No Elephant to clone."); return false; }
 
+            var pl = FindAnyObjectByType<PlayerController>();
+            Vector3 camp = pl != null ? pl.transform.position : new Vector3(7f, 0f, -57f);   // the player starts in the camp
+            MammothTerritory.Init(camp, new Vector3(30f, 0f, -25f));   // jungle centre for the first pass
             Vector3 home = Vector3.zero; bool ok = false;
-            foreach (var c in Candidates)
+            var spots = new List<Vector3>();
+            var cands = new List<Vector2>(Candidates);
+            for (int i = 0; i < 24; i++)      // plus random points in the jungle, so it never depends on a few hard-coded spots
+                cands.Add(new Vector2(Random.Range(MammothTerritory.Min.x + 5f, MammothTerritory.Max.x - 5f), Random.Range(MammothTerritory.Min.y + 5f, MammothTerritory.Max.y - 5f)));
+            foreach (var c in cands)
             {
+                var wp = new Vector3(c.x, 0f, c.y);
+                if (MammothTerritory.InCamp(wp) || Vector2.Distance(c, new Vector2(camp.x, camp.z)) < MammothTerritory.CampRadius + 8f) continue;
                 if (Physics.Raycast(new Vector3(c.x, 300f, c.y), Vector3.down, out var h, 600f, ~(1 << 2), QueryTriggerInteraction.Ignore)
                     && NavMesh.SamplePosition(h.point, out var nh, 6f, NavMesh.AllAreas)
+                    && MammothTerritory.Contains(nh.position)
                     && Vector3.Distance(nh.position, src.transform.position) > 12f)
-                { home = nh.position; ok = true; break; }
+                    spots.Add(nh.position);
             }
-            if (!ok) { Debug.LogWarning("[Sanjula] No NavMesh spot for the mammoth."); return; }
+            if (spots.Count > 0)
+            {
+                // a different (random) valid spot each session; prefer ones that are not too far from the camp so the mammoth is discoverable
+                // a spot is only good if it is connected to a lot of walkable jungle (an isolated pocket gives a useless patrol / search graph)
+                var scored = new List<(Vector3 p, int links, float dist)>();
+                foreach (var sp in spots) scored.Add((sp, Connectivity(sp), Mathf.Abs(Vector3.Distance(sp, camp) - 55f)));
+                int maxLinks = 0; foreach (var sc in scored) maxLinks = Mathf.Max(maxLinks, sc.links);
+                scored.RemoveAll(sc => sc.links < Mathf.Max(Mathf.Min(10, maxLinks), maxLinks - 3));      // keep only the best-connected spots (never empties the list)
+                scored.Sort((x, y) => x.dist.CompareTo(y.dist));
+                int pool = Mathf.Min(scored.Count, 5);
+                var pick = scored[Random.Range(0, pool)]; home = pick.p; lastLinks = pick.links; ok = true;
+            }
+            if (!ok) { if (lastChance) Debug.LogWarning("[Sanjula] No NavMesh spot for the mammoth."); return false; }
 
             bool wasActive = src.gameObject.activeSelf;
             src.gameObject.SetActive(false);
@@ -36,6 +82,7 @@ namespace LastShift
             go.name = "Sanjulas Mammoth";
             DestroyImmediate(go.GetComponent<EnemyAI>());
             go.transform.position = home;
+            MammothTerritory.Init(camp, home);
 
             var hp = go.GetComponent<Health>(); hp.max = 1400f; hp.regenDelay = 0f; hp.regenPerSecond = 0f;
             var cap = go.GetComponent<CapsuleCollider>();
@@ -54,8 +101,31 @@ namespace LastShift
             }
             var anim = go.GetComponent<CreatureAnimator>();
             if (anim != null) { anim.cadence = 1.7f; }
+            go.AddComponent<MammothPerception>();   // milestone 1: sensors
+            go.AddComponent<TacticalGraph>();       // milestone 2: waypoint graph + Bayesian belief (observe and log only until milestone 5)
+            go.AddComponent<MammothBelief>();
+            go.AddComponent<MammothPlanner>();      // milestone 4: A* route planner (self-checks against Dijkstra at start-up)
+            go.AddComponent<MammothMemory>();       // milestone 3: sightings, clues, searched places, route heat
             go.AddComponent<MammothAI>();
+            go.AddComponent<MammothDecision>();     // milestone 5: utility-based decision engine; MammothAI executes its choice
+            go.AddComponent<MammothSelfTest>();     // F9 / F8 / F7 rule checks
+            go.AddComponent<MammothDebugView>();    // F11 mind visualiser
             go.SetActive(true);
+            return true;
+        }
+
+        /// <summary>How many of 16 probe points (rings at 15 m and 30 m) around a spot are walkable, inside the jungle and reachable in a straight NavMesh line.</summary>
+        static int Connectivity(Vector3 p)
+        {
+            int n = 0;
+            for (int ring = 1; ring <= 2; ring++)
+                for (int i = 0; i < 8; i++)
+                {
+                    float a = i / 8f * Mathf.PI * 2f, r = ring * 15f;
+                    var q = p + new Vector3(Mathf.Cos(a) * r, 0f, Mathf.Sin(a) * r);
+                    if (NavMesh.SamplePosition(q, out var nh, 5f, NavMesh.AllAreas) && MammothTerritory.Contains(nh.position) && !NavMesh.Raycast(p, nh.position, out _, NavMesh.AllAreas)) n++;
+                }
+            return n;
         }
 
         static void Recolor(Transform model)

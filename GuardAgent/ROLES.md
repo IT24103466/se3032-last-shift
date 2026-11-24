@@ -44,3 +44,15 @@ Retrain one role: `.venv\Scripts\python train.py --role lookout --steps 900000` 
 * Roles are trained one at a time against a scripted intruder, not against each other: team tactics (flanking, covering fire) come from the shared belief only, not from learned coordination.
 * Gunshot noise is heard by every bridge at runtime but is not in the simulator.
 * The 9 agents were checked live once (all connected, correct roles, engaged the player in the yard, damage and scores consistent); no long-run balance test yet.
+
+## Interior garrison and tougher bodies (added later)
+* **Seven of the nine people wait INSIDE the factory building**, at a post, and never leave it by their own choice: Guard_14, Guard_12, Worker_15 (rolling floor), Worker_16 (loft), Worker_17 (storeroom), Guard_13 and Worker_18 (boiler room). Only the two Gatekeepers (Guard_10, Guard_11) hold the yard and the gate outside.
+  Guard_12, Guard_13 and Worker_18 used to start outside; `Tools > Guard Agent > Attach Agents To Everyone In The Factory` moves them in (undoable), removes their patrol route and sets `stayInside` + `postZone` on their bridge.
+* **How "stay inside" works** (`brain.py`): whatever zone the policy picks, a confined person who would walk to an outside zone is sent to `_best_inside()` instead: the interior zone with the most belief mass, or the one next to the outside zone he is most likely to come through (an ambush spot behind the door), a small bonus for his post, and a penalty for zones his teammates already cover, so the garrison spreads out. If he last saw the intruder outside, he waits at the door instead of chasing. He still shoots at anything he can see, including through an open door.
+* **Close-range awareness** (bridge): within 4.5 m he notices the player whichever way he faces; while the alarm is on and he sees nobody he turns slowly on the spot.
+* **No clear shot** (brain): if he sees the player inside his range but crates or machines block the muzzle line, he steps towards him for a line instead of standing there.
+* **Tougher**: `toughness` x2.5 on the bridge: guards 250 hp, workers 200 hp (the brain still sees health as a fraction of the normal body, so the policies behave as before).
+* **Bug fixed on the way**: a person never reloaded (`reloadUntil` started at 0); the 2-shell workers stood empty-handed after their first blast.
+* **Live check (Level_01)**: all nine connected; the garrison stayed inside for the whole test with the player in the yard; with the player in the storeroom the garrison (two shotgun workers and the guards) put down a 600-hp player in about 50 s, nobody left the building.
+* Not retrained for the higher health: the policies were trained on the normal bodies; they are simply harder to kill in the game. Retraining with `toughness` in the simulator would let them take more risks.
+* Known limit: if the brain server is stopped or restarted during play, the stock AI takes over for a few seconds and may chase the player out of the building.

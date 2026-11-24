@@ -16,12 +16,14 @@ class Team:
         self.clock = clock
         self.reports: list[tuple[float, int, str]] = []        # (time, zone, who)
         self.members: dict[str, str] = {}                      # agent id -> role
+        self.targets: dict[str, int] = {}                      # agent id -> the zone he is in or heading to (so insiders spread out instead of stacking at one door)
 
     def join(self, agent_id: str, role: str):
         self.members[agent_id] = role
 
     def leave(self, agent_id: str):
         self.members.pop(agent_id, None)
+        self.targets.pop(agent_id, None)
 
     def report(self, agent_id: str, zone: int):
         now = self.clock()

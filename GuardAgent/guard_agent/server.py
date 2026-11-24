@@ -39,10 +39,10 @@ class Factory:
                 self.models[name] = PPO.load(path, device="cpu")
         print("[sentinel] policies loaded for: " + (", ".join(self.models) or "none") + " | roles without a policy use the utility planner", flush=True)
 
-    def new_brain(self, role: str, agent_id: str, focus):
+    def new_brain(self, role: str, agent_id: str, focus, confined: bool = False, post=None):
         if role not in ROLES:
             role = "sentinel"
-        return GuardBrain(None, self.zg, role=role, team=self.team, agent_id=agent_id, focus=focus, model=self.models.get(role))
+        return GuardBrain(None, self.zg, role=role, team=self.team, agent_id=agent_id, focus=focus, model=self.models.get(role), confined=confined, post=post)
 
 
 async def handle(reader, writer, factory: Factory):
@@ -63,8 +63,9 @@ async def handle(reader, writer, factory: Factory):
             if t == "hello":
                 if brain is not None:
                     brain.close()
-                brain = factory.new_brain(msg.get("role", "sentinel"), msg.get("id", f"agent{peer[1]}"), msg.get("focus") or None)
-                print(f"[sentinel] {brain.id} connected as {brain.role} ({'ppo' if brain.model is not None else 'utility'})", flush=True)
+                brain = factory.new_brain(msg.get("role", "sentinel"), msg.get("id", f"agent{peer[1]}"), msg.get("focus") or None,
+                                           bool(msg.get("confined", False)), msg.get("post") or None)
+                print(f"[sentinel] {brain.id} connected as {brain.role} ({'ppo' if brain.model is not None else 'utility'})" + (f", stays inside (post: {msg.get('post')})" if brain.confined else ""), flush=True)
                 out = {"type": "ready", "zones": factory.zg.names, "role": brain.role, "model": "ppo" if brain.model is not None else "utility"}
             elif brain is None:
                 out = {"type": "error", "msg": "say hello first"}
@@ -74,6 +75,8 @@ async def handle(reader, writer, factory: Factory):
             elif t == "tick":
                 out = brain.decide(msg)
                 out["type"] = "action"
+                if os.environ.get("SENTINEL_TRACE") == brain.id:           # debugging: print every decision of one person
+                    print(f"[trace] {brain.id} vis={msg.get('player_visible')} clear={msg.get('clear_shot')} pos={msg['guard']['pos']} ammo={msg['guard'].get('ammo')} -> {out['mode']} {out.get('target')} ({out['why']})", flush=True)
                 if counts[t] in (1, 2) or counts[t] % 100 == 0:
                     print(f"[sentinel] {brain.id}/{brain.role} tick #{counts[t]}: {out['mode']} -> {out['zone']} ({out['why']}) score {out['score']}", flush=True)
             elif t == "episode_end":
