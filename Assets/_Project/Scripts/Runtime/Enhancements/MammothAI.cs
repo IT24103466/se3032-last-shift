@@ -105,9 +105,15 @@ namespace LastShift
         {
             if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
             agent.speed = speed * (enraged ? 1.2f : 1f);
+            p = MammothTerritory.Clamp(p);                                          // never target the camp / outside the jungle
             if (Time.time < nextDest && (p - lastDest).sqrMagnitude < 4f) return;   // do not recalculate the path every frame
             nextDest = Time.time + 0.2f; lastDest = p;
-            if (NavMesh.SamplePosition(p, out var nh, 8f, NavMesh.AllAreas)) agent.SetDestination(nh.position);
+            if (!NavMesh.SamplePosition(p, out var nh, 8f, NavMesh.AllAreas)) return;
+            if (!MammothTerritory.Contains(nh.position))                            // the nearest NavMesh point fell inside the camp: try tighter
+            {
+                if (!NavMesh.SamplePosition(p, out nh, 3f, NavMesh.AllAreas) || !MammothTerritory.Contains(nh.position)) return;
+            }
+            agent.SetDestination(nh.position);
         }
 
         /// <summary>Go to a point. Short trips: straight to the NavMeshAgent. Long trips: A* waypoint route, one waypoint at a time.</summary>
@@ -167,7 +173,7 @@ namespace LastShift
                 {
                     float spd = enraged ? 14f : 12f;
                     var np = transform.position + chargeDir * spd * Time.deltaTime;
-                    if (NavMesh.SamplePosition(np, out var nh, 3f, NavMesh.AllAreas) && Vector3.Distance(nh.position, np) < 2.2f)
+                    if (MammothTerritory.Contains(np) && NavMesh.SamplePosition(np, out var nh, 3f, NavMesh.AllAreas) && Vector3.Distance(nh.position, np) < 2.2f)
                         transform.position = new Vector3(np.x, nh.position.y, np.z);
                     else timer = 0f;
                     transform.rotation = Quaternion.LookRotation(chargeDir);
@@ -188,6 +194,11 @@ namespace LastShift
 
         void Execute(Vector3 pp, float d)
         {
+            if (!MammothTerritory.Contains(transform.position))        // safety net: strayed out of the jungle -> walk straight back in
+            {
+                Direct(MammothTerritory.Clamp(transform.position), 4.5f);
+                return;
+            }
             var act = decision != null ? decision.Current : MammothAction.Patrol;
             if (act != lastAction)
             {
@@ -212,8 +223,9 @@ namespace LastShift
         {
             if (Time.time <= nextWander) return;
             nextWander = Time.time + Random.Range(6f, 11f);
-            var p = home + new Vector3(Random.Range(-14f, 14f), 0, Random.Range(-14f, 14f));
-            if (NavMesh.SamplePosition(p, out var nh, 8f, NavMesh.AllAreas)) { lastDest = nh.position; Direct(nh.position, 1.6f); }
+            // roam a wide patch around home (visible, natural movement) - Direct() keeps it inside the jungle territory
+            var p = MammothTerritory.Clamp(home + new Vector3(Random.Range(-24f, 24f), 0, Random.Range(-24f, 24f)));
+            if (NavMesh.SamplePosition(p, out var nh, 8f, NavMesh.AllAreas) && MammothTerritory.Contains(nh.position)) { nextDest = 0f; Direct(nh.position, 1.8f); }
         }
 
         void DoInvestigate()

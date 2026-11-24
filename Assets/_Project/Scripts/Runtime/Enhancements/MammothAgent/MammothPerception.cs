@@ -199,6 +199,7 @@ namespace LastShift
         public void RegisterHit(Vector3 from)
         {
             var ev = new NoiseEvent { pos = from, strength = 1f, sigma = 4f, kind = NoiseKind.Gunshot, time = Time.time };
+            ev.pos = MammothTerritory.Clamp(ev.pos);
             LastNoise = ev;
             if (logEvents) Debug.Log("[MammothAI] HIT from the direction of " + from);
             NoiseHeard?.Invoke(ev);
@@ -210,10 +211,11 @@ namespace LastShift
             Vector3 d = src - transform.position; d.y = 0f;
             float dist = d.magnitude;
             if (dist > radius) return;                         // too far to hear
+            if (kind != NoiseKind.Gunshot && MammothTerritory.InCamp(src)) return;   // everyday camp noise is not an invitation into the jungle
             float strength = Mathf.Clamp01(1f - dist / radius);
             float sigma = Mathf.Max(2f, dist * localisationError);
             Vector2 err = UnityEngine.Random.insideUnitCircle * sigma;   // the mammoth cannot pinpoint the source
-            var ev = new NoiseEvent { pos = src + new Vector3(err.x, 0f, err.y), strength = strength, sigma = sigma, kind = kind, time = Time.time };
+            var ev = new NoiseEvent { pos = MammothTerritory.Clamp(src + new Vector3(err.x, 0f, err.y)), strength = strength, sigma = sigma, kind = kind, time = Time.time };
             LastNoise = ev;
             if (logEvents) Debug.Log($"[MammothAI] HEARD {kind} ~{dist:F0} m away (strength {strength:F2}, +/-{sigma:F0} m)");
             NoiseHeard?.Invoke(ev);

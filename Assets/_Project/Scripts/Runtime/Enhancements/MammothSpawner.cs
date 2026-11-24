@@ -9,7 +9,8 @@ namespace LastShift
         static readonly Vector2[] Candidates =
         {
             new Vector2(16,-33), new Vector2(14,-30), new Vector2(20,-34), new Vector2(10,-36),
-            new Vector2(24,-24), new Vector2(14,-22), new Vector2(34,-26), new Vector2(6,-28)
+            new Vector2(24,-24), new Vector2(14,-22), new Vector2(34,-26), new Vector2(6,-28),
+            new Vector2(30,-14), new Vector2(46,-22), new Vector2(40,-34), new Vector2(58,-18)
         };
 
         void Start()
@@ -19,9 +20,13 @@ namespace LastShift
                 if (e.kind == EnemyKind.Elephant) { src = e; break; }
             if (src == null) { Debug.LogWarning("[Sanjula] No Elephant to clone - mammoth skipped."); return; }
 
+            var pl = FindAnyObjectByType<PlayerController>();
+            Vector3 camp = pl != null ? pl.transform.position : new Vector3(7f, 0f, -57f);   // the player starts in the camp
+            MammothTerritory.Init(camp, Vector3.zero);
             Vector3 home = Vector3.zero; bool ok = false;
             foreach (var c in Candidates)
             {
+                if (MammothTerritory.InCamp(new Vector3(c.x, 0f, c.y)) || Vector2.Distance(c, new Vector2(camp.x, camp.z)) < MammothTerritory.CampRadius + 8f) continue;
                 if (Physics.Raycast(new Vector3(c.x, 300f, c.y), Vector3.down, out var h, 600f, ~(1 << 2), QueryTriggerInteraction.Ignore)
                     && NavMesh.SamplePosition(h.point, out var nh, 6f, NavMesh.AllAreas)
                     && Vector3.Distance(nh.position, src.transform.position) > 12f)
@@ -36,6 +41,7 @@ namespace LastShift
             go.name = "Sanjulas Mammoth";
             DestroyImmediate(go.GetComponent<EnemyAI>());
             go.transform.position = home;
+            MammothTerritory.Init(camp, home);
 
             var hp = go.GetComponent<Health>(); hp.max = 1400f; hp.regenDelay = 0f; hp.regenPerSecond = 0f;
             var cap = go.GetComponent<CapsuleCollider>();

@@ -60,6 +60,7 @@ namespace LastShift
                         && NavMesh.SamplePosition(h.point, out var nh, sampleRange, NavMesh.AllAreas))
                     {
                         var p = nh.position;
+                        if (!MammothTerritory.Contains(p)) continue;      // the camp / outside the jungle is not part of the mammoth's world
                         if (Mathf.Abs(p.x - c.x) < sampleRange * 1.5f && Mathf.Abs(p.z - c.z) < sampleRange * 1.5f) nodes.Add(p);
                     }
                     if (++tested % candidatesPerFrame == 0) yield return null;

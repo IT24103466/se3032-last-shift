@@ -86,13 +86,14 @@ namespace LastShift
             // Noise-driven senses: eyesight only CONFIRMS a target once a noise / hit has made the mammoth alert.
             // A silent player (walking, crouching, standing still) is ignored even when standing in plain view.
             bool alert = perc.IsAlert || provoked > 0.05f || ai.Enraged;
-            bool vis = perc.PlayerVisible && alert;
+            bool inCamp = perc.HasSeenPlayer && MammothTerritory.InCamp(perc.LastSeenPos);   // the camp is out of bounds: never hunt into it
+            bool vis = perc.PlayerVisible && alert && !inCamp;
             float dVis = vis ? Flat(pos, perc.LastSeenPos) : 999f;
             float mul = perc.StealthMul();
             float noticeEff = ai.NoticeR * mul, aggroEff = ai.AggroR * Mathf.Lerp(1f, mul, 0.6f);
             float enr = ai.Enraged ? 1f : 0f;
             float pe = Mathf.Max(provoked, enr);
-            bool seenEver = perc.HasSeenPlayer && alert;
+            bool seenEver = perc.HasSeenPlayer && alert && !inCamp;
             float tSeen = seenEver ? perc.TimeSinceSeen : 999f;
             float tNoise = perc.HasHeardNoise ? perc.NoiseAge : 999f;
             float tEvid = Mathf.Min(tSeen, tNoise);
