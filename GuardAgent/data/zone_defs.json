@@ -1,0 +1,203 @@
+{
+ "zones": [
+  {
+   "name": "tea_field",
+   "x0": 0,
+   "x1": 60,
+   "z0": 8,
+   "z1": 40,
+   "protected": false,
+   "bag": false
+  },
+  {
+   "name": "yard_w",
+   "x0": 10,
+   "x1": 30,
+   "z0": 40,
+   "z1": 52,
+   "protected": false,
+   "bag": false
+  },
+  {
+   "name": "yard_e",
+   "x0": 30,
+   "x1": 50,
+   "z0": 40,
+   "z1": 52,
+   "protected": false,
+   "bag": false
+  },
+  {
+   "name": "gate_road",
+   "x0": 0,
+   "x1": 10,
+   "z0": 40,
+   "z1": 52,
+   "protected": false,
+   "bag": false
+  },
+  {
+   "name": "rolling",
+   "x0": 10,
+   "x1": 36,
+   "z0": 52,
+   "z1": 66,
+   "protected": true,
+   "bag": false
+  },
+  {
+   "name": "loft",
+   "x0": 10,
+   "x1": 36,
+   "z0": 66,
+   "z1": 76,
+   "protected": true,
+   "bag": true
+  },
+  {
+   "name": "catwalk",
+   "x0": 32,
+   "x1": 36,
+   "z0": 58,
+   "z1": 66,
+   "protected": true,
+   "bag": false
+  },
+  {
+   "name": "storeroom",
+   "x0": 36,
+   "x1": 50,
+   "z0": 52,
+   "z1": 62,
+   "protected": true,
+   "bag": true
+  },
+  {
+   "name": "boiler",
+   "x0": 36,
+   "x1": 50,
+   "z0": 62,
+   "z1": 76,
+   "protected": true,
+   "bag": false
+  },
+  {
+   "name": "compound",
+   "x0": 50,
+   "x1": 68,
+   "z0": 40,
+   "z1": 66,
+   "protected": false,
+   "bag": false
+  },
+  {
+   "name": "line_houses",
+   "x0": 68,
+   "x1": 76,
+   "z0": 40,
+   "z1": 72,
+   "protected": false,
+   "bag": true
+  },
+  {
+   "name": "warehouse",
+   "x0": 52,
+   "x1": 64,
+   "z0": 66,
+   "z1": 80,
+   "protected": false,
+   "bag": true
+  },
+  {
+   "name": "north_lane",
+   "x0": 10,
+   "x1": 52,
+   "z0": 76,
+   "z1": 80,
+   "protected": false,
+   "bag": false
+  }
+ ],
+ "edges": [
+  {
+   "a": 0,
+   "b": 2
+  },
+  {
+   "a": 0,
+   "b": 1
+  },
+  {
+   "a": 3,
+   "b": 1
+  },
+  {
+   "a": 3,
+   "b": 0
+  },
+  {
+   "a": 1,
+   "b": 2
+  },
+  {
+   "a": 1,
+   "b": 4
+  },
+  {
+   "a": 2,
+   "b": 7
+  },
+  {
+   "a": 2,
+   "b": 9
+  },
+  {
+   "a": 4,
+   "b": 6
+  },
+  {
+   "a": 6,
+   "b": 5
+  },
+  {
+   "a": 4,
+   "b": 5
+  },
+  {
+   "a": 4,
+   "b": 7
+  },
+  {
+   "a": 4,
+   "b": 8
+  },
+  {
+   "a": 7,
+   "b": 8
+  },
+  {
+   "a": 7,
+   "b": 9
+  },
+  {
+   "a": 5,
+   "b": 12
+  },
+  {
+   "a": 8,
+   "b": 12
+  },
+  {
+   "a": 12,
+   "b": 11
+  },
+  {
+   "a": 11,
+   "b": 9
+  },
+  {
+   "a": 9,
+   "b": 10
+  }
+ ]
+}
