@@ -54,7 +54,9 @@ namespace LastShift
             }
             var anim = go.GetComponent<CreatureAnimator>();
             if (anim != null) { anim.cadence = 1.7f; }
-            go.AddComponent<MammothPerception>();   // sensors (milestone 1: observes and logs; the brain uses it from milestone 2 on)
+            go.AddComponent<MammothPerception>();   // milestone 1: sensors
+            go.AddComponent<TacticalGraph>();       // milestone 2: waypoint graph + Bayesian belief (observe and log only until milestone 5)
+            go.AddComponent<MammothBelief>();
             go.AddComponent<MammothAI>();
             go.SetActive(true);
         }

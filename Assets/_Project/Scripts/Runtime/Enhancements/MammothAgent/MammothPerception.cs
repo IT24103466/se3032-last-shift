@@ -116,6 +116,18 @@ namespace LastShift
             if (seen) RecordSighting(player.transform.position);
         }
 
+        /// <summary>Could I see something standing at this point right now (field of view, range, line of sight)? Used by the belief to rule places out.</summary>
+        public bool CanSeePoint(Vector3 point, out float distance)
+        {
+            Vector3 eye = EyePosition;
+            Vector3 to = point - eye;
+            distance = to.magnitude;
+            if (distance > viewRange || distance < 0.01f) return false;
+            Vector3 flat = to; flat.y = 0f;
+            if (flat.sqrMagnitude > 0.0001f && Vector3.Angle(transform.forward, flat) > fieldOfView * 0.5f) return false;
+            return HasLineOfSight(eye, to, distance);
+        }
+
         bool HasLineOfSight(Vector3 from, Vector3 to, float dist)
         {
             int n = Physics.RaycastNonAlloc(from, to / dist, hitBuf, dist, ~(1 << 2), QueryTriggerInteraction.Ignore);
