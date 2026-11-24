@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -13,26 +15,53 @@ namespace LastShift
             new Vector2(30,-14), new Vector2(46,-22), new Vector2(40,-34), new Vector2(58,-18)
         };
 
-        void Start()
+        /// <summary>Spawn is retried (NavMesh / scene objects may not be ready on the first frame) so a mammoth exists in EVERY session.</summary>
+        IEnumerator Start()
+        {
+            const int attempts = 40;
+            for (int i = 1; i <= attempts; i++)
+            {
+                yield return null;
+                if (FindObjectsByType<MammothAI>().Length > 0) yield break;     // exactly one mammoth per session
+                if (TrySpawn(i == attempts)) { Debug.Log($"[Sanjula] Mammoth spawned (attempt {i})."); yield break; }
+                yield return new WaitForSeconds(0.25f);
+            }
+            Debug.LogError("[Sanjula] The mammoth could not be spawned after " + attempts + " attempts.");
+        }
+
+        bool TrySpawn(bool lastChance)
         {
             EnemyAI src = null;
             foreach (var e in FindObjectsByType<EnemyAI>(FindObjectsInactive.Include))
                 if (e.kind == EnemyKind.Elephant) { src = e; break; }
-            if (src == null) { Debug.LogWarning("[Sanjula] No Elephant to clone - mammoth skipped."); return; }
+            if (src == null) { if (lastChance) Debug.LogWarning("[Sanjula] No Elephant to clone."); return false; }
 
             var pl = FindAnyObjectByType<PlayerController>();
             Vector3 camp = pl != null ? pl.transform.position : new Vector3(7f, 0f, -57f);   // the player starts in the camp
-            MammothTerritory.Init(camp, Vector3.zero);
+            MammothTerritory.Init(camp, new Vector3(30f, 0f, -25f));   // jungle centre for the first pass
             Vector3 home = Vector3.zero; bool ok = false;
-            foreach (var c in Candidates)
+            var spots = new List<Vector3>();
+            var cands = new List<Vector2>(Candidates);
+            for (int i = 0; i < 24; i++)      // plus random points in the jungle, so it never depends on a few hard-coded spots
+                cands.Add(new Vector2(Random.Range(MammothTerritory.Min.x + 5f, MammothTerritory.Max.x - 5f), Random.Range(MammothTerritory.Min.y + 5f, MammothTerritory.Max.y - 5f)));
+            foreach (var c in cands)
             {
-                if (MammothTerritory.InCamp(new Vector3(c.x, 0f, c.y)) || Vector2.Distance(c, new Vector2(camp.x, camp.z)) < MammothTerritory.CampRadius + 8f) continue;
+                var wp = new Vector3(c.x, 0f, c.y);
+                if (MammothTerritory.InCamp(wp) || Vector2.Distance(c, new Vector2(camp.x, camp.z)) < MammothTerritory.CampRadius + 8f) continue;
                 if (Physics.Raycast(new Vector3(c.x, 300f, c.y), Vector3.down, out var h, 600f, ~(1 << 2), QueryTriggerInteraction.Ignore)
                     && NavMesh.SamplePosition(h.point, out var nh, 6f, NavMesh.AllAreas)
+                    && MammothTerritory.Contains(nh.position)
                     && Vector3.Distance(nh.position, src.transform.position) > 12f)
-                { home = nh.position; ok = true; break; }
+                    spots.Add(nh.position);
             }
-            if (!ok) { Debug.LogWarning("[Sanjula] No NavMesh spot for the mammoth."); return; }
+            if (spots.Count > 0)
+            {
+                // a different (random) valid spot each session; prefer ones that are not too far from the camp so the mammoth is discoverable
+                spots.Sort((x, y) => (Mathf.Abs(Vector3.Distance(x, camp) - 55f)).CompareTo(Mathf.Abs(Vector3.Distance(y, camp) - 55f)));
+                int pool = Mathf.Min(spots.Count, 5);
+                home = spots[Random.Range(0, pool)]; ok = true;
+            }
+            if (!ok) { if (lastChance) Debug.LogWarning("[Sanjula] No NavMesh spot for the mammoth."); return false; }
 
             bool wasActive = src.gameObject.activeSelf;
             src.gameObject.SetActive(false);
@@ -67,7 +96,9 @@ namespace LastShift
             go.AddComponent<MammothMemory>();       // milestone 3: sightings, clues, searched places, route heat
             go.AddComponent<MammothAI>();
             go.AddComponent<MammothDecision>();     // milestone 5: utility-based decision engine; MammothAI executes its choice
+            go.AddComponent<MammothSelfTest>();     // F9 / F8 / F7 rule checks
             go.SetActive(true);
+            return true;
         }
 
         static void Recolor(Transform model)
