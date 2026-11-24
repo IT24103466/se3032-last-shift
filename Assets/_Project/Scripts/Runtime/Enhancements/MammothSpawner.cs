@@ -60,6 +60,7 @@ namespace LastShift
             go.AddComponent<MammothPlanner>();      // milestone 4: A* route planner (self-checks against Dijkstra at start-up)
             go.AddComponent<MammothMemory>();       // milestone 3: sightings, clues, searched places, route heat
             go.AddComponent<MammothAI>();
+            go.AddComponent<MammothDecision>();     // milestone 5: utility-based decision engine; MammothAI executes its choice
             go.SetActive(true);
         }
 

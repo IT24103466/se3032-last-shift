@@ -5,30 +5,47 @@ using UnityEngine.InputSystem;
 namespace LastShift
 {
     /// <summary>
-    /// Sanjula's Mammoth. Three HIDDEN, randomised ranges around the player:
-    ///   notice  (outer)  - it wakes up and lumbers toward you
-    ///   aggro   (inner)  - it charges and trampling begins
-    ///   leash   (far)    - if you get this far away it gives up and walks home
-    /// Shooting it makes it hunt you from anywhere. Under 35% HP it becomes enraged. Press F10 to reveal the ranges.
+    /// Sanjula's Mammoth - the body. It does not decide anything about WHAT to do: MammothDecision (utility engine) picks the action
+    /// from the belief / memory / perception, and this class executes it:
+    ///   Patrol, InvestigateSound, TrackLastKnown, Search, Pursue, ReturnHome  -> movement (via the tactical A* planner for long trips,
+    ///                                                                            ONE NavMeshAgent does all the walking)
+    ///   Windup / Charge / Recover / Dead                                       -> the combat controller (stomp, charge, stagger, death)
+    /// Three HIDDEN, randomised ranges remain its territorial personality: notice (outer), aggro (inner), leash (far). F10 reveals them.
+    /// Under 35% HP it becomes enraged.
     /// </summary>
     public class MammothAI : MonoBehaviour
     {
-        enum S { Idle, Investigate, Hunt, Windup, Charge, Recover, Return, Dead }
+        enum C { Free, Windup, Charge, Recover, Dead }
 
         public float noticeR, aggroR, leashR;
-        S state = S.Idle;
+        C cs = C.Free;
         Health hp; NavMeshAgent agent; CreatureAnimator anim; PlayerController player;
-        Vector3 home; float timer, nextWander, atkCd, lastHurt = -99f, lostTimer, staggerAcc, footT;
-        Vector3 chargeDir; bool enraged, roared;
+        MammothPerception perc; MammothBelief belief; MammothMemory memory; MammothPlanner planner; MammothDecision decision;
+        Vector3 home; float timer, nextWander, atkCd, lastHurt = -99f, staggerAcc, footT, nextRoar;
+        Vector3 chargeDir; bool enraged;
         AudioSource audioSrc; AudioClip thud, roarClip;
         LineRenderer[] rings; bool showRings; float ringT;
         public static bool RangesRevealed;
-        public float NoticeR => noticeR; public float AggroR => aggroR;
-        public bool IsHunting => state == S.Hunt || state == S.Windup || state == S.Charge;
+
+        // movement bookkeeping
+        MammothAction lastAction = MammothAction.Patrol;
+        Vector3 lastDest; float nextDest, nextReplan; bool routeActive; int routeIdx; Vector3 routeGoal;
+        Vector3 searchPos; int searchNode = -1; float searchDeadline;
+
+        public float NoticeR => noticeR; public float AggroR => aggroR; public float LeashR => leashR;
+        public Vector3 Home => home;
+        public bool Enraged => enraged;
+        public float LastHurtTime => lastHurt;
+        public bool IsDead => cs == C.Dead;
+        public bool PlayerLive { get; private set; }
+        public MammothAction CurrentAction => decision != null ? decision.Current : MammothAction.Patrol;
+        public bool IsHunting => cs == C.Windup || cs == C.Charge || CurrentAction == MammothAction.Pursue;
 
         void Start()
         {
             hp = GetComponent<Health>(); agent = GetComponent<NavMeshAgent>(); anim = GetComponent<CreatureAnimator>();
+            perc = GetComponent<MammothPerception>(); belief = GetComponent<MammothBelief>(); memory = GetComponent<MammothMemory>();
+            planner = GetComponent<MammothPlanner>(); decision = GetComponent<MammothDecision>();
             player = FindAnyObjectByType<PlayerController>();
             home = transform.position;
             noticeR = Random.Range(34f, 42f); aggroR = Random.Range(18f, 26f); leashR = Random.Range(80f, 95f);
@@ -47,24 +64,24 @@ namespace LastShift
         void OnHurt(float amt, Vector3 from)
         {
             lastHurt = Time.time;
-            if (state == S.Dead) return;
+            if (cs == C.Dead) return;
             anim?.Flinch();
             staggerAcc += amt;
-            if (state == S.Idle || state == S.Investigate || state == S.Return) { state = S.Hunt; Roar(); }
+            if (perc != null) perc.RegisterHit(from);          // a hit tells it which way the shot came from
             if (!enraged && hp.Fraction < 0.35f)
             {
-                enraged = true; Roar();
+                enraged = true; Roar(); routeActive = false;
                 GameManager.Instance?.Toast("Sanjula's Mammoth is ENRAGED!", 3f);
             }
-            if (staggerAcc > hp.max * 0.12f && (state == S.Hunt))
+            if (staggerAcc > hp.max * 0.12f && cs == C.Free && CurrentAction == MammothAction.Pursue)
             {
-                staggerAcc = 0f; state = S.Recover; timer = 0.7f; Stop();
+                staggerAcc = 0f; cs = C.Recover; timer = 0.7f; Stop();
             }
         }
 
         void OnDied()
         {
-            state = S.Dead;
+            cs = C.Dead;
             if (agent != null) agent.enabled = false;
             foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
             anim?.Die();
@@ -75,31 +92,56 @@ namespace LastShift
             if (rings != null) foreach (var r in rings) if (r) r.enabled = false;
         }
 
-        void Roar() { audioSrc.PlayOneShot(roarClip, 1f); anim?.Roar(); }
-        void Stop() { if (agent != null && agent.enabled && agent.isOnNavMesh) { agent.ResetPath(); agent.velocity = Vector3.zero; } }
-        void Go(Vector3 p, float speed)
-        {
-            if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
-            agent.speed = speed * (enraged ? 1.2f : 1f); agent.SetDestination(p);
-        }
+        void Roar() { if (Time.time < nextRoar) return; nextRoar = Time.time + 6f; audioSrc.PlayOneShot(roarClip, 1f); anim?.Roar(); }
+        void Stop() { if (agent != null && agent.enabled && agent.isOnNavMesh) { agent.ResetPath(); agent.velocity = Vector3.zero; } routeActive = false; }
         void Face(Vector3 p)
         {
             var d = p - transform.position; d.y = 0;
             if (d.sqrMagnitude > 0.01f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(d), 220f * Time.deltaTime);
         }
 
+        // ------------------------------------------------------------------ movement (one NavMeshAgent; the planner only picks waypoints)
+        void Direct(Vector3 p, float speed)
+        {
+            if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+            agent.speed = speed * (enraged ? 1.2f : 1f);
+            if (Time.time < nextDest && (p - lastDest).sqrMagnitude < 4f) return;   // do not recalculate the path every frame
+            nextDest = Time.time + 0.2f; lastDest = p;
+            if (NavMesh.SamplePosition(p, out var nh, 8f, NavMesh.AllAreas)) agent.SetDestination(nh.position);
+        }
+
+        /// <summary>Go to a point. Short trips: straight to the NavMeshAgent. Long trips: A* waypoint route, one waypoint at a time.</summary>
+        void MoveTo(Vector3 target, float speed)
+        {
+            if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+            Vector3 pos = transform.position;
+            if (FlatDist(pos, target) < 22f || planner == null || !planner.Ready) { routeActive = false; Direct(target, speed); return; }
+            if (!routeActive || (target - routeGoal).sqrMagnitude > 100f || Time.time > nextReplan)
+            {
+                planner.PlanToPosition(pos, target);
+                routeActive = planner.LastPlanFound; routeGoal = target; routeIdx = 0; nextReplan = Time.time + 3f;
+            }
+            if (!routeActive) { Direct(target, speed); return; }
+            while (routeIdx < planner.Route.Count && FlatDist(pos, planner.Route[routeIdx]) < 5f) routeIdx++;
+            Vector3 wp = routeIdx < planner.Route.Count ? planner.Route[routeIdx] : target;
+            Direct(wp, speed);
+            if (!agent.pathPending && agent.pathStatus != NavMeshPathStatus.PathComplete && routeIdx < planner.Route.Count)
+            {
+                planner.BlockNode(planner.Graph.NearestNode(wp), 25f);      // the agent cannot get there: plan around it
+                nextReplan = 0f;
+            }
+        }
+
+        // ------------------------------------------------------------------ the loop
         void Update()
         {
             if (Keyboard.current != null && Keyboard.current.f10Key.wasPressedThisFrame) ToggleRings();
             if (showRings) UpdateRings();
-            if (state == S.Dead || player == null || hp == null) return;
+            if (cs == C.Dead || player == null || hp == null) return;
 
-            bool live = GameManager.Instance != null && GameManager.Instance.IsPlaying && !player.Health.Dead;
+            PlayerLive = GameManager.Instance != null && GameManager.Instance.IsPlaying && !player.Health.Dead;
             Vector3 pp = player.transform.position;
             float d = FlatDist(transform.position, pp);
-            float mul = player.Hidden ? 0.4f : player.Crouched ? 0.6f : player.Sprinting ? 1.3f : 1f;
-            float notice = noticeR * mul, aggro = aggroR * Mathf.Lerp(1f, mul, 0.6f);
-            bool provoked = Time.time - lastHurt < 8f;
             atkCd -= Time.deltaTime; timer -= Time.deltaTime;
 
             // footsteps
@@ -107,77 +149,141 @@ namespace LastShift
             footT -= Time.deltaTime * v;
             if (footT <= 0f && v > 0.6f) { footT = 3.2f; audioSrc.PlayOneShot(thud, Mathf.Clamp01(v / 7f) + 0.3f); }
 
-            if (!live) { if (state != S.Idle && state != S.Return) { state = S.Return; Stop(); } }
-
-            switch (state)
+            switch (cs)
             {
-                case S.Idle:
-                    if (Time.time > nextWander)
-                    {
-                        nextWander = Time.time + Random.Range(6f, 11f);
-                        var p = home + new Vector3(Random.Range(-14f, 14f), 0, Random.Range(-14f, 14f));
-                        if (NavMesh.SamplePosition(p, out var nh, 8f, NavMesh.AllAreas)) Go(nh.position, 1.6f);
-                    }
-                    if (live && d < aggro) { state = S.Hunt; Roar(); }
-                    else if (live && d < notice) { state = S.Investigate; timer = 14f; }
-                    break;
+                case C.Free: Execute(pp, d); break;
 
-                case S.Investigate:
-                    Go(pp, 3.2f);
-                    if (d < aggro) { state = S.Hunt; Roar(); }
-                    else if (d > notice * 1.35f || timer <= 0f) { state = S.Return; }
-                    break;
-
-                case S.Hunt:
-                    Go(pp, 6.8f);
-                    lostTimer = (d > leashR || FlatDist(transform.position, home) > leashR * 1.6f) && !provoked ? lostTimer + Time.deltaTime : 0f;
-                    if (lostTimer > 6f || (d > notice * 1.8f && !provoked && lostTimer > 0f)) { state = S.Return; lostTimer = 0f; break; }
-                    if (d > notice * 1.8f && !provoked) lostTimer += Time.deltaTime;
-                    if (atkCd <= 0f && d < 6f) { state = S.Windup; timer = enraged ? 0.7f : 0.95f; chargeDir = Vector3.zero; Stop(); anim?.PlayAttack(); }
-                    else if (atkCd <= 0f && d > 11f && d < 32f && Random.value < 0.4f * Time.deltaTime * 3f)
-                    { state = S.Windup; timer = 0.9f; Stop(); chargeDir = Vector3.zero; Roar(); }
-                    break;
-
-                case S.Windup:
+                case C.Windup:
                     Face(pp);
                     if (timer <= 0f)
                     {
                         if (chargeDir == Vector3.zero && d < 8f) Stomp();
-                        else { var fd = pp - transform.position; fd.y = 0; chargeDir = fd.normalized; state = S.Charge; timer = 1.4f; if (agent) agent.enabled = false; break; }
-                        atkCd = enraged ? 1.4f : 2.2f; state = S.Hunt;
+                        else { var fd = pp - transform.position; fd.y = 0; chargeDir = fd.normalized; cs = C.Charge; timer = 1.4f; if (agent) agent.enabled = false; break; }
+                        atkCd = enraged ? 1.4f : 2.2f; cs = C.Free;
                     }
                     break;
 
-                case S.Charge:
+                case C.Charge:
                 {
                     float spd = enraged ? 14f : 12f;
-                    var step = chargeDir * spd * Time.deltaTime;
-                    var np = transform.position + step;
+                    var np = transform.position + chargeDir * spd * Time.deltaTime;
                     if (NavMesh.SamplePosition(np, out var nh, 3f, NavMesh.AllAreas) && Vector3.Distance(nh.position, np) < 2.2f)
                         transform.position = new Vector3(np.x, nh.position.y, np.z);
                     else timer = 0f;
                     transform.rotation = Quaternion.LookRotation(chargeDir);
-                    if (FlatDist(transform.position, pp) < 3.8f && live)
-                    { Hit(65f, 14f); timer = 0f; }
+                    if (FlatDist(transform.position, pp) < 3.8f && PlayerLive) { Hit(65f, 14f); timer = 0f; }
                     if (timer <= 0f)
                     {
                         if (agent) { agent.enabled = true; agent.Warp(transform.position); }
-                        state = S.Recover; timer = 1.6f; atkCd = 3f;
+                        cs = C.Recover; timer = 1.6f; atkCd = 3f; routeActive = false;
                     }
                     break;
                 }
 
-                case S.Recover:
-                    if (timer <= 0f) state = S.Hunt;
-                    break;
-
-                case S.Return:
-                    Go(home, 4.2f);
-                    hp.current = Mathf.Min(hp.max * 0.6f, hp.current + hp.max * 0.01f * Time.deltaTime); // slow breather, never full
-                    if (live && d < aggro) { state = S.Hunt; Roar(); }
-                    else if (FlatDist(transform.position, home) < 4f) { state = S.Idle; nextWander = Time.time + 3f; }
+                case C.Recover:
+                    if (timer <= 0f) cs = C.Free;
                     break;
             }
+        }
+
+        void Execute(Vector3 pp, float d)
+        {
+            var act = decision != null ? decision.Current : MammothAction.Patrol;
+            if (act != lastAction)
+            {
+                routeActive = false; nextDest = 0f;
+                if (act == MammothAction.Pursue) Roar();
+                if (act == MammothAction.Search) searchNode = -1;
+                lastAction = act;
+            }
+            switch (act)
+            {
+                case MammothAction.Patrol: Wander(); break;
+                case MammothAction.InvestigateSound: DoInvestigate(); break;
+                case MammothAction.TrackLastKnown: DoTrack(pp); break;
+                case MammothAction.Search:
+                case MammothAction.Ambush: DoSearch(); break;
+                case MammothAction.Pursue: DoPursue(pp, d); break;
+                case MammothAction.ReturnHome: DoReturn(); break;
+            }
+        }
+
+        void Wander()
+        {
+            if (Time.time <= nextWander) return;
+            nextWander = Time.time + Random.Range(6f, 11f);
+            var p = home + new Vector3(Random.Range(-14f, 14f), 0, Random.Range(-14f, 14f));
+            if (NavMesh.SamplePosition(p, out var nh, 8f, NavMesh.AllAreas)) { lastDest = nh.position; Direct(nh.position, 1.6f); }
+        }
+
+        void DoInvestigate()
+        {
+            if (memory == null || !memory.TryGetFreshClue(out var clue, 20f)) return;
+            MoveTo(clue.pos, 3.8f);
+            if (FlatDist(transform.position, clue.pos) < 7f) { memory.MarkCluesChecked(clue.pos, 12f); MarkSearchedHere(); }
+        }
+
+        void DoTrack(Vector3 pp)
+        {
+            if (perc == null) { MoveTo(pp, 3.5f); return; }
+            bool vis = perc.PlayerVisible;
+            Vector3 tgt = vis ? perc.LastSeenPos : perc.LastSeenPos + perc.LastSeenVelocity * Mathf.Min(perc.TimeSinceSeen, 2.5f);   // lead a little: he was moving
+            MoveTo(tgt, vis ? 3.6f : 5f);
+            if (!vis && FlatDist(transform.position, perc.LastSeenPos) < 6f)
+            {
+                MarkSearchedHere();
+                if (memory != null) memory.MarkCluesChecked(transform.position, 12f);
+            }
+        }
+
+        void DoSearch()
+        {
+            if (belief == null || !belief.Ready || memory == null) { Wander(); return; }
+            if (searchNode < 0 || FlatDist(transform.position, searchPos) < 5f || Time.time > searchDeadline)
+            {
+                if (searchNode >= 0) MarkSearchedHere();
+                PickSearchNode();
+            }
+            if (searchNode >= 0) MoveTo(searchPos, enraged ? 4.8f : 3.6f);
+        }
+
+        void PickSearchNode()
+        {
+            var g = belief.Graph; int best = -1; float bs = -1f; Vector3 pos = transform.position;
+            for (int i = 0; i < g.Count; i++)
+            {
+                if (!g.Reachable(i)) continue;
+                float p = belief.Probability(i);
+                float score = p * (1f - 0.85f * memory.SearchPenalty(i)) / (1f + FlatDist(pos, g.Position(i)) / 50f);
+                if (score > bs) { bs = score; best = i; }
+            }
+            searchNode = best; searchDeadline = Time.time + 20f;
+            if (best >= 0) searchPos = g.Position(best);
+        }
+
+        void MarkSearchedHere()
+        {
+            if (memory == null || planner == null || !planner.Ready) return;
+            var g = planner.Graph; int n = g.NearestNode(transform.position);
+            if (n < 0) return;
+            memory.MarkSearched(n);
+            foreach (int nb in g.Neighbours(n)) if (FlatDist(g.Position(nb), transform.position) < 14f) memory.MarkSearched(nb);
+        }
+
+        void DoPursue(Vector3 pp, float d)
+        {
+            bool vis = perc == null || perc.PlayerVisible;
+            Vector3 tgt = vis ? pp : perc.LastSeenPos;
+            MoveTo(tgt, 6.8f);
+            if (!vis || atkCd > 0f) return;
+            if (d < 6f) { cs = C.Windup; timer = enraged ? 0.7f : 0.95f; chargeDir = Vector3.zero; Stop(); anim?.PlayAttack(); }
+            else if (d > 11f && d < 32f && Random.value < 0.4f * Time.deltaTime * 3f) { cs = C.Windup; timer = 0.9f; Stop(); chargeDir = Vector3.zero; Roar(); }
+        }
+
+        void DoReturn()
+        {
+            MoveTo(home, 4.2f);
+            hp.current = Mathf.Min(hp.max * 0.6f, hp.current + hp.max * 0.01f * Time.deltaTime);   // slow breather, never full
         }
 
         void Stomp()
@@ -199,8 +305,10 @@ namespace LastShift
         // ---------------- boss bar ----------------
         void OnGUI()
         {
-            if (state == S.Dead || player == null || hp == null) return;
-            if (state == S.Idle || state == S.Return) { if (Time.time - lastHurt > 6f) return; }
+            if (cs == C.Dead || player == null || hp == null) return;
+            var act = decision != null ? decision.Current : MammothAction.Patrol;
+            bool engaged = cs != C.Free || act == MammothAction.Pursue || act == MammothAction.TrackLastKnown;
+            if (!engaged && Time.time - lastHurt > 6f) return;
             if (FlatDist(transform.position, player.transform.position) > leashR * 1.2f) return;
             float s = Screen.height / 1080f;
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));

@@ -83,7 +83,8 @@ namespace LastShift
         }
 
         // ------------------------------------------------------------------ vision
-        float StealthMul()
+        /// <summary>1 = standing player; &lt;1 when hidden/crouched (harder to see), &gt;1 when sprinting.</summary>
+        public float StealthMul()
         {
             if (player.Hidden) return hiddenMul;
             if (player.Sprinting) return sprintMul;
@@ -188,6 +189,15 @@ namespace LastShift
                 lastNoiseStamp = stamp;
                 Hear(NoiseKind.Other, otherRadius);
             }
+        }
+
+        /// <summary>A bullet hit the mammoth: it always knows the shot came from that direction (small uncertainty).</summary>
+        public void RegisterHit(Vector3 from)
+        {
+            var ev = new NoiseEvent { pos = from, strength = 1f, sigma = 4f, kind = NoiseKind.Gunshot, time = Time.time };
+            LastNoise = ev;
+            if (logEvents) Debug.Log("[MammothAI] HIT from the direction of " + from);
+            NoiseHeard?.Invoke(ev);
         }
 
         void Hear(NoiseKind kind, float radius)
