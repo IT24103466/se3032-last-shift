@@ -12,6 +12,7 @@ namespace GuardAgentTools
 {
     /// <summary>
     /// Tools > Guard Agent
+    ///   Attach Agents To Everyone In The Factory   gives every guard and worker a brain with his own role (Sentinel, Gatekeeper, Tea keeper, Lookout); undoable, no duplicates
     ///   Attach Agent To Guard      puts GuardAgentBridge on the selected guard (or, with nothing selected, the guard nearest the factory yard); undoable, no duplicates
     ///   Detach Agent               removes it again (the stock EnemyAI takes over)
     ///   Export Zone Graph          measures the open scene: NavMesh-snapped centre of every zone, NavMesh path length between all zones, and line of sight between zones.
@@ -29,6 +30,7 @@ namespace GuardAgentTools
             if (guard == null) { Debug.LogWarning("[Guard Agent] no Guard (EnemyAI kind Guard) found in the open scene"); return; }
             if (guard.GetComponent<GuardAgentBridge>() != null) { Debug.Log($"[Guard Agent] {guard.name} already has the agent"); return; }
             var b = Undo.AddComponent<GuardAgentBridge>(guard.gameObject);
+            b.role = RoleFor(guard);
             EditorUtility.SetDirty(b);
             if (!Application.isPlaying) EditorSceneManager.MarkAllScenesDirty();
             Debug.Log($"[Guard Agent] agent attached to '{guard.name}' (position {guard.transform.position}). Start the brain: cd GuardAgent ; .venv\\Scripts\\python -m guard_agent.server   then press Play.");
@@ -41,6 +43,46 @@ namespace GuardAgentTools
             foreach (var b in Object.FindObjectsByType<GuardAgentBridge>(FindObjectsInactive.Include).ToList()) { Undo.DestroyObjectImmediate(b); n++; }
             if (!Application.isPlaying && n > 0) EditorSceneManager.MarkAllScenesDirty();
             Debug.Log($"[Guard Agent] removed {n} agent bridge(s)");
+        }
+
+        // ------------------------------------------------------------------ everybody
+        /// <summary>Roles for the people of Level_01 (documented in GuardAgent/ARCHITECTURE.md). Names not in the table get a role from their kind and position.</summary>
+        static AgentRole RoleFor(EnemyAI e)
+        {
+            switch (e.name)
+            {
+                case "Guard_14": case "Guard_13": case "Guard_12": return AgentRole.Sentinel;       // factory floor, back lane, warehouse: keep him out of the building
+                case "Guard_10": case "Guard_11": return AgentRole.Gatekeeper;                      // yard and east compound: cut off the way to the main gate
+                case "Worker_17": case "Worker_18": return AgentRole.TeaKeeper;                     // storeroom and line houses: guard the tea bags
+                case "Worker_15": case "Worker_16": return AgentRole.Lookout;                       // rolling floor and loft: spot, report, survive
+            }
+            if (e.kind == EnemyKind.Worker)
+            {
+                float best = float.MaxValue;
+                foreach (var b in Object.FindObjectsByType<TeaBag>(FindObjectsInactive.Exclude)) best = Mathf.Min(best, Vector3.Distance(b.transform.position, e.transform.position));
+                return best < 6f ? AgentRole.TeaKeeper : AgentRole.Lookout;
+            }
+            return e.transform.position.x < 35f && e.transform.position.z < 54f ? AgentRole.Gatekeeper : AgentRole.Sentinel;
+        }
+
+        [MenuItem("Tools/Guard Agent/Attach Agents To Everyone In The Factory")]
+        public static void AttachAll()
+        {
+            int added = 0, updated = 0;
+            var lines = new List<string>();
+            foreach (var e in Object.FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude).Where(x => x.kind == EnemyKind.Guard || x.kind == EnemyKind.Worker).OrderBy(x => x.name))
+            {
+                var role = RoleFor(e);
+                var b = e.GetComponent<GuardAgentBridge>();
+                if (b == null) { b = Undo.AddComponent<GuardAgentBridge>(e.gameObject); added++; }
+                else if (b.role != role) { Undo.RecordObject(b, "Set agent role"); updated++; }
+                b.role = role; b.useRolePreset = true;
+                EditorUtility.SetDirty(b);
+                lines.Add($"{e.name} ({e.kind}) -> {role}");
+            }
+            if (!Application.isPlaying && (added > 0 || updated > 0)) EditorSceneManager.MarkAllScenesDirty();
+            Debug.Log($"[Guard Agent] agents attached: {added} new, {updated} role changes.\n" + string.Join("\n", lines) +
+                      "\nStart the brain:  cd GuardAgent ; .venv\\Scripts\\python -m guard_agent.server   then press Play. (The hunter keeps the stock AI: he never enters the factory.)");
         }
 
         static EnemyAI PickGuard()
@@ -88,6 +130,22 @@ namespace GuardAgentTools
                 else if (samples[i].Count > 0) point[i] = samples[i][0];
                 else { Debug.LogError($"[Guard Agent] zone '{z.name}' has no NavMesh: bake the NavMesh first"); return; }
             }
+
+            // a zone's point must be on the same NavMesh island as the yard: of its sample points, take the one nearest the centre that has a complete path from the yard
+            var reach = new NavMeshPath();
+            Vector3 reference = point[System.Array.FindIndex(rects, r => r.name == "yard_w") >= 0 ? System.Array.FindIndex(rects, r => r.name == "yard_w") : 0];
+            var report = new List<string>();
+            for (int i = 0; i < n; i++)
+            {
+                Vector3 centre = new Vector3(0.5f * (rects[i].x0 + rects[i].x1), 0f, 0.5f * (rects[i].z0 + rects[i].z1));
+                var cands = new List<Vector3>(samples[i]) { point[i] };
+                cands = cands.OrderBy(v => (new Vector3(v.x, 0f, v.z) - centre).sqrMagnitude).ToList();
+                bool found = false;
+                foreach (var v in cands)
+                    if (NavMesh.CalculatePath(reference, v, NavMesh.AllAreas, reach) && reach.status == NavMeshPathStatus.PathComplete) { if ((v - point[i]).sqrMagnitude > 0.01f) report.Add($"{rects[i].name} moved to a connected spot ({v.x:F0},{v.z:F0})"); point[i] = v; found = true; break; }
+                if (!found) report.Add($"{rects[i].name}: NO sample point is connected to the yard (isolated NavMesh island or sealed room)");
+            }
+            if (report.Count > 0) Debug.LogWarning("[Guard Agent] " + string.Join("; ", report));
 
             // path length between every pair of zones (NavMesh)
             var dist = new float[n, n];

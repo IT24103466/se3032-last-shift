@@ -12588,6 +12588,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 148031481}
     - targetCorrespondingSourceObject: {fileID: 7975780274625385360, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       insertIndex: -1
       addedObject: {fileID: 745685852}
@@ -12597,6 +12600,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
   m_PrefabInstance: {fileID: 148031478}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &148031480 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+  m_PrefabInstance: {fileID: 148031478}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &148031481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 148031480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 0
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1001 &148416281
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -29352,6 +29401,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8315754235487244122, guid: c78cec23a96a3694495d43fef554a151, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 343590616}
     - targetCorrespondingSourceObject: {fileID: 1529021435402983813, guid: c78cec23a96a3694495d43fef554a151, type: 3}
       insertIndex: -1
       addedObject: {fileID: 756653536}
@@ -29361,6 +29413,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3241514812544459038, guid: c78cec23a96a3694495d43fef554a151, type: 3}
   m_PrefabInstance: {fileID: 343590613}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &343590615 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8315754235487244122, guid: c78cec23a96a3694495d43fef554a151, type: 3}
+  m_PrefabInstance: {fileID: 343590613}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &343590616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343590615}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 3
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1001 &346580377
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -68417,6 +68515,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 822331372}
     - targetCorrespondingSourceObject: {fileID: 7975780274625385360, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       insertIndex: -1
       addedObject: {fileID: 517743652}
@@ -68426,6 +68527,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
   m_PrefabInstance: {fileID: 822331369}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &822331371 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+  m_PrefabInstance: {fileID: 822331369}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &822331372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 822331371}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 0
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1 &823125058
 GameObject:
   m_ObjectHideFlags: 0
@@ -68688,6 +68835,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8315754235487244122, guid: c78cec23a96a3694495d43fef554a151, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 824271802}
     - targetCorrespondingSourceObject: {fileID: 1529021435402983813, guid: c78cec23a96a3694495d43fef554a151, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1488924495}
@@ -68697,6 +68847,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3241514812544459038, guid: c78cec23a96a3694495d43fef554a151, type: 3}
   m_PrefabInstance: {fileID: 824271799}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &824271801 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8315754235487244122, guid: c78cec23a96a3694495d43fef554a151, type: 3}
+  m_PrefabInstance: {fileID: 824271799}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &824271802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824271801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 2
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1001 &825262203
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -74249,6 +74445,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 895237337}
     - targetCorrespondingSourceObject: {fileID: 7975780274625385360, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       insertIndex: -1
       addedObject: {fileID: 670944217}
@@ -74258,6 +74457,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
   m_PrefabInstance: {fileID: 895237334}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &895237336 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+  m_PrefabInstance: {fileID: 895237334}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &895237337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 895237336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 1
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1 &895375994
 GameObject:
   m_ObjectHideFlags: 0
@@ -90151,6 +90396,11 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 3211193375028995941, guid: ff7585efac74845439ef67d4420f239c, type: 3}
   m_PrefabInstance: {fileID: 1083032534}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1085900618 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+  m_PrefabInstance: {fileID: 2013163754}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1086209833
 GameObject:
@@ -131984,6 +132234,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8315754235487244122, guid: c78cec23a96a3694495d43fef554a151, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1555884606}
     - targetCorrespondingSourceObject: {fileID: 1529021435402983813, guid: c78cec23a96a3694495d43fef554a151, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1385309148}
@@ -131993,6 +132246,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3241514812544459038, guid: c78cec23a96a3694495d43fef554a151, type: 3}
   m_PrefabInstance: {fileID: 1555884603}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1555884605 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8315754235487244122, guid: c78cec23a96a3694495d43fef554a151, type: 3}
+  m_PrefabInstance: {fileID: 1555884603}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1555884606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1555884605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 2
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1 &1556341242
 GameObject:
   m_ObjectHideFlags: 0
@@ -161850,6 +162149,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1940866859}
     - targetCorrespondingSourceObject: {fileID: 7975780274625385360, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       insertIndex: -1
       addedObject: {fileID: 154909853}
@@ -161859,6 +162161,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
   m_PrefabInstance: {fileID: 1940866856}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1940866858 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+  m_PrefabInstance: {fileID: 1940866856}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1940866859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1940866858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 1
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1 &1941724939
 GameObject:
   m_ObjectHideFlags: 0
@@ -167016,6 +167364,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8315754235487244122, guid: c78cec23a96a3694495d43fef554a151, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1999531708}
     - targetCorrespondingSourceObject: {fileID: 1529021435402983813, guid: c78cec23a96a3694495d43fef554a151, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1564255578}
@@ -167025,6 +167376,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3241514812544459038, guid: c78cec23a96a3694495d43fef554a151, type: 3}
   m_PrefabInstance: {fileID: 1999531705}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1999531707 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8315754235487244122, guid: c78cec23a96a3694495d43fef554a151, type: 3}
+  m_PrefabInstance: {fileID: 1999531705}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1999531708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999531707}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 3
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1 &2000851593
 GameObject:
   m_ObjectHideFlags: 0
@@ -167339,6 +167736,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 321857220015365805, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2013163761}
     - targetCorrespondingSourceObject: {fileID: 7975780274625385360, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       insertIndex: -1
       addedObject: {fileID: 584842535}
@@ -167348,6 +167748,47 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
   m_PrefabInstance: {fileID: 2013163754}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2013163761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1085900618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e77890af6175a1f42a0c41638d6b6a87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardAgentBridge
+  host: 127.0.0.1
+  port: 5555
+  decisionInterval: 0.5
+  role: 0
+  useRolePreset: 1
+  focusZones: []
+  hp: 100
+  walkSpeed: 1.8
+  runSpeed: 5.2
+  sight: 22
+  fov: 120
+  hearing: 12
+  gunRange: 22
+  gunDamage: 8
+  gunInterval: 1
+  gunAim: 0.5
+  gunAccuracy: 0.65
+  gunReload: 1.8
+  gunMag: 12
+  pellets: 1
+  eyeHeight: 1.7
+  gunshotRadius: 40
+  damageDealt: 0
+  score: 0
+  showHud: 1
+  linkStatus: 
+  ticksSent: 0
+  actionsReceived: 0
+  debug: 
 --- !u!1 &2013605385
 GameObject:
   m_ObjectHideFlags: 0

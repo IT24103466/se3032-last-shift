@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from .roles import focus_mask, get_role
 from .zones import ZoneGraph
 
 
@@ -15,9 +16,9 @@ def decode(o: np.ndarray, n: int) -> dict:
 class PatrolGuard:
     """The guard as the game ships him: walks a fixed patrol, shoots what he sees, searches the last known spot for ~7 s, and runs to the alarm."""
 
-    def __init__(self, zg: ZoneGraph, route=("yard_w", "rolling", "storeroom", "yard_e", "compound", "north_lane")):
+    def __init__(self, zg: ZoneGraph, route=None, role="sentinel"):
         self.zg = zg
-        self.route = [zg.idx(r) for r in route]
+        self.route = [zg.idx(r) for r in (route or get_role(role).patrol)]
         self.i = 0
         self.A_ENGAGE, self.A_COVER, self.A_RELOAD = zg.n, zg.n + 1, zg.n + 2
 
@@ -55,9 +56,11 @@ class UtilityGuard:
     """Hand-written expected-value brain over the belief map; also the fallback inside the runtime when no trained policy is available.
     Picks the zone with the highest  belief mass x (1 + protected bonus) / travel time  and engages whenever he has the intruder in sight."""
 
-    def __init__(self, zg: ZoneGraph, protect_bonus: float = 1.8):
+    def __init__(self, zg: ZoneGraph, protect_bonus: float = 1.8, role="sentinel"):
         self.zg = zg
         self.pb = protect_bonus
+        self.spec = get_role(role)
+        self.focus = focus_mask(zg, self.spec)
         self.A_ENGAGE, self.A_COVER, self.A_RELOAD = zg.n, zg.n + 1, zg.n + 2
 
     def reset(self):
@@ -73,7 +76,7 @@ class UtilityGuard:
                 return self.A_COVER
             return self.A_ENGAGE
         b = d["belief"]
-        utility = b * (1.0 + (self.pb - 1.0) * zg.protected) / (1.0 + zg.dist[d["zone"]] / 20.0)
+        utility = b * (1.0 + (self.pb - 1.0) * self.focus) / (1.0 + zg.dist[d["zone"]] / 20.0)
         utility[zg.idx("tea_field")] *= 0.2                      # no point standing in the tea field
         utility[d["zone"]] *= 1.0 if b[d["zone"]] > 0.15 else 0.6
         return int(np.argmax(utility))

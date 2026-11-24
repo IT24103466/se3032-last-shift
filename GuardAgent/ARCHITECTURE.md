@@ -1,4 +1,6 @@
-# Sentinel: the security guard's agent brain
+# Sentinel: the agent brain of the people in the factory
+
+> The same architecture drives every guard and worker, each with his own **role**, weapon and goal: see `ROLES.md`. The text below describes the architecture using the Sentinel (security guard) as the example.
 
 One NPC (a security guard) is driven by a Python agent. The game stays in Unity; the brain runs as a local server and talks to the guard over a TCP socket (JSON lines, 2 decisions per second).
 If the brain is not running, the guard silently falls back to the game's own `EnemyAI`.
@@ -73,6 +75,10 @@ cd GuardAgent
 ```
 In Unity: open the level, `Tools > Guard Agent > Attach Agent To Guard`, press Play. The top-right HUD shows the guard's score, mode, reason and belief.
 
+## Gunshot hearing
+The game has no public 'shot fired' event, so `GuardAgentBridge.PollGunshots` watches the player's magazine (it drops by one on every shot). A shot within `gunshotRadius` (default 40 m, the game's own gunshot noise radius) is heard through walls, whether or not the guard can see the player. It is sent as a `gunshot` noise (louder when closer) and the guard decides at once instead of waiting for the next tick.
+The brain blurs the position (3 m + 20% of the distance, like a real direction/distance estimate), widens the belief update (a shot is audible from far away but pins him down less than footsteps), and the HUD shows GUNSHOT HEARD for 3 s.
+
 ## Agent-mode guard stats
 The stock guard (80 hp, 5 damage per shot, one shot every 1.3 s) cannot hurt a 100 hp player in a straight fight, so a damage-scored agent would have nothing to optimise.
 The agent-mode guard has 100 hp, 8 damage, 1.0 s between shots, 12-round magazine (`config.GuardStats` and the matching inspector fields on `GuardAgentBridge`). Change both together, then retrain.
@@ -80,4 +86,13 @@ The agent-mode guard has 100 hp, 8 damage, 1.0 s between shots, 12-round magazin
 ## Known limits
 * The simulator is an abstraction (zones, expected combat), not the game: the exported graph and `evaluate.py` show how well it transfers; the final test is playing against the real guard.
 * One guard has the brain. Other guards keep the stock AI (they are alerted by the alarm and by gunfire as before).
-* The player's gunfire is not reported as a noise event yet (the game has no public hook); sprinting and rummaging noises are.
+* The simulator does not model gunshot noise yet (the intruder only fires when he sees the guard); the policy was trained without it. The belief still uses real gunshots at runtime. Retrain after adding it to `sim/` if you want the policy to learn to react to far-off shots.
+
+## Troubleshooting (found during the first live test)
+* **The guard just stands there / ticks stay at 0:** Unity pauses the game loop while its window is not focused unless *Run In Background* is on (Project Settings > Player). Click the Game view, or tick it. The inspector on `GuardAgentBridge` shows `linkStatus`, `debug`, `ticksSent` and `actionsReceived`.
+* **The game stays on the intro screen:** the guard only acts while the game is in the Playing phase (start it normally).
+* **Start order:** start the brain first (`python -m guard_agent.server`); the bridge retries the connection every 3 s and hands control back to the stock `EnemyAI` whenever the brain is not connected.
+* Unity's `JsonUtility` works only on the main thread: the network thread keeps the newest raw reply and `Update` parses it.
+
+## First live result (Level_01, Guard_14)
+Player placed in the open yard at full health: the brain took over, the alarm went off, the guard ran to the yard, engaged and landed hits (score 25 after 3 hits) while the other, stock guards also fought. The zone graph exported from the real NavMesh (13 zones, all connected) was used for the final training; see `logs/evaluate_real_graph.txt` (mixed intruders: score -11.7 vs -50.6 for the game's patrol guard, -42.7 for the utility planner).

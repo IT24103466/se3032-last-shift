@@ -52,8 +52,9 @@ class BeliefTracker:
         self.b = self.b * (1.0 - np.clip(p_see, 0.0, 0.97))
         self._norm()
 
-    def observe_noise(self, zone: int, strength: float = 0.7):
-        like = 0.15 + strength * np.exp(-self.zg.dist[zone] / 14.0)
+    def observe_noise(self, zone: int, strength: float = 0.7, spread: float = 14.0):
+        """A sound near `zone`. spread = how far the sound blurs the guess (metres of walking distance): footsteps are local, a gunshot is heard from far away but pins him down less."""
+        like = 0.12 + strength * np.exp(-self.zg.dist[zone] / spread)
         self.b = self.b * like
         self._norm()
 

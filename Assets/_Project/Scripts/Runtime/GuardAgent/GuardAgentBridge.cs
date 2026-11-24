@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -26,6 +27,9 @@ namespace LastShift
     /// defined in GuardAgent/guard_agent/config.py. It is shown top-right (F8 hides it).
     /// Start the brain first:   cd GuardAgent ; .venv\Scripts\python -m guard_agent.server
     /// </summary>
+    /// <summary>The job of this person. Same agent architecture for everyone; the role sets the weapon, the goal (score weights) and the zones he looks after.</summary>
+    public enum AgentRole { Sentinel, Gatekeeper, TeaKeeper, Lookout }
+
     [RequireComponent(typeof(EnemyAI), typeof(NavMeshAgent), typeof(Health))]
     public class GuardAgentBridge : MonoBehaviour
     {
@@ -34,12 +38,25 @@ namespace LastShift
         public int port = 5555;
         public float decisionInterval = 0.5f;
 
-        [Header("Agent-mode guard (must match GuardAgent/guard_agent/config.py)")]
+        [Header("Role")]
+        [Tooltip("Sentinel: keep him out of the factory. Gatekeeper: stop the escape at the gate. TeaKeeper: protect the tea bags (shotgun ambush). Lookout: spot, report, survive.")]
+        public AgentRole role = AgentRole.Sentinel;
+        [Tooltip("Fill the numbers below from the role (guards: pistol, workers: double-barrel). Untick to tune them by hand.")]
+        public bool useRolePreset = true;
+        [Tooltip("Optional: zone names this person looks after instead of the role default (e.g. north_lane, loft)")]
+        public string[] focusZones;
+
+        [Header("Weapon and body (the presets match GuardAgent/guard_agent/config.py)")]
         public float hp = 100f;
         public float walkSpeed = 1.8f, runSpeed = 5.2f, sight = 22f, fov = 120f, hearing = 12f;
         public float gunRange = 22f, gunDamage = 8f, gunInterval = 1.0f, gunAim = 0.5f, gunAccuracy = 0.65f, gunReload = 1.8f;
         public int gunMag = 12;
+        [Tooltip("Pellets per shot: 1 for the pistol, 5 for the worker shotgun")] public int pellets = 1;
         public float eyeHeight = 1.7f;
+
+        [Header("Gunshot hearing")]
+        [Tooltip("The guard hears the player's gunshots within this many metres, through walls (the game's own noise radius for a shot is 40)")]
+        public float gunshotRadius = 40f;
 
         [Header("Score (read-only: the brain keeps the score and sends it back)")]
         public float damageDealt;
@@ -47,27 +64,52 @@ namespace LastShift
         public bool showHud = true;
 
         // ------------------------------------------------------------------ state
+        PlayerGun playerGun; int lastMag = -1, lastSlot = -1; float lastShotHeard = -99f;
+        readonly List<NoiseEvent> shotEvents = new List<NoiseEvent>();
         EnemyAI ai; NavMeshAgent agent; Health health; CreatureAnimator anim; PlayerController player; Transform muzzle;
         GuardLink link;
         AgentAction action;
         readonly object actionLock = new object();
-        AgentAction pending;
+        string pendingLine;
         float nextTick, aimUntil = -1f, nextShot, reloadUntil, nextDoorCheck, coverUntil, lastDamageTime = -99f;
         int ammo;
-        float damageSinceTick, damageTakenSinceTick;
+        float damageSinceTick, damageTakenSinceTick, lastHitOnPlayer = -99f;
         bool alarmSent, wasPlaying, ended, hadConnection;
         Vector3 lastKnown, coverSpot;
         bool coverValid;
         readonly List<NoiseEvent> noises = new List<NoiseEvent>();
         string lastWhy = "", lastMode = "", lastZone = ""; string[] belief = new string[0];
-        float lastLatencyMs;
+        static int hudCount; int hudIndex = -1;
+        float lastLatencyMs, bagsCountedAt = -99f; int bagsSearched;
 
         // Factory building = protected zones of the zone graph (x0, x1, z0, z1)
         static readonly float[][] Factory = { new[] { 10f, 36f, 52f, 66f }, new[] { 10f, 36f, 66f, 76f }, new[] { 36f, 50f, 52f, 62f }, new[] { 36f, 50f, 62f, 76f } };
 
         public bool Connected => link != null && link.Connected;
+        [Tooltip("What the socket thread is doing (read-only)")] public string linkStatus = "";
+        string lastLoggedStatus = "";
+        [Header("Diagnostics (read-only)")] public int ticksSent, actionsReceived; public string debug = "";
 
         // ------------------------------------------------------------------ setup
+        public static string RoleKey(AgentRole r) => r == AgentRole.Sentinel ? "sentinel" : r == AgentRole.Gatekeeper ? "gatekeeper" : r == AgentRole.TeaKeeper ? "tea_keeper" : "lookout";
+        public static string RoleTitle(AgentRole r) => r == AgentRole.Sentinel ? "SENTINEL" : r == AgentRole.Gatekeeper ? "GATEKEEPER" : r == AgentRole.TeaKeeper ? "TEA KEEPER" : "LOOKOUT";
+
+        /// <summary>Guards carry the pistol, workers the double-barrel shotgun (numbers = config.py).</summary>
+        void ApplyPreset()
+        {
+            if (!useRolePreset) return;
+            bool worker = role == AgentRole.TeaKeeper || role == AgentRole.Lookout;
+            if (worker) { hp = 80f; walkSpeed = 1.4f; runSpeed = 4.6f; sight = 14f; fov = 110f; hearing = 9f; gunRange = 10f; gunDamage = 9f; pellets = 5; gunInterval = 1.6f; gunAim = 0.6f; gunAccuracy = 0.5f; gunReload = 2.2f; gunMag = 2; }
+            else { hp = 100f; walkSpeed = 1.8f; runSpeed = 5.2f; sight = 22f; fov = 120f; hearing = 12f; gunRange = 22f; gunDamage = 8f; pellets = 1; gunInterval = 1.0f; gunAim = 0.5f; gunAccuracy = 0.65f; gunReload = 1.8f; gunMag = 12; }
+        }
+
+        string HelloJson()
+        {
+            var sb = new StringBuilder("{\"type\":\"hello\",\"version\":2,\"role\":\"").Append(RoleKey(role)).Append("\",\"id\":\"").Append(name).Append("\"");
+            if (focusZones != null && focusZones.Length > 0) sb.Append(",\"focus\":[").Append(string.Join(",", focusZones.Select(z => "\"" + z + "\""))).Append("]");
+            return sb.Append("}").ToString();
+        }
+
         void Awake()
         {
             ai = GetComponent<EnemyAI>(); agent = GetComponent<NavMeshAgent>(); health = GetComponent<Health>(); anim = GetComponent<CreatureAnimator>();
@@ -77,11 +119,13 @@ namespace LastShift
         void Start()
         {
             player = FindAnyObjectByType<PlayerController>();
+            playerGun = FindAnyObjectByType<PlayerGun>();
+            ApplyPreset();
             health.max = hp; health.current = hp;
             ammo = gunMag;
             health.Damaged += OnDamaged;
             health.Died += OnDied;
-            link = new GuardLink(host, port) { OnMessage = OnMessage };
+            link = new GuardLink(host, port, HelloJson()) { OnMessage = OnMessage };
             link.Start();
             nextTick = Time.time + 0.5f;
         }
@@ -99,7 +143,8 @@ namespace LastShift
         // ------------------------------------------------------------------ main loop
         void Update()
         {
-            if (health.Dead || !agent.isOnNavMesh) return;
+            if (link != null) { linkStatus = link.Status; if (linkStatus != lastLoggedStatus && (linkStatus.StartsWith("error") || linkStatus == "connected")) Debug.Log("[Guard Agent] " + linkStatus); lastLoggedStatus = linkStatus; }
+            if (health.Dead || !agent.isOnNavMesh) { debug = health.Dead ? "guard dead" : "guard not on NavMesh"; return; }
             var gm = GameManager.Instance;
             bool playing = gm == null || gm.IsPlaying;
             agent.isStopped = !playing;
@@ -119,22 +164,46 @@ namespace LastShift
                 if (!playing && wasPlaying && Connected && !ended)
                 {
                     ended = true;
-                    string outcome = gm.phase == GameManager.Phase.Won ? "escape" : (player != null && player.Health.Dead ? "kill" : "timeout");
+                    bool iKilledHim = player != null && player.Health.Dead && Time.time - lastHitOnPlayer < 6f;     // only counts if the guard's own shots were the last to hurt him
+                    string outcome = gm.phase == GameManager.Phase.Won ? "escape" : (iKilledHim ? "kill" : "timeout");
                     link.Send("{\"type\":\"episode_end\",\"outcome\":\"" + outcome + "\"}");
                 }
                 wasPlaying = playing;
             }
-            if (!Connected || !playing || player == null) return;
+            if (!Connected || !playing || player == null) { debug = !Connected ? "not connected" : !playing ? "game not in Playing phase" : "no player"; return; }
+            debug = "running";
 
             // pick up the newest answer
-            lock (actionLock) { if (pending != null) { action = pending; pending = null; } }
+            ParsePending();
             if (Time.time >= nextDoorCheck) { nextDoorCheck = Time.time + 0.25f; OpenDoors(); }
             if (reloadUntil > 0f && Time.time >= reloadUntil) { reloadUntil = -1f; ammo = gunMag; }
             if (ammo <= 0 && reloadUntil < 0f) { reloadUntil = Time.time + gunReload; GunFX.Play(GunSound.Reload, transform.position, 0.6f); }
 
+            PollGunshots();
             Execute();
 
             if (Time.time >= nextTick) { nextTick = Time.time + decisionInterval; SendTick(); }
+        }
+
+        /// <summary>The game has no 'shot fired' event for other scripts, so watch the player's magazine: it drops by one on every shot.
+        /// A shot within <see cref="gunshotRadius"/> is heard whether or not the guard can see the player; louder when closer.</summary>
+        void PollGunshots()
+        {
+            if (playerGun == null || player == null || player.Health.Dead) return;
+            var g = playerGun.Current;
+            if (g == null) { lastMag = -1; lastSlot = playerGun.Slot; return; }
+            if (playerGun.Slot != lastSlot || lastMag < 0) { lastSlot = playerGun.Slot; lastMag = g.mag; return; }
+            if (g.mag < lastMag)
+            {
+                float dist = Vector3.Distance(transform.position, player.transform.position);
+                if (dist <= gunshotRadius)
+                {
+                    shotEvents.Add(new NoiseEvent { pos = new[] { player.transform.position.x, player.transform.position.z }, strength = Mathf.Lerp(1f, 0.4f, dist / gunshotRadius), kind = "gunshot" });
+                    lastShotHeard = Time.time;
+                    nextTick = Time.time;                       // react now, not at the next tick
+                }
+            }
+            lastMag = g.mag;
         }
 
         void ApplyStats()
@@ -176,6 +245,16 @@ namespace LastShift
             return false;
         }
 
+        int CountSearchedBags()
+        {
+            if (Time.time - bagsCountedAt > 1f)
+            {
+                bagsCountedAt = Time.time; bagsSearched = 0;
+                foreach (var b in FindObjectsByType<TeaBag>(FindObjectsInactive.Exclude)) if (b.searched) bagsSearched++;
+            }
+            return bagsSearched;
+        }
+
         void SendTick()
         {
             float dist = Vector3.Distance(transform.position, player.transform.position);
@@ -192,7 +271,7 @@ namespace LastShift
                 clear_shot = sees && dist <= gunRange && ClearShot(),
                 alarm = gm != null && gm.AlarmRaised,
                 damage_taken = damageTakenSinceTick,
-                score_info = new ScoreInfo { damage_dealt_now = damageSinceTick, intruder_in_factory = !player.Health.Dead && InFactory(player.transform.position) },
+                score_info = new ScoreInfo { damage_dealt_now = damageSinceTick, intruder_in_factory = !player.Health.Dead && InFactory(player.transform.position), intruder_searching_bag = player.SearchProgress > 0.01f, bags_searched_total = CountSearchedBags() },
             };
             if (sees) lastKnown = player.transform.position;
             if (t.alarm && !alarmSent) { alarmSent = true; t.alarm_event_pos = new[] { player.transform.position.x, player.transform.position.z }; }
@@ -201,12 +280,13 @@ namespace LastShift
             noises.Clear();
             if (!player.Health.Dead && !player.Hidden)
             {
-                if (player.Sprinting && dist < hearing) noises.Add(new NoiseEvent { pos = new[] { player.transform.position.x, player.transform.position.z }, strength = 0.7f });
-                else if (Time.time - player.LastNoiseTime < 0.6f && dist < hearing * 0.8f) noises.Add(new NoiseEvent { pos = new[] { player.transform.position.x, player.transform.position.z }, strength = 0.5f });
+                if (player.Sprinting && dist < hearing) noises.Add(new NoiseEvent { pos = new[] { player.transform.position.x, player.transform.position.z }, strength = 0.7f, kind = "footsteps" });
+                else if (Time.time - player.LastNoiseTime < 0.6f && dist < hearing * 0.8f) noises.Add(new NoiseEvent { pos = new[] { player.transform.position.x, player.transform.position.z }, strength = 0.5f, kind = "rummaging" });
             }
+            noises.AddRange(shotEvents); shotEvents.Clear();
             t.noises = noises.ToArray();
             damageSinceTick = 0f; damageTakenSinceTick = 0f;
-            link.Send(JsonUtility.ToJson(t));
+            link.Send(JsonUtility.ToJson(t)); ticksSent++;
         }
 
         // ------------------------------------------------------------------ execute the brain's decision
@@ -274,24 +354,30 @@ namespace LastShift
             float chance = gunAccuracy * (1f - 0.5f * dist / gunRange) * (player.Sprinting ? 0.6f : 1f) * (player.Crouched ? 0.75f : 1f) * (alarmSent ? 1.15f : 1f);
             chance = Mathf.Clamp(chance, 0.05f, 0.95f);
             ammo--;
-            bool hit = UnityEngine.Random.value < chance;
-            if (hit) GunFX.Tracer(from, player.Chest + UnityEngine.Random.insideUnitSphere * 0.25f, 0.02f, 0.05f);
-            else
+            int hits = 0;
+            for (int i = 0; i < Mathf.Max(1, pellets); i++)
             {
-                Vector3 aim = player.Chest + UnityEngine.Random.insideUnitSphere * 1.3f - from;
-                if (Physics.Raycast(from, aim.normalized, out var h, gunRange * 1.5f, ~(1 << 2), QueryTriggerInteraction.Ignore) && !h.collider.transform.IsChildOf(transform))
-                { GunFX.Tracer(from, h.point, 0.02f, 0.05f); GunFX.Impact(h.point, h.normal, false); }
-                else GunFX.Tracer(from, from + aim.normalized * gunRange, 0.02f, 0.05f);
+                bool hit = UnityEngine.Random.value < chance;
+                if (hit) hits++;
+                if (i >= 3) continue;                                   // only a few tracers for a shotgun blast
+                if (hit) GunFX.Tracer(from, player.Chest + UnityEngine.Random.insideUnitSphere * 0.25f, 0.02f, 0.05f);
+                else
+                {
+                    Vector3 aim = player.Chest + UnityEngine.Random.insideUnitSphere * 1.3f - from;
+                    if (Physics.Raycast(from, aim.normalized, out var h, gunRange * 1.5f, ~(1 << 2), QueryTriggerInteraction.Ignore) && !h.collider.transform.IsChildOf(transform))
+                    { GunFX.Tracer(from, h.point, 0.02f, 0.05f); GunFX.Impact(h.point, h.normal, false); }
+                    else GunFX.Tracer(from, from + aim.normalized * gunRange, 0.02f, 0.05f);
+                }
             }
             GunFX.Flash(from, 5f);
-            GunFX.Play(GunSound.Pistol, from, 1f);
+            GunFX.Play(pellets > 1 ? GunSound.Shotgun : GunSound.Pistol, from, 1f);
             anim?.Shoot();
-            if (hit)
+            if (hits > 0)
             {
                 float before = player.Health.current;
-                player.Health.Damage(gunDamage, transform.position);
+                player.Health.Damage(gunDamage * hits, transform.position);
                 float dealt = before - player.Health.current;
-                damageDealt += dealt; damageSinceTick += dealt;
+                damageDealt += dealt; damageSinceTick += dealt; lastHitOnPlayer = Time.time;
                 GameManager.Instance?.OnPlayerHit(ai);
             }
             EnemyAI.MakeNoise(transform.position, 20f);
@@ -330,10 +416,23 @@ namespace LastShift
         // ------------------------------------------------------------------ messages from the brain (called on the network thread)
         void OnMessage(string line)
         {
-            if (line.IndexOf("\"type\": \"action\"", StringComparison.Ordinal) < 0 && line.IndexOf("\"type\":\"action\"", StringComparison.Ordinal) < 0) return;
-            var a = JsonUtility.FromJson<AgentAction>(line);
-            lock (actionLock) pending = a;
-            lastWhy = a.why; lastMode = a.mode; lastZone = a.zone; belief = a.belief_top ?? belief; score = a.score;
+            // network thread: JsonUtility only works on the main thread, so just keep the newest raw line; Update() parses it
+            if (line.IndexOf("\"action\"", StringComparison.Ordinal) < 0) return;
+            lock (actionLock) pendingLine = line;
+        }
+
+        void ParsePending()
+        {
+            string line;
+            lock (actionLock) { line = pendingLine; pendingLine = null; }
+            if (line == null) return;
+            try
+            {
+                var a = JsonUtility.FromJson<AgentAction>(line);
+                action = a; actionsReceived++;
+                lastWhy = a.why; lastMode = a.mode; lastZone = a.zone; belief = a.belief_top ?? belief; score = a.score;
+            }
+            catch (Exception e) { Debug.LogWarning("[Guard Agent] could not read the brain's answer: " + e.Message); }
         }
 
         // ------------------------------------------------------------------ HUD
@@ -342,17 +441,19 @@ namespace LastShift
             if (!showHud || !Connected) return;
             var gm = GameManager.Instance;
             if (gm != null && !gm.IsPlaying) return;
-            var style = new GUIStyle(GUI.skin.label) { fontSize = 13, richText = true, alignment = TextAnchor.UpperRight };
+            var style = new GUIStyle(GUI.skin.label) { fontSize = 11, richText = true, alignment = TextAnchor.UpperRight };
             float w = 380f;
-            var r = new Rect(Screen.width - w - 12f, 10f, w, 120f);
+            if (hudIndex < 0) hudIndex = hudCount++;
+            var r = new Rect(Screen.width - w - 12f, 10f + hudIndex * 40f, w, 40f);
             string b = belief != null && belief.Length > 0 ? string.Join("  ", belief) : "";
-            GUI.Label(r, $"<b>SENTINEL</b>  guard agent\nscore <b>{score:F0}</b>   damage dealt <b>{damageDealt:F0}</b>\n{lastMode} → {lastZone}\n<i>{lastWhy}</i>\nbelief: {b}", style);
+            if (Time.time - lastShotHeard < 3f) b = "<color=#ff5050>GUNSHOT HEARD</color>  " + b;
+            GUI.Label(r, $"<b>{RoleTitle(role)}</b> {name}  score <b>{score:F0}</b>  dmg <b>{damageDealt:F0}</b>  {lastMode} → {lastZone}\n<i>{lastWhy}</i>  {b}", style);
         }
 
         // ------------------------------------------------------------------ wire format (JsonUtility)
         [Serializable] class GuardInfo { public float[] pos; public float hp; public int ammo; public bool reloading; }
-        [Serializable] class ScoreInfo { public float damage_dealt_now; public bool intruder_in_factory; }
-        [Serializable] class NoiseEvent { public float[] pos; public float strength; }
+        [Serializable] class ScoreInfo { public float damage_dealt_now; public bool intruder_in_factory; public bool intruder_searching_bag; public int bags_searched_total; }
+        [Serializable] class NoiseEvent { public float[] pos; public float strength; public string kind; }
         [Serializable] class Tick
         {
             public string type; public float dt; public GuardInfo guard; public bool player_visible; public float[] player_pos; public float player_hp_frac;
@@ -363,15 +464,17 @@ namespace LastShift
         /// <summary>Line-based JSON over TCP on background threads; reconnects every 3 s.</summary>
         class GuardLink
         {
-            readonly string host; readonly int port;
+            readonly string host, hello; readonly int port;
             Thread thread; volatile bool stop; volatile bool connected;
             readonly ConcurrentQueue<string> outbox = new ConcurrentQueue<string>();
             public Action<string> OnMessage;
             public bool Connected => connected;
-            public GuardLink(string h, int p) { host = h; port = p; }
+            public GuardLink(string h, int p, string helloJson) { host = h; port = p; hello = helloJson; }
             public void Send(string json) { if (connected) outbox.Enqueue(json); }
             public void Start() { thread = new Thread(Run) { IsBackground = true, Name = "GuardAgentLink" }; thread.Start(); }
             public void Stop() { stop = true; }
+
+            public volatile string Status = "starting";
 
             void Run()
             {
@@ -379,31 +482,37 @@ namespace LastShift
                 {
                     try
                     {
+                        Status = "connecting to " + host + ":" + port;
                         using (var c = new TcpClient { NoDelay = true })
                         {
                             c.Connect(host, port);
                             using (var s = c.GetStream())
                             {
-                                s.ReadTimeout = 20; s.WriteTimeout = 1000;
                                 var w = new StreamWriter(s, new UTF8Encoding(false)) { AutoFlush = true, NewLine = "\n" };
                                 var rd = new StreamReader(s, Encoding.UTF8);
-                                w.WriteLine("{\"type\":\"hello\",\"version\":1}");
+                                w.WriteLine(hello);
+                                Status = "hello sent";
                                 var sb = new StringBuilder();
                                 bool gotReady = false;
                                 var buf = new char[4096];
-                                while (!stop && c.Connected)
+                                while (!stop)
                                 {
                                     while (outbox.TryDequeue(out var msg)) w.WriteLine(msg);
-                                    int n = 0;
-                                    try { n = rd.Read(buf, 0, buf.Length); }
-                                    catch (IOException) { continue; }          // read timeout: nothing to read yet
+                                    if (!s.DataAvailable)
+                                    {
+                                        // the server closed the connection: readable with nothing to read
+                                        if (c.Client.Poll(0, SelectMode.SelectRead) && c.Client.Available == 0) break;
+                                        Thread.Sleep(5);
+                                        continue;
+                                    }
+                                    int n = rd.Read(buf, 0, buf.Length);
                                     if (n == 0) break;
                                     sb.Append(buf, 0, n);
                                     string all = sb.ToString(); int nl;
                                     while ((nl = all.IndexOf('\n')) >= 0)
                                     {
                                         string line = all.Substring(0, nl); all = all.Substring(nl + 1);
-                                        if (!gotReady && line.Contains("\"ready\"")) { gotReady = true; connected = true; continue; }
+                                        if (!gotReady && line.Contains("\"ready\"")) { gotReady = true; connected = true; Status = "connected"; continue; }
                                         OnMessage?.Invoke(line);
                                     }
                                     sb.Clear(); sb.Append(all);
@@ -411,7 +520,7 @@ namespace LastShift
                             }
                         }
                     }
-                    catch (Exception) { }
+                    catch (Exception e) { Status = "error: " + e.Message; }
                     connected = false;
                     while (outbox.TryDequeue(out _)) { }
                     for (int i = 0; i < 30 && !stop; i++) Thread.Sleep(100);

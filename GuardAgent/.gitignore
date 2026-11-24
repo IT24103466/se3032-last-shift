@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 pip_install.log
 logs/
-models/*.zip
+models/*_last.zip
+models/opponent_memory.json

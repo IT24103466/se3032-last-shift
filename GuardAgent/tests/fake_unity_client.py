@@ -29,4 +29,6 @@ t = dict(t, guard=dict(pos=[30, 46], hp=20, ammo=5, reloading=False), damage_tak
 print("hurt    ", call(t))
 t = dict(base, alarm=True, guard=dict(pos=[30, 46], hp=60, ammo=0, reloading=False))
 print("no ammo ", call(t))
+t = dict(base, alarm=True, noises=[dict(pos=[58, 73], strength=0.9, kind="gunshot")])
+print("gunshot ", call(t))
 print(call({"type": "episode_end", "outcome": "kill"}))
