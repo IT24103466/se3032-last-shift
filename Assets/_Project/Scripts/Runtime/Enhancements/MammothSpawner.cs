@@ -23,10 +23,17 @@ namespace LastShift
             {
                 yield return null;
                 if (FindObjectsByType<MammothAI>().Length > 0) yield break;     // exactly one mammoth per session
-                if (TrySpawn(i == attempts)) { Debug.Log($"[Sanjula] Mammoth spawned (attempt {i})."); yield break; }
+                if (SafeTrySpawn(i == attempts)) { Debug.Log($"[Sanjula] Mammoth spawned (attempt {i}), connectivity {lastLinks}/16."); yield break; }
                 yield return new WaitForSeconds(0.25f);
             }
             Debug.LogError("[Sanjula] The mammoth could not be spawned after " + attempts + " attempts.");
+        }
+
+        int lastLinks;
+        bool SafeTrySpawn(bool lastChance)
+        {
+            try { return TrySpawn(lastChance); }
+            catch (System.Exception e) { Debug.LogWarning("[Sanjula] spawn attempt failed, retrying: " + e.Message); return false; }
         }
 
         bool TrySpawn(bool lastChance)
@@ -57,9 +64,14 @@ namespace LastShift
             if (spots.Count > 0)
             {
                 // a different (random) valid spot each session; prefer ones that are not too far from the camp so the mammoth is discoverable
-                spots.Sort((x, y) => (Mathf.Abs(Vector3.Distance(x, camp) - 55f)).CompareTo(Mathf.Abs(Vector3.Distance(y, camp) - 55f)));
-                int pool = Mathf.Min(spots.Count, 5);
-                home = spots[Random.Range(0, pool)]; ok = true;
+                // a spot is only good if it is connected to a lot of walkable jungle (an isolated pocket gives a useless patrol / search graph)
+                var scored = new List<(Vector3 p, int links, float dist)>();
+                foreach (var sp in spots) scored.Add((sp, Connectivity(sp), Mathf.Abs(Vector3.Distance(sp, camp) - 55f)));
+                int maxLinks = 0; foreach (var sc in scored) maxLinks = Mathf.Max(maxLinks, sc.links);
+                scored.RemoveAll(sc => sc.links < Mathf.Max(Mathf.Min(10, maxLinks), maxLinks - 3));      // keep only the best-connected spots (never empties the list)
+                scored.Sort((x, y) => x.dist.CompareTo(y.dist));
+                int pool = Mathf.Min(scored.Count, 5);
+                var pick = scored[Random.Range(0, pool)]; home = pick.p; lastLinks = pick.links; ok = true;
             }
             if (!ok) { if (lastChance) Debug.LogWarning("[Sanjula] No NavMesh spot for the mammoth."); return false; }
 
@@ -97,8 +109,23 @@ namespace LastShift
             go.AddComponent<MammothAI>();
             go.AddComponent<MammothDecision>();     // milestone 5: utility-based decision engine; MammothAI executes its choice
             go.AddComponent<MammothSelfTest>();     // F9 / F8 / F7 rule checks
+            go.AddComponent<MammothDebugView>();    // F11 mind visualiser
             go.SetActive(true);
             return true;
+        }
+
+        /// <summary>How many of 16 probe points (rings at 15 m and 30 m) around a spot are walkable, inside the jungle and reachable in a straight NavMesh line.</summary>
+        static int Connectivity(Vector3 p)
+        {
+            int n = 0;
+            for (int ring = 1; ring <= 2; ring++)
+                for (int i = 0; i < 8; i++)
+                {
+                    float a = i / 8f * Mathf.PI * 2f, r = ring * 15f;
+                    var q = p + new Vector3(Mathf.Cos(a) * r, 0f, Mathf.Sin(a) * r);
+                    if (NavMesh.SamplePosition(q, out var nh, 5f, NavMesh.AllAreas) && MammothTerritory.Contains(nh.position) && !NavMesh.Raycast(p, nh.position, out _, NavMesh.AllAreas)) n++;
+                }
+            return n;
         }
 
         static void Recolor(Transform model)

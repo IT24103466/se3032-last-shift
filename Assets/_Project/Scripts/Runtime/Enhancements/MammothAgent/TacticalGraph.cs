@@ -18,7 +18,7 @@ namespace LastShift
         [Header("Coverage")]
         public float radius = 70f;
         public float spacing = 10f;
-        public float maxLinkDistance = 17f;
+        public float maxLinkDistance = 24f;
         public float sampleRange = 4f;
         public int maxNodes = 200;
         [Header("Build speed")]
