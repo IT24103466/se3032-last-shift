@@ -1,0 +1,6 @@
+numpy
+networkx
+gymnasium
+stable-baselines3
+torch
+pytest
