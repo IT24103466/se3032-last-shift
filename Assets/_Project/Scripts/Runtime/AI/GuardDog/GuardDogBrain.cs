@@ -16,6 +16,7 @@ namespace LastShift.GuardDog
     ///  │  (no retreat: Kalu fights until he's down: five hits)
     ///  ├─ Wait turn    sees him but someone else is fighting him  → keep 10 m off, growl, watch
     ///  ├─ Indicate     smells him hiding (locker / bush) nearby  → stand and bark at the spot
+    ///  ├─ Alarm        the siren is on and he's inside the premises → run to him (the guards' radios / the noise)
     ///  ├─ Investigate  heard a noise (gunshots always, small noises while still curious)
     ///  ├─ Track        fresher scent within 4.5 m                → follow the trail (scent-weighted A*)
     ///  ├─ Cast         lost the trail &lt; 25 s ago                 → search ahead then around
@@ -103,6 +104,10 @@ namespace LastShift.GuardDog
                     new Condition("Smells him hiding, my turn", () => SmellsHiddenPlayer() && MyTurn()),
                     new ActionNode("Point and bark", Indicate, enter: () => body.Growl())),
 
+                new Sequence("Alarm",
+                    new Condition("Siren on, he's in the premises", AlarmHunt),
+                    new ActionNode("Run to the intruder", RunToIntruder, enter: () => body.Bark())),
+
                 new Sequence("Investigate",
                     new Condition("Heard something", HeardSomething),
                     new ActionNode("Check the noise", Investigate, enter: () => investigateSniffUntil = -1f, exit: () => body.SetSniffing(false))),
@@ -174,6 +179,20 @@ namespace LastShift.GuardDog
 
         /// <summary>One fight at a time: only attack when the ThreatDirector gives Kalu the turn.</summary>
         bool MyTurn() => ThreatDirector.TryAttack(this, "Kalu (the estate dog)", player.transform.position);
+
+        /// <summary>The alarm is on and the intruder is inside the factory premises: the dog joins the hunt.</summary>
+        bool AlarmHunt()
+        {
+            var gm = GameManager.Instance;
+            return gm != null && gm.AlarmRaised && !Blackboard.PlayerHidden && ThreatDirector.InPremises(Blackboard.PlayerPos);
+        }
+
+        Status RunToIntruder()
+        {
+            GoTo(Blackboard.PlayerPos, DogNavigator.Mode.Chase, runSpeed * 0.9f);
+            ChaseBark();
+            return Status.Running;
+        }
 
         /// <summary>Lost sight of him a moment ago (round a corner, behind a bush): keep after him.</summary>
         bool InPursuit() => !Blackboard.PlayerHidden && Now - Blackboard.LastSeenTime < pursuitMemory;

@@ -1295,8 +1295,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d52295639dc34aa41aef657296d81891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.GuardDog.DogBody
-  biteDamage: 11
-  biteCooldown: 1
+  biteDamage: 7
+  biteCooldown: 1.2
   biteKnockback: 3.5
 --- !u!114 &2438516736346780023
 MonoBehaviour:

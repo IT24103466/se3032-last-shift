@@ -105,12 +105,13 @@ Root (Selector)
  ├─ Engage       sees the player (or saw him < 4 s ago) and has the turn (ThreatDirector)
  │    ├─ Alert   Cooldown 5 s: bark → noise 35 m (guards come), alarm if inside the premises
  │    └─ Attack (Selector)                                  (barks every 0.8–1.5 s throughout)
- │         ├─ Bite      within 1.7 m                       → 11 damage + knockback / 1 s
- │         ├─ Pounce    within 4.5 m, sees him, every 2.5 s → jump at him, 15 damage on landing
+ │         ├─ Bite      within 1.7 m                       → 7 damage + knockback / 1.2 s
+ │         ├─ Pounce    within 4.5 m, sees him, every 3 s → jump at him, 10 damage on landing
  │         ├─ Dodge     gun aimed at it (< 12°) and > 5 m  → zigzag in, Flank-mode A*
  │         └─ Chase                                         → Chase-mode A*; unreachable → wait & bark
  ├─ Wait turn    sees him but another enemy has the turn  → keep ~10 m off, growl, watch
  ├─ Indicate     player hidden (locker/bush) ≤ 9 m and his scent there > 0.4 → stand at the spot and bark
+ ├─ Alarm        siren on and he is inside the premises    → run to him (Chase-mode A*), barking
  ├─ Investigate  heard a noise (player gunfire always; small noises only if not on a trail and interest > 0.3)
  ├─ Track        newer scent within 4.5 m                   → follow the trail (Track-mode A*)
  ├─ Cast         lost the trail < 25 s ago                   → search pattern
@@ -139,6 +140,7 @@ twice with the slingshot, but not forever. Gunfire is never ignored.
 | Player crosses the stream / bridge | Trail breaks (water holds no scent) → Cast ahead, then around |
 | Trail loops or crosses itself | Deposit-time rule never backtracks |
 | Pebble distractions | Habituation (above) |
+| Factory alarm | Inside the premises the one-at-a-time rule is off: Kalu runs to the intruder and fights alongside the guards |
 | Gun pointed at it | Zigzags in outside the aim cone |
 | Shot | Five hits and it's down, whatever the weapon; a shotgun blast's 8 pellets land together and count as one hit. No retreat: it fights on |
 | Loses sight mid-chase | Keeps chasing for 4 s (pursuit memory), then follows the scent trail |

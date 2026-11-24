@@ -40,11 +40,11 @@ namespace LastShift.GuardDog
     [RequireComponent(typeof(NavMeshAgent), typeof(Health))]
     public class DogBody : MonoBehaviour, IDogBody
     {
-        public float maxHealth = 70f, biteDamage = 11f, biteCooldown = 1f, biteKnockback = 3.5f;
+        public float maxHealth = 70f, biteDamage = 7f, biteCooldown = 1.2f, biteKnockback = 3.5f;
         [Tooltip("Kalu goes down after this many hits, whatever the weapon (a shotgun blast counts as one)")]
         public int shotsToKill = 5;
         [Tooltip("The pounce: a jump at the player from a few metres away that ends in a bite")]
-        public float leapDamage = 15f, leapCooldown = 2.5f, leapTime = 0.38f, leapHeight = 0.8f;
+        public float leapDamage = 10f, leapCooldown = 3f, leapTime = 0.38f, leapHeight = 0.8f;
 
         NavMeshAgent agent;
         Health health;
