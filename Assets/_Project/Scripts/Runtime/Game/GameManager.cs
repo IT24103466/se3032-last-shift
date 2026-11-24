@@ -29,6 +29,7 @@ namespace LastShift
         float startTime, endTime, flash, toastUntil, lastEscapeNag;
         string toast, loseReason;
         GUIStyle box, big, title, body, small, center;
+        GUIStyle pauseTitle, pauseEyebrow, pauseHeading, pauseBody, pauseKey, pauseButton;
         bool debugAI;
         PlayerSlingshot sling;
         PlayerGun gun;
@@ -49,6 +50,7 @@ namespace LastShift
 
         void Start()
         {
+            if (GetComponent<FactoryLampLighting>() == null) gameObject.AddComponent<FactoryLampLighting>();
             player = FindAnyObjectByType<PlayerController>();
             bags = FindObjectsByType<TeaBag>(FindObjectsInactive.Exclude);
             enemies = FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude);
@@ -92,7 +94,7 @@ namespace LastShift
                     }
                     break;
                 case Phase.Paused:
-                    if (kb.escapeKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame) { phase = Phase.Playing; Time.timeScale = 1f; SetCursor(true); }
+                    if (kb.escapeKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame) Resume();
                     if (kb.rKey.wasPressedThisFrame) Restart();
                     break;
                 case Phase.Won:
@@ -292,7 +294,7 @@ namespace LastShift
             switch (phase)
             {
                 case Phase.Intro: DrawIntro(w, h); return;
-                case Phase.Paused: DrawHud(w, h); DrawPanel(w, h, "PAUSED", "Esc / Enter  resume        R  restart", null); return;
+                case Phase.Paused: DrawPause(w, h); return;
                 case Phase.Won:
                     DrawPanel(w, h, "YOU ESCAPED", $"Nimal slips back into the jungle and reaches his camp with the ring safe in his pocket.\nTime: {Format(endTime - startTime)}    Bags searched: {searched}/{bags.Length}    Knocked out: {knockedOut}", "Press R to play again");
                     return;
@@ -441,10 +443,103 @@ namespace LastShift
                 "He has to get it back before morning: through the jungle (tigers and the old elephant: the camp fire keeps them away), " +
                 "up through the tea, over the factory fence, past the armed security guards and night-shift workers, and then all the way back to his camp.", body);
             GUI.Label(new Rect(x, h * 0.58f, cw, 120),
-                "WASD move  ·  Shift sprint  ·  Space jump  ·  C crouch (hide in bushes)  ·  Left click shoot  ·  R reload  ·  1 pistol  2 shotgun  3 slingshot  ·  Right click stick\n" +
+                "WASD move  ·  Hold Ctrl sprint  ·  Space jump  ·  Hold Shift crouch (hide in bushes)  ·  Left click shoot  ·  R reload pistol  ·  1 pistol  2 shotgun  3 slingshot  ·  Right click stick\n" +
                 "E use doors, search bags (hold), take ammo, hide in lockers  ·  F torch (helps you see, but helps them see you)  ·  Esc pause\nTip: gunshots are loud (shooting inside the premises sets off the alarm); a slingshot pebble lures a guard away quietly", small);
             GUI.Label(new Rect(x, h * 0.70f, cw, 30), "Demo checkpoints: F1 jungle camp · F2 stream · F3 estate · F4 fence breach · F5 warehouse · F6 main gate", small);
             GUI.Label(new Rect(x, h * 0.78f, cw, 40), "Press ENTER to begin", big);
+        }
+
+        void Resume()
+        {
+            phase = Phase.Playing;
+            Time.timeScale = 1f;
+            SetCursor(true);
+        }
+
+        void PauseStyles()
+        {
+            if (pauseTitle != null) return;
+            GUIStyle Label(int size, FontStyle weight, Color color)
+            {
+                var style = new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = size, fontStyle = weight, wordWrap = true,
+                    alignment = TextAnchor.UpperLeft, padding = new RectOffset(0, 0, 0, 0)
+                };
+                style.normal.textColor = color;
+                return style;
+            }
+            var ivory = new Color(0.96f, 0.94f, 0.86f);
+            var gold = new Color(0.87f, 0.71f, 0.43f);
+            pauseTitle = Label(72, FontStyle.Bold, ivory);
+            pauseEyebrow = Label(14, FontStyle.Bold, gold);
+            pauseHeading = Label(23, FontStyle.Bold, ivory);
+            pauseBody = Label(18, FontStyle.Normal, new Color(0.74f, 0.79f, 0.75f));
+            pauseKey = Label(15, FontStyle.Bold, gold);
+            pauseKey.alignment = TextAnchor.MiddleCenter;
+            pauseButton = new GUIStyle(GUI.skin.button)
+            {
+                fontSize = 19, fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter
+            };
+            pauseButton.normal.textColor = ivory;
+            pauseButton.hover.textColor = gold;
+            pauseButton.focused.textColor = gold;
+        }
+
+        void DrawPause(float w, float h)
+        {
+            PauseStyles();
+            Fill(new Rect(0, 0, w, h), new Color(0.015f, 0.028f, 0.025f, 0.96f));
+            // Fit the entire menu to the viewport, including narrow Game views.
+            const float width = 1080f, height = 940f;
+            float fit = Mathf.Min(1f, (w - 32f) / width, (h - 32f) / height);
+            var previousMatrix = GUI.matrix;
+            GUI.matrix = previousMatrix * Matrix4x4.TRS(
+                new Vector3((w - width * fit) / 2f, (h - height * fit) / 2f, 0f),
+                Quaternion.identity, new Vector3(fit, fit, 1f));
+            try
+            {
+                Fill(new Rect(0, 0, width, height), new Color(0.045f, 0.075f, 0.065f));
+                Fill(new Rect(0, 0, 5, height), new Color(0.87f, 0.71f, 0.43f));
+                GUI.Label(new Rect(44, 34, 980, 24), "LAST SHIFT  /  KIRIMALA ESTATE", pauseEyebrow);
+                GUI.Label(new Rect(40, 64, 990, 96), "A moment to breathe.", pauseTitle);
+                GUI.Label(new Rect(44, 166, 990, 30), "PAUSED  /  Take your time. Plan your way out.", pauseBody);
+                Fill(new Rect(44, 216, 992, 1), new Color(0.3f, 0.37f, 0.31f));
+                GUI.Label(new Rect(44, 240, 980, 24), "YOUR NEXT MOVE", pauseEyebrow);
+                GUI.Label(new Rect(44, 273, 980, 72), Objective(), pauseHeading);
+
+                GUI.Label(new Rect(44, 368, 470, 34), "Move & explore", pauseHeading);
+                GUI.Label(new Rect(566, 368, 470, 34), "Interact & survive", pauseHeading);
+                PauseControl(44, 419, "W A S D", "Move", 470);
+                PauseControl(44, 461, "MOUSE", "Look around", 470);
+                PauseControl(44, 503, "CTRL", "Hold to sprint forward", 470);
+                PauseControl(44, 545, "SPACE", "Jump", 470);
+                PauseControl(44, 587, "SHIFT", "Hold to crouch; release to stand", 470);
+                PauseControl(44, 629, "F", "Toggle torch", 470);
+                PauseControl(566, 419, "E", "Use doors, lockers; collect supplies", 470);
+                PauseControl(566, 461, "HOLD E", "Search a tea bag", 470);
+                PauseControl(566, 503, "LEFT CLICK", "Fire; hold/release to use slingshot", 470);
+                PauseControl(566, 545, "RIGHT CLICK", "Swing your stick", 470);
+                PauseControl(566, 587, "R", "Reload pistol (also automatic at empty)", 470);
+                PauseControl(566, 629, "1 / 2 / 3", "Pistol / shotgun / slingshot", 470);
+
+                Fill(new Rect(44, 697, 992, 1), new Color(0.3f, 0.37f, 0.31f));
+                GUI.Label(new Rect(44, 718, 980, 24), "KEEP A LOW PROFILE", pauseEyebrow);
+                GUI.Label(new Rect(44, 752, 980, 60),
+                    "Gunshots attract attention. Use a slingshot pebble to lure guards away. Your torch helps you see, " +
+                    "but makes you easier to spot. Find the ring before heading to the main gate.", pauseBody);
+                if (GUI.Button(new Rect(44, 837, 474, 58), "Resume  /  Esc or Enter", pauseButton)) Resume();
+                if (GUI.Button(new Rect(538, 837, 498, 58), "Restart night  /  R", pauseButton)) Restart();
+            }
+            finally { GUI.matrix = previousMatrix; }
+        }
+
+        void PauseControl(float x, float y, string keys, string description, float width)
+        {
+            Fill(new Rect(x, y, 124, 34), new Color(0.09f, 0.14f, 0.115f));
+            GUI.Label(new Rect(x, y, 124, 34), keys, pauseKey);
+            GUI.Label(new Rect(x + 140, y + 5, width - 140, 38), description, pauseBody);
         }
 
         void DrawPanel(float w, float h, string head, string text, string foot)

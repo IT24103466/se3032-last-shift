@@ -14,8 +14,14 @@ namespace LastShift
         public float damage = 20f;
         bool spent;
         Rigidbody rb;
+        Vector3 previousPosition;
 
-        void Awake() => rb = GetComponent<Rigidbody>();
+        void Awake() { rb = GetComponent<Rigidbody>(); previousPosition = transform.position; }
+        void FixedUpdate()
+        {
+            if (!spent) EnemyAI.NoticeProjectile(previousPosition, transform.position, transform);
+            previousPosition = transform.position;
+        }
         void Start() => Destroy(gameObject, 8f);
 
         void OnCollisionEnter(Collision c)

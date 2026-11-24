@@ -186,11 +186,7 @@ namespace CustomArt.EditorTools
                         root = new GameObject("TeaBag_Custom");
                         mesh.name = "Sack"; mesh.transform.SetParent(root.transform, false);
                         var sc = mesh.AddComponent<CapsuleCollider>(); sc.radius = 0.27f; sc.height = 0.78f; sc.center = new Vector3(0f, 0.38f, 0f);
-                        var tag = GameObject.CreatePrimitive(PrimitiveType.Cube); tag.name = "Tag";
-                        Object.DestroyImmediate(tag.GetComponent<Collider>());
-                        tag.transform.SetParent(root.transform, false);
-                        tag.transform.localPosition = new Vector3(0f, 0.50f, -0.215f); tag.transform.localScale = new Vector3(0.20f, 0.12f, 0.012f);
-                        var tr = tag.GetComponent<MeshRenderer>(); tr.sharedMaterial = TagMaterial(); tr.shadowCastingMode = ShadowCastingMode.Off;
+                        // The custom sack's texture contains its label; no emissive tag overlay.
                         root.AddComponent<TeaBag>();
                         break;
                 }

@@ -240,7 +240,7 @@ namespace WorldBuilder.EditorTools
 
             var torch = new GameObject("Torch").AddComponent<Light>();
             torch.transform.SetParent(eyes.transform, false);
-            torch.type = LightType.Spot; torch.spotAngle = 55f; torch.range = 22f; torch.intensity = 5f;
+            torch.type = LightType.Spot; torch.spotAngle = 65f; torch.innerSpotAngle = 38f; torch.range = 40f; torch.intensity = 8f;
             torch.color = new Color(1f, 0.95f, 0.85f); torch.shadows = LightShadows.Soft; torch.enabled = false;
             pc.eyes = eyes.transform; pc.torch = torch;
 
@@ -320,13 +320,7 @@ namespace WorldBuilder.EditorTools
             Hand(pump, new Vector3(-0.01f, -0.03f, 0f), new Vector3(-5f, 28f, 0f));
             var shotgunMuzzle = Pivot(shotgun, "Muzzle", new Vector3(0f, 0.038f, 0.64f));
 
-            // A faint fill light just in front of the face so the guns read against the night
-            // (range under a metre: it lights the weapon and hands, not the world)
-            var fill = new GameObject("ViewmodelLight").AddComponent<Light>();
-            fill.transform.SetParent(eyes.transform, false);
-            fill.transform.localPosition = new Vector3(0.02f, 0.12f, 0.12f);
-            fill.type = LightType.Point; fill.range = 0.9f; fill.intensity = 1.2f;
-            fill.color = new Color(0.78f, 0.84f, 1f); fill.shadows = LightShadows.None;
+            // Weapon visibility uses scene lighting; a player point light leaks onto nearby walls.
 
             gun.guns[0].model = pistol; gun.guns[0].muzzle = pistolMuzzle;
             gun.guns[1].model = shotgun; gun.guns[1].muzzle = shotgunMuzzle; gun.guns[1].pump = pump;

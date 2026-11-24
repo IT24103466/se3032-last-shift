@@ -3,20 +3,46 @@ using UnityEngine;
 namespace LastShift
 {
     /// <summary>
-    /// A box of ammunition: look at it and press E to take the rounds and shells.
+    /// Supplies are collected automatically within reach, with E as an optional fallback.
     /// The level has crates along the route; knocked-out guards, workers and the hunter drop a small box.
     /// </summary>
     public class AmmoBox : MonoBehaviour
     {
-        public int pistolRounds = 30, shells = 10;
+        public int pistolRounds = 18, shells = 6;
+        PlayerGun nearbyPlayer;
+        float nextCheck;
+        void Start()
+        {
+            pistolRounds = Random.Range(6, 11); shells = Random.Range(5, 8);
+            PickupTargeting.Fit(this);
+            nearbyPlayer = FindAnyObjectByType<PlayerGun>();
+        }
+
+        void Update()
+        {
+            if (Time.time < nextCheck || (GameManager.Instance != null && !GameManager.Instance.IsPlaying)) return;
+            nextCheck = Time.time + 0.15f;
+            if (nearbyPlayer == null) nearbyPlayer = FindAnyObjectByType<PlayerGun>();
+            if (nearbyPlayer == null || !nearbyPlayer.CanAddAmmo) return;
+            var player = nearbyPlayer.GetComponent<PlayerController>();
+            if (player == null || player.Health.Dead || player.InLocker) return;
+            var volume = transform.Find("InteractionVolume");
+            var collider = volume != null ? volume.GetComponent<Collider>() : GetComponentInChildren<Collider>();
+            Vector3 point = collider != null ? collider.ClosestPoint(player.transform.position + Vector3.up * 0.45f) : transform.position;
+            if (Vector3.Distance(point, player.transform.position + Vector3.up * 0.45f) > 1.15f) return;
+            Vector3 from = player.Chest, to = transform.position + Vector3.up * 0.1f;
+            foreach (var hit in Physics.RaycastAll(from, (to - from).normalized, Vector3.Distance(from, to), ~(1 << 2), QueryTriggerInteraction.Ignore))
+                if (!hit.transform.IsChildOf(player.transform) && !hit.transform.IsChildOf(transform)) return;
+            Take(nearbyPlayer);
+        }
 
         public void Take(PlayerGun gun)
         {
-            if (!gun.AddAmmo(pistolRounds, shells)) { GameManager.Instance?.Toast("You can't carry any more ammo.", 1.5f); return; }
-            string what = pistolRounds > 0 && shells > 0 ? $"{pistolRounds} rounds and {shells} shells"
-                        : pistolRounds > 0 ? $"{pistolRounds} pistol rounds" : $"{shells} shotgun shells";
+            if (!gameObject.activeInHierarchy) return;
+            int beforePistol = gun.guns[0].reserve, beforeShotgun = gun.guns[1].reserve;
+            if (!gun.AddAmmo(pistolRounds, shells)) return;
+            string what = $"{gun.guns[0].reserve - beforePistol} pistol rounds and {gun.guns[1].reserve - beforeShotgun} shells";
             GameManager.Instance?.Toast("Picked up " + what, 1.5f);
-            GunFX.Play(GunSound.Reload, transform.position, 0.5f);
             gameObject.SetActive(false);
         }
 

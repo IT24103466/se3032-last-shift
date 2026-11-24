@@ -164,11 +164,13 @@ namespace LastShift
                     if (i > 0)
                     {
                         var seg = Prim(PrimitiveType.Capsule, model, ivory);
+                        seg.name = "MammothTusk";
                         Vector3 d = p - prev;
                         seg.transform.localPosition = (p + prev) * 0.5f;
                         seg.transform.localRotation = Quaternion.FromToRotation(Vector3.up, d.normalized);
                         float th = Mathf.Lerp(0.34f, 0.07f, t);
                         seg.transform.localScale = new Vector3(th, d.magnitude * 0.62f, th);
+                        if (head != null) seg.transform.SetParent(head, true);
                     }
                     prev = p;
                 }
@@ -183,6 +185,7 @@ namespace LastShift
             for (int i = 0; i < 26; i++)
             {
                 var g = Prim(PrimitiveType.Sphere, model, fur);
+                g.name = "MammothFur";
                 bool back = i < 14;
                 float z = Mathf.Lerp(-1.5f, 1.6f, R());
                 g.transform.localPosition = back ? new Vector3((R() - 0.5f) * 1.2f, 3.05f + R() * 0.3f, z)

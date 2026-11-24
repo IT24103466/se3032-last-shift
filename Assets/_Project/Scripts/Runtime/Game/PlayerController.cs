@@ -46,6 +46,15 @@ namespace LastShift
             Health = GetComponent<Health>();
             Stamina = maxStamina;
             if (eyes == null) eyes = transform.Find("Eyes");
+            // Legacy scenes contain a shadowless fill light which leaks into nearby walls.
+            foreach (var light in GetComponentsInChildren<Light>(true))
+                if (light.name == "ViewmodelLight") light.enabled = false;
+            if (torch != null)
+            {
+                torch.spotAngle = 65f; torch.innerSpotAngle = 38f;
+                torch.range = 40f; torch.intensity = 8f;
+                torch.shadows = LightShadows.Soft;
+            }
             Health.Damaged += (a, from) => shake = 0.25f;
         }
 
@@ -68,7 +77,8 @@ namespace LastShift
                 return;
             }
 
-            if (kb.cKey.wasPressedThisFrame || kb.leftCtrlKey.wasPressedThisFrame) SetCrouch(!Crouched);
+            bool crouchHeld = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
+            if (crouchHeld != Crouched) SetCrouch(crouchHeld);
             Move(kb);
             Interact(kb);
             if (kb.fKey.wasPressedThisFrame && torch != null) torch.enabled = !torch.enabled;
@@ -122,7 +132,7 @@ namespace LastShift
             var input = new Vector2((kb.dKey.isPressed ? 1 : 0) - (kb.aKey.isPressed ? 1 : 0),
                                     (kb.wKey.isPressed ? 1 : 0) - (kb.sKey.isPressed ? 1 : 0));
             input = Vector2.ClampMagnitude(input, 1f);
-            bool wantSprint = kb.leftShiftKey.isPressed && input.y > 0.1f && !Crouched;
+            bool wantSprint = (kb.leftCtrlKey.isPressed || kb.rightCtrlKey.isPressed) && input.y > 0.1f && !Crouched;
             Sprinting = wantSprint && Stamina > 1f;
             Stamina = Sprinting ? Mathf.Max(0f, Stamina - sprintDrain * Time.deltaTime)
                                 : Mathf.Min(maxStamina, Stamina + staminaRegen * Time.deltaTime);
@@ -132,7 +142,7 @@ namespace LastShift
             if (Body.isGrounded)
             {
                 if (vertical < 0f) vertical = -2f;
-                if (kb.spaceKey.wasPressedThisFrame && !Crouched && Stamina > 5f)
+                if (kb.spaceKey.wasPressedThisFrame && Stamina >= 5f)
                 {
                     vertical = Mathf.Sqrt(jumpHeight * -2f * gravity);
                     Stamina -= 5f;
@@ -207,14 +217,10 @@ namespace LastShift
         void Interact(Keyboard kb)
         {
             Prompt = null;
-            TeaBag bag = null; GreyboxInteractable thing = null; PebblePile pile = null; AmmoBox ammo = null;
-            if (LookingAt(2.6f, out var hit))
-            {
-                bag = hit.collider.GetComponentInParent<TeaBag>();
-                pile = hit.collider.GetComponentInParent<PebblePile>();
-                ammo = hit.collider.GetComponentInParent<AmmoBox>();
-                if (bag == null && pile == null && ammo == null) thing = hit.collider.GetComponentInParent<GreyboxInteractable>();
-            }
+            var target = PickupTargeting.Find(eyes, transform);
+            var bag = target as TeaBag; var pile = target as PebblePile;
+            var ammo = target as AmmoBox; var thing = target as GreyboxInteractable;
+            if (bag != searching) { searching = null; SearchProgress = 0f; }
             if (ammo != null)
             {
                 Prompt = "E  Take the ammo";
