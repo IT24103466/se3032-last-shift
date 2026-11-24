@@ -210,6 +210,7 @@ namespace WorldBuilder.EditorTools
             light.intensity = intensity;
             light.shadows = LightShadows.Soft;
             light.lightmapBakeType = mode;
+            LastShift.FactoryLampLighting.ConfigureLight(light);
             AddBulb(go.transform, color);
             if (mode == LightmapBakeType.Mixed)
             {

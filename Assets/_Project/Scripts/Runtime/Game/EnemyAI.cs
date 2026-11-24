@@ -45,6 +45,7 @@ namespace LastShift
         GunSound gunSound;
         Transform muzzle;
         float aimUntil = -1f, nextShot, reloadUntil;
+        float nextHurtVoice;
         bool spotted;
 
         State state, resumeState;
@@ -52,6 +53,8 @@ namespace LastShift
         Health health;
         CreatureAnimator anim;
         HumanLocomotion humanMotion;
+        TigerVoice tigerVoice;
+        float nextClueCheck, nextInvestigation;
         PlayerController player;
         Vector3 home, lastKnown, knock;
         float stateTimer, lostTimer, nextAttack, nextDoorCheck, idleUntil, attackAt = -1f;
@@ -71,6 +74,22 @@ namespace LastShift
                 if (e != null && Vector3.Distance(e.transform.position, pos) < radius) e.HearNoise(pos);
         }
 
+        public static void NoticeProjectile(Vector3 from, Vector3 to, Transform source)
+        {
+            if ((to - from).sqrMagnitude < 0.001f) return;
+            foreach (var e in all)
+            {
+                if (e == null || e.transform == source || e.health.Dead || e.Chasing || Time.time < e.nextInvestigation) continue;
+                var eye = e.transform.position + Vector3.up * e.eyeHeight;
+                Vector3 near = EnemyAwareness.ClosestPoint(from, to, eye);
+                float distance = Vector3.Distance(near, eye);
+                if (distance > 6f) continue;
+                e.nextInvestigation = Time.time + 1f;
+                if (Random.value > Mathf.Lerp(0.85f, 0.25f, distance / 6f) || !EnemyAwareness.Clear(eye, near, e.transform, source)) continue;
+                e.HearNoise(near + Random.insideUnitSphere * 1.5f);
+            }
+        }
+
         void HearNoise(Vector3 pos)
         {
             if (state == State.Dead || player == null) return;
@@ -80,7 +99,8 @@ namespace LastShift
                 case EnemyKind.Elephant: break;   // unbothered
                 default:
                     if (state == State.Chase || state == State.Stunned) return;
-                    lastKnown = pos; state = State.Search; stateTimer = 5f;
+                    lastKnown = NavMesh.SamplePosition(pos, out var navPoint, 3f, agent.areaMask) ? navPoint.position : new Vector3(pos.x, transform.position.y, pos.z);
+                    state = State.Search; stateTimer = 5f;
                     break;
             }
         }
@@ -140,6 +160,11 @@ namespace LastShift
 
         void Start()
         {
+            if (kind == EnemyKind.Tiger)
+            {
+                tigerVoice = GetComponent<TigerVoice>();
+                if (tigerVoice == null) tigerVoice = gameObject.AddComponent<TigerVoice>();
+            }
             if (IsHuman)
             {
                 humanMotion = GetComponent<HumanLocomotion>();
@@ -175,6 +200,13 @@ namespace LastShift
             float dist = Vector3.Distance(transform.position, player.transform.position);
             bool sees = !player.Health.Dead && CanSee(dist);
             bool hears = !player.Health.Dead && Hears(dist);
+            if (!sees && !player.Health.Dead && Time.time >= nextClueCheck)
+            {
+                nextClueCheck = Time.time + 0.5f;
+                Vector3 eye = transform.position + Vector3.up * eyeHeight;
+                if (Time.time >= nextInvestigation && EnemyAwareness.TorchClue(player.torch, player.transform, transform, eye, transform.forward, out var clue))
+                { nextInvestigation = Time.time + 3f; HearNoise(clue + Random.insideUnitSphere * 2f); }
+            }
 
             if (state == State.Stunned)
             {
@@ -386,7 +418,7 @@ namespace LastShift
             {
                 shotsLeft = gunMag;
                 reloadUntil = Time.time + gunReload;
-                GunFX.Play(GunSound.Reload, transform.position, 0.6f);
+                GunFX.Play(GunFX.ReloadFor(gunSound), transform.position, 0.6f);
             }
         }
 
@@ -418,6 +450,7 @@ namespace LastShift
                 if (Random.value < chance)
                 {
                     damage += gunDamage;
+                    NoticeProjectile(from, player.Chest, transform);
                     if (i < 3) GunFX.Tracer(from, player.Chest + Random.insideUnitSphere * 0.25f + Vector3.up * 0.2f, 0.02f, 0.05f);
                 }
                 else if (i < 3)
@@ -426,8 +459,8 @@ namespace LastShift
                     Vector3 aim = player.Chest + Random.insideUnitSphere * 1.3f - from;
                     if (Physics.Raycast(from, aim.normalized, out var hit, gunRange * 1.5f, ~(1 << 2), QueryTriggerInteraction.Ignore)
                         && !hit.collider.transform.IsChildOf(transform))
-                    { GunFX.Tracer(from, hit.point, 0.02f, 0.05f); GunFX.Impact(hit.point, hit.normal, false); }
-                    else GunFX.Tracer(from, from + aim.normalized * gunRange, 0.02f, 0.05f);
+                    { GunFX.Tracer(from, hit.point, 0.02f, 0.05f); GunFX.Impact(hit.point, hit.normal, false); NoticeProjectile(from, hit.point, transform); }
+                    else { GunFX.Tracer(from, from + aim.normalized * gunRange, 0.02f, 0.05f); NoticeProjectile(from, from + aim.normalized * gunRange, transform); }
                 }
             }
             GunFX.Flash(from, 5f);
@@ -441,11 +474,17 @@ namespace LastShift
             MakeNoise(transform.position, 20f);   // gunfire draws the others
         }
 
-        public void Knockback(Vector3 v) { v.y = 0f; knock += v * (kind == EnemyKind.Elephant ? 0.1f : 1f); }
+        public void Knockback(Vector3 v) { v.y = 0f; knock = Vector3.ClampMagnitude(knock + v * (kind == EnemyKind.Elephant ? 0.1f : 1f), IsHuman ? 7f : 12f); }
 
         void OnDamaged(float amount, Vector3 from)
         {
             if (state == State.Dead) return;
+            if (kind == EnemyKind.Tiger && !health.Dead) tigerVoice?.TryGrowl();
+            if (IsHuman && !health.Dead && Time.time >= nextHurtVoice)
+            {
+                nextHurtVoice = Time.time + 0.3f;
+                GunFX.Play(Random.Range(0, 2) == 0 ? GunSound.HumanHurt1 : GunSound.HumanHurt2, transform.position + Vector3.up, 0.8f);
+            }
             if (player != null) lastKnown = player.transform.position;
             anim?.Flinch();
             switch (kind)
@@ -465,6 +504,7 @@ namespace LastShift
 
         void OnDied()
         {
+            if (IsHuman) GunFX.Play(GunSound.HumanDeath, transform.position + Vector3.up, 0.9f);
             state = State.Dead;
             agent.enabled = false;
             foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
@@ -488,7 +528,11 @@ namespace LastShift
             if (state != State.Chase) { state = State.Search; stateTimer = 12f; }
         }
 
-        void Bark() => anim?.Roar();
+        void Bark()
+        {
+            anim?.Roar();
+            if (kind == EnemyKind.Tiger) tigerVoice?.TryGrowl();
+        }
 
         // Closed doors are not on the NavMesh's mind: open them on the way (guards have keys)
         void OpenDoors()

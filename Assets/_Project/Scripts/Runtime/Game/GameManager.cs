@@ -50,6 +50,7 @@ namespace LastShift
 
         void Start()
         {
+            if (GetComponent<FactoryLampLighting>() == null) gameObject.AddComponent<FactoryLampLighting>();
             player = FindAnyObjectByType<PlayerController>();
             bags = FindObjectsByType<TeaBag>(FindObjectsInactive.Exclude);
             enemies = FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude);
@@ -384,7 +385,7 @@ namespace LastShift
                 "He has to get it back before morning: through the jungle (tigers, the old elephant, and a poacher with a rifle), " +
                 "up through the tea, over the factory fence, and past the armed security guards and night-shift workers.", body);
             GUI.Label(new Rect(x, h * 0.58f, cw, 120),
-                "WASD move  ·  Shift sprint  ·  Space jump  ·  C crouch (hide in bushes)  ·  Left click shoot  ·  R reload  ·  1 pistol  2 shotgun  3 slingshot  ·  Right click stick\n" +
+                "WASD move  ·  Hold Ctrl sprint  ·  Space jump  ·  Hold Shift crouch (hide in bushes)  ·  Left click shoot  ·  R reload pistol  ·  1 pistol  2 shotgun  3 slingshot  ·  Right click stick\n" +
                 "E use doors, search bags (hold), take ammo, hide in lockers  ·  F torch (helps you see, but helps them see you)  ·  Esc pause\nTip: gunshots are loud (shooting inside the premises sets off the alarm); a slingshot pebble lures a guard away quietly", small);
             GUI.Label(new Rect(x, h * 0.70f, cw, 30), "Demo checkpoints: F1 jungle camp · F2 stream · F3 estate · F4 fence breach · F5 warehouse · F6 main gate", small);
             GUI.Label(new Rect(x, h * 0.78f, cw, 40), "Press ENTER to begin", big);
@@ -454,15 +455,15 @@ namespace LastShift
                 GUI.Label(new Rect(566, 368, 470, 34), "Interact & survive", pauseHeading);
                 PauseControl(44, 419, "W A S D", "Move", 470);
                 PauseControl(44, 461, "MOUSE", "Look around", 470);
-                PauseControl(44, 503, "SHIFT", "Hold to sprint forward", 470);
+                PauseControl(44, 503, "CTRL", "Hold to sprint forward", 470);
                 PauseControl(44, 545, "SPACE", "Jump", 470);
-                PauseControl(44, 587, "C / CTRL", "Toggle crouch; hide in bushes", 470);
+                PauseControl(44, 587, "SHIFT", "Hold to crouch; release to stand", 470);
                 PauseControl(44, 629, "F", "Toggle torch", 470);
                 PauseControl(566, 419, "E", "Use doors, lockers; collect supplies", 470);
                 PauseControl(566, 461, "HOLD E", "Search a tea bag", 470);
                 PauseControl(566, 503, "LEFT CLICK", "Fire; hold/release to use slingshot", 470);
                 PauseControl(566, 545, "RIGHT CLICK", "Swing your stick", 470);
-                PauseControl(566, 587, "R", "Reload while playing", 470);
+                PauseControl(566, 587, "R", "Reload pistol (also automatic at empty)", 470);
                 PauseControl(566, 629, "1 / 2 / 3", "Pistol / shotgun / slingshot", 470);
 
                 Fill(new Rect(44, 697, 992, 1), new Color(0.3f, 0.37f, 0.31f));

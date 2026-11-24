@@ -170,7 +170,7 @@ namespace WorldBuilder.EditorTools
             int n = 0;
             foreach (var light in lightsRoot.GetComponentsInChildren<Light>(true))
             {
-                if (light.type != LightType.Point || !light.name.StartsWith("Lamp_")) continue;
+                if ((light.type != LightType.Point && light.type != LightType.Spot) || !light.name.StartsWith("Lamp_")) continue;
                 Vector3 p = light.transform.position;
                 bool outdoor = light.name.StartsWith("Lamp_Yard") || light.name.StartsWith("Lamp_Gate") || light.name.StartsWith("Lamp_Path");
 

@@ -240,7 +240,7 @@ namespace WorldBuilder.EditorTools
 
             var torch = new GameObject("Torch").AddComponent<Light>();
             torch.transform.SetParent(eyes.transform, false);
-            torch.type = LightType.Spot; torch.spotAngle = 55f; torch.range = 22f; torch.intensity = 5f;
+            torch.type = LightType.Spot; torch.spotAngle = 65f; torch.innerSpotAngle = 38f; torch.range = 40f; torch.intensity = 8f;
             torch.color = new Color(1f, 0.95f, 0.85f); torch.shadows = LightShadows.Soft; torch.enabled = false;
             pc.eyes = eyes.transform; pc.torch = torch;
 

@@ -3,12 +3,11 @@ using UnityEngine;
 
 namespace LastShift
 {
-    public enum GunSound { Pistol, Shotgun, Rifle, Reload, Empty, Pump }
+    public enum GunSound { Pistol, Shotgun, Rifle, Reload, Empty, Pump, PistolReload, ShotgunReload, HumanHurt1, HumanHurt2, HumanDeath, TigerGrowl }
 
     /// <summary>
     /// Shared gunfire effects for the player and the enemies: tracers, muzzle flashes, impact sparks
-    /// and gunshot sounds. Everything is made at runtime (no imported assets): the sounds are
-    /// synthesised once (a noise burst with a low thump for the shot, short clicks for reloading).
+    /// and positional sound. Supplied SFX are loaded from Resources, with generated fallbacks.
     /// </summary>
     public static class GunFX
     {
@@ -75,8 +74,9 @@ namespace LastShift
         }
 
         // ------------------------------------------------------------------ sound
+        public static GunSound ReloadFor(GunSound gun) => gun == GunSound.Shotgun ? GunSound.ShotgunReload : gun == GunSound.Pistol ? GunSound.PistolReload : GunSound.Reload;
 
-        public static void Play(GunSound s, Vector3 pos, float volume = 1f)
+        public static AudioSource Play(GunSound s, Vector3 pos, float volume = 1f)
         {
             var clip = Clip(s);
             var go = new GameObject("GunSound");
@@ -87,15 +87,26 @@ namespace LastShift
             src.spatialBlend = 1f;
             src.rolloffMode = AudioRolloffMode.Linear;
             src.minDistance = 2f;
-            src.maxDistance = s == GunSound.Reload || s == GunSound.Empty || s == GunSound.Pump ? 12f : 90f;
+            src.maxDistance = s == GunSound.Reload || s == GunSound.PistolReload || s == GunSound.ShotgunReload || s == GunSound.Empty || s == GunSound.Pump ? 12f
+                : s == GunSound.HumanHurt1 || s == GunSound.HumanHurt2 || s == GunSound.HumanDeath ? 25f : 90f;
             src.pitch = Random.Range(0.94f, 1.06f);
             src.Play();
             Object.Destroy(go, clip.length + 0.1f);
+            return src;
         }
 
         static AudioClip Clip(GunSound s)
         {
             if (clips.TryGetValue(s, out var c) && c != null) return c;
+            string file = s == GunSound.Pistol ? "pistol_fire" : s == GunSound.Shotgun ? "shotgun_fire"
+                : s == GunSound.PistolReload || s == GunSound.Reload ? "pistol_reload" : s == GunSound.ShotgunReload ? "shotgun_reload"
+                : s == GunSound.HumanHurt1 ? "human_hurt1" : s == GunSound.HumanHurt2 ? "human_hurt2"
+                : s == GunSound.HumanDeath ? "human_death" : s == GunSound.TigerGrowl ? "tiger_growl" : null;
+            if (file != null)
+            {
+                c = Resources.Load<AudioClip>("Audio/SFX/" + file);
+                if (c != null) { clips[s] = c; return c; }
+            }
             const int rate = 22050;
             float len; System.Func<float, float> wave;
             var rng = new System.Random((int)s * 977 + 13);
