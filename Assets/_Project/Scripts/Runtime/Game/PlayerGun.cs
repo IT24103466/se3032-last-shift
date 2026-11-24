@@ -10,7 +10,7 @@ namespace LastShift
     {
         public string name = "Pistol";
         public GunSound sound = GunSound.Pistol;
-        public int magSize = 12, mag = 12, reserve = 36, maxReserve = 72;
+        public int magSize = 12, mag = 12, reserve = 72, maxReserve = 120;
         [Tooltip("Damage per pellet (a pistol fires one pellet)")]
         public float damage = 25f;
         public int pellets = 1;
@@ -37,7 +37,7 @@ namespace LastShift
         public Gun[] guns =
         {
             new Gun(),
-            new Gun { name = "Shotgun", sound = GunSound.Shotgun, magSize = 6, mag = 6, reserve = 12, maxReserve = 30,
+            new Gun { name = "Shotgun", sound = GunSound.Shotgun, magSize = 6, mag = 6, reserve = 24, maxReserve = 48,
                       damage = 13f, pellets = 8, spread = 4.5f, interval = 0.85f, reloadTime = 0.5f, range = 40f, recoil = 6f, shellByShell = true },
         };
         public Material tracerMaterial, sparkMaterial;

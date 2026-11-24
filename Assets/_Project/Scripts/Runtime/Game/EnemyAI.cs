@@ -64,8 +64,12 @@ namespace LastShift
         void OnDisable() => all.Remove(this);
 
         /// <summary>A sound at a point (a pebble landing): enemies in range go to look; deer bolt.</summary>
+        /// <summary>Every noise in the world (position, radius): lets other agents (e.g. the guard dog) listen without coupling to EnemyAI.</summary>
+        public static event System.Action<Vector3, float> NoiseMade;
+
         public static void MakeNoise(Vector3 pos, float radius)
         {
+            NoiseMade?.Invoke(pos, radius);
             foreach (var e in all.ToArray())
                 if (e != null && Vector3.Distance(e.transform.position, pos) < radius) e.HearNoise(pos);
         }
@@ -79,12 +83,74 @@ namespace LastShift
                 case EnemyKind.Elephant: break;   // unbothered
                 default:
                     if (state == State.Chase || state == State.Stunned) return;
+                    // Only a couple of people respond at a time; the rest stay at their posts
+                    if (IsHuman && state != State.Search && !SlotFree(pos)) return;
                     lastKnown = pos; state = State.Search; stateTimer = 5f;
                     break;
             }
         }
+        // ---- One fight at a time (see ThreatDirector): an enemy that notices the player only
+        //      attacks if it gets the turn; otherwise it keeps its distance and watches.
+        // ---- Stealth: noticing takes time. Suspicion (0..1) fills while the player is in view —
+        //      faster up close, when already alerted or when he isn't crouching — and drains when
+        //      he's out of sight. Only at 1 does the enemy commit to a chase.
+        public float Suspicion { get; private set; }
+        public static System.Collections.Generic.IReadOnlyList<EnemyAI> All => all;
+
+        /// <summary>How many guards/workers may be out hunting the player at once (the rest hold their posts).</summary>
+        public const int MaxResponders = 3;
+
+        /// <summary>Guards and workers currently chasing or searching.</summary>
+        public static int Responders()
+        {
+            int n = 0;
+            foreach (var e in all)
+                if (e != null && e.IsHuman && (e.state == State.Chase || e.state == State.Search)) n++;
+            return n;
+        }
+
+        /// <summary>May I leave my post to respond to something at pos? Yes if there's a free slot or it's right next to me.</summary>
+        bool SlotFree(Vector3 pos) => Responders() < MaxResponders || Vector3.Distance(transform.position, pos) < 10f;
+
+        bool MayAttackPlayer() => harmless || ThreatDirector.TryAttack(this, DisplayName, player.transform.position);
+
+        /// <summary>Not my turn: keep my distance from the player and watch him.</summary>
+        void HoldBack(float dist)
+        {
+            aimUntil = -1f;
+            if (dist < 12f) Go(home, walkSpeed);
+            else if (agent.hasPath) agent.ResetPath();
+            Vector3 to = player.transform.position - transform.position; to.y = 0f;
+            if (to.sqrMagnitude > 0.01f) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to), 3f * Time.deltaTime);
+        }
+
+        /// <summary>Fills while the player is in view; true once fully noticed.</summary>
+        bool Notice(bool sees, float dist)
+        {
+            if (sees)
+            {
+                float closeness = Mathf.Lerp(2.6f, 0.55f, Mathf.Clamp01(dist / Mathf.Max(1f, sight)));
+                float rate = closeness * (alerted ? 2f : 1f) * (player.Crouched ? 0.5f : 1f) * (player.TorchOn ? 1.4f : 1f);
+                Suspicion = Mathf.Min(1f, Suspicion + rate * Time.deltaTime);
+            }
+            else Suspicion = Mathf.Max(0f, Suspicion - 0.35f * Time.deltaTime);
+            return Suspicion >= 1f;
+        }
+
         public string DisplayName => kind.ToString();
         public bool IsHuman => kind == EnemyKind.Guard || kind == EnemyKind.Worker || kind == EnemyKind.Hunter;
+        public bool IsAnimal => kind == EnemyKind.Tiger || kind == EnemyKind.Deer || kind == EnemyKind.Elephant;
+
+        /// <summary>Animals never go past this line: the factory fence keeps them out of the premises.</summary>
+        const float AnimalLimitZ = ThreatDirector.PremisesFenceZ - 3f;
+
+        /// <summary>Where an animal may go: never over the factory fence.</summary>
+        Vector3 Allowed(Vector3 target)
+        {
+            if (!IsAnimal || target.z <= AnimalLimitZ) return target;
+            target.z = AnimalLimitZ;
+            return NavMesh.SamplePosition(target, out var hit, 6f, NavMesh.AllAreas) && hit.position.z <= AnimalLimitZ + 0.5f ? hit.position : home;
+        }
         public bool Aiming => aimUntil > 0f;
         public string StateName => state.ToString();
 
@@ -104,17 +170,19 @@ namespace LastShift
             switch (kind)
             {
                 case EnemyKind.Tiger:
-                    Set(18f, 150f, 14f, 2.2f, 6.6f, 2.0f, 11f, 1.6f, 4f, 1.0f); health.max = 70f; if (leash == 0f) leash = 38f; break;
+                    Set(15f, 150f, 12f, 2.2f, 6.2f, 2.0f, 8f, 1.8f, 3.5f, 1.0f); health.max = 40f; if (leash == 0f) leash = 30f; break;
                 case EnemyKind.Deer:
                     Set(16f, 300f, 16f, 1.4f, 7.5f, 0f, 0f, 99f, 0f, 1.7f); health.max = 30f; harmless = true; break;
                 case EnemyKind.Elephant:
-                    Set(10f, 360f, 10f, 1.2f, 6.2f, 3.4f, 35f, 3f, 11f, 2.8f); health.max = 600f; wanderRadius = 7f; break;
+                    Set(10f, 360f, 10f, 1.2f, 6.2f, 3.4f, 25f, 3f, 9f, 2.8f); health.max = 220f; wanderRadius = 7f; break;
                 case EnemyKind.Guard:
-                    Set(22f, 120f, 12f, 1.8f, 5.2f, 1.8f, 8f, 1.6f, 3f, 1.7f); health.max = 80f;
+                    Set(20f, 110f, 10f, 1.8f, 5.2f, 1.8f, 8f, 1.6f, 3f, 1.7f); health.max = 100f;   // 4 pistol body shots or 2 headshots
                     SetGun(GunSound.Pistol, 22f, 5f, 1, 1.3f, 0.6f, 0.4f, 8, 2.2f); break;
                 case EnemyKind.Worker:
-                    Set(14f, 110f, 9f, 1.4f, 4.6f, 1.7f, 6f, 1.8f, 2.5f, 1.7f); health.max = 55f;
-                    SetGun(GunSound.Shotgun, 10f, 3f, 5, 1.9f, 0.7f, 0.4f, 2, 2.6f); break;
+                    // Factory officers: as sharp as the security guards (sight, speed, reaction time),
+                    // with a double-barrel shotgun: deadly close up, quick to aim, quick to reload
+                    Set(20f, 120f, 11f, 1.8f, 5.4f, 1.7f, 8f, 1.4f, 3f, 1.7f); health.max = 100f;
+                    SetGun(GunSound.Shotgun, 16f, 3.5f, 6, 1.3f, 0.35f, 0.45f, 2, 1.6f); break;
                 case EnemyKind.Hunter:
                     Set(30f, 130f, 18f, 1.7f, 4.8f, 1.8f, 8f, 1.6f, 3f, 1.7f); health.max = 90f; if (leash == 0f) leash = 45f;
                     SetGun(GunSound.Rifle, 45f, 16f, 1, 2.6f, 1f, 0.55f, 5, 3f); break;
@@ -175,6 +243,14 @@ namespace LastShift
                 return;
             }
 
+            // The factory fence keeps animals out: once he's inside the premises they lose interest,
+            // and one that has strayed over the line heads back home
+            if (IsAnimal && (ThreatDirector.InPremises(player.transform.position) || transform.position.z > AnimalLimitZ + 1f))
+            {
+                sees = false; hears = false;
+                if (state == State.Chase || state == State.Charge || state == State.Search) { state = State.Wander; aimUntil = -1f; Go(home, walkSpeed); }
+            }
+
             switch (kind)
             {
                 case EnemyKind.Deer: DeerLogic(dist, sees || hears); break;
@@ -187,6 +263,22 @@ namespace LastShift
         {
             // The hunter keeps to the jungle: once the player is up in the tea, he lets him go
             if (kind == EnemyKind.Hunter && player.transform.position.z > -1f) { sees = false; hears = false; if (state == State.Chase) { state = State.Search; stateTimer = 3f; } }
+            bool noticed = Notice(sees, dist) || (sees && state == State.Chase);
+            if (noticed && !MayAttackPlayer())
+            {
+                // Someone else is fighting him (or he's at the camp): wait for my turn
+                if (state == State.Chase) { state = State.Search; stateTimer = 4f; }
+                HoldBack(dist);
+                return;
+            }
+            if (sees && !noticed)
+            {
+                // Something's there... turn and edge closer to look (the moment to duck out of sight)
+                Vector3 to = player.transform.position - transform.position; to.y = 0f;
+                if (to.sqrMagnitude > 0.01f) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to), 4f * Time.deltaTime);
+                if (Suspicion > 0.5f && state != State.Search) { lastKnown = player.transform.position; state = State.Search; stateTimer = 4f; }
+                sees = false;
+            }
             if (sees)
             {
                 lastKnown = player.transform.position; lostTimer = 0f;
@@ -244,6 +336,7 @@ namespace LastShift
             switch (state)
             {
                 case State.Charge:
+                    if (!MayAttackPlayer()) { state = State.Recover; stateTimer = 3f; break; }
                     Go(player.transform.position, runSpeed);
                     stateTimer -= Time.deltaTime;
                     if (dist <= attackRange) { TryAttack(); state = State.Recover; stateTimer = 7f; }
@@ -255,7 +348,7 @@ namespace LastShift
                     if (stateTimer <= 0f) state = State.Wander;
                     break;
                 default:
-                    if (sees && dist < sight && !player.Hidden) { state = State.Charge; stateTimer = 6f; Bark(); GameManager.Instance?.Toast("The elephant is charging!"); }
+                    if (Notice(sees && dist < sight && !player.Hidden, dist) && MayAttackPlayer()) { state = State.Charge; stateTimer = 6f; Bark(); GameManager.Instance?.Toast("The elephant is charging!"); }
                     else Wander();
                     break;
             }
@@ -265,6 +358,7 @@ namespace LastShift
 
         void Go(Vector3 target, float speed)
         {
+            target = Allowed(target);
             agent.speed = speed;
             if ((agent.destination - target).sqrMagnitude > 0.5f || !agent.hasPath) agent.SetDestination(target);
         }
@@ -279,7 +373,7 @@ namespace LastShift
             if (!agent.hasPath || Arrived(0.6f))
             {
                 var p = home + Random.insideUnitSphere * wanderRadius;
-                if (NavMesh.SamplePosition(p, out var hit, 4f, NavMesh.AllAreas)) agent.SetDestination(hit.position);
+                if (NavMesh.SamplePosition(p, out var hit, 4f, NavMesh.AllAreas)) agent.SetDestination(Allowed(hit.position));
                 idleUntil = Time.time + Random.Range(2f, 6f);
             }
         }
@@ -456,27 +550,34 @@ namespace LastShift
         void OnDied()
         {
             state = State.Dead;
+            ThreatDirector.Release(this);
             agent.enabled = false;
             foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
             anim?.Die();
             if (anim != null) anim.aiming = false;
             switch (kind)   // people drop what they were carrying
             {
-                case EnemyKind.Guard: AmmoBox.Drop(transform.position + transform.right * 0.6f, 12, 0); break;
-                case EnemyKind.Worker: AmmoBox.Drop(transform.position + transform.right * 0.6f, 0, 4); break;
+                case EnemyKind.Guard: AmmoBox.Drop(transform.position + transform.right * 0.6f, 20, 4); break;
+                case EnemyKind.Worker: AmmoBox.Drop(transform.position + transform.right * 0.6f, 8, 8); break;
                 case EnemyKind.Hunter: AmmoBox.Drop(transform.position + transform.right * 0.6f, 8, 6); break;
             }
             GameManager.Instance?.OnEnemyDown(this);
         }
 
         /// <summary>The alarm: guards (and workers nearby) come running to where the player was.</summary>
-        public void Alert(Vector3 where)
+        /// <summary>Returns false if there's no free responder slot yet (the GameManager sends him later).</summary>
+        public bool Alert(Vector3 where)
         {
-            if (state == State.Dead) return;
+            if (state == State.Dead) return true;
             alerted = true;
+            if (state == State.Chase || state == State.Search) { lastKnown = where; return true; }
+            if (!SlotFree(where)) return false;
             lastKnown = where;
-            if (state != State.Chase) { state = State.Search; stateTimer = 12f; }
+            state = State.Search; stateTimer = 12f;
+            return true;
         }
+
+        public bool Dead => state == State.Dead;
 
         void Bark() => anim?.Roar();
 
