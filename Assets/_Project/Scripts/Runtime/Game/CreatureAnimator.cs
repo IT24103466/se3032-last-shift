@@ -33,6 +33,9 @@ namespace LastShift
         Vector3 modelRest, modelScale, lastPos, deathPosition;
         Renderer[] renderers;
         Health health;
+        CorpsePhysics corpse;
+        bool corpseAttempted;
+        Vector3 lastVelocity;
         Transform torso, upperBody;
         UnityEngine.AI.NavMeshAgent nav;
         bool humanoid, ownsTurning, originalNavRotation, turning;
@@ -106,6 +109,8 @@ namespace LastShift
             if (health != null) { health.Died -= Die; health.Damaged -= OnDamaged; }
             RestoreNavigationRotation();
         }
+
+        void OnDestroy() { corpse?.Dispose(); }
 
         void OnDamaged(float amount, Vector3 from)
         {
@@ -236,6 +241,8 @@ namespace LastShift
         public void ResetPose()
         {
             if (model == null || (health != null && health.Dead)) return;
+            corpse?.Dispose();
+            corpseAttempted = false; lastVelocity = Vector3.zero;
             dieT = attackT = shootT = flinchT = roarT = -1f;
             phase = speed = aimBlend = 0f;
             targetUntil = -1f; torsoYaw = gazeYaw = gazePitch = armYaw = armPitch = 0f;
@@ -271,7 +278,8 @@ namespace LastShift
             Vector3 delta = transform.position - lastPos;
             delta.y = 0f;
             lastPos = transform.position;
-            float measured = delta.magnitude > Mathf.Max(2f, dt * 20f) ? 0f : delta.magnitude / dt;
+            lastVelocity = delta.magnitude > Mathf.Max(2f, dt * 20f) ? Vector3.zero : delta / dt;
+            float measured = lastVelocity.magnitude;
             float blend = 1f - Mathf.Exp(-10f * dt);
             speed = Mathf.Lerp(speed, Mathf.Min(measured, 12f), blend);
             float gait = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(speed / 2.5f));
@@ -339,6 +347,21 @@ namespace LastShift
 
         void AnimateDeath(float dt)
         {
+            if (corpse != null && corpse.Active)
+            {
+                CurrentMotion = corpse.Sleeping ? Motion.Dead : Motion.Dying;
+                return; // PhysX owns the visuals now; never write a keyed pose over it.
+            }
+            if (!corpseAttempted && dieT >= 0.3f)
+            {
+                corpseAttempted = true;
+                corpse = new CorpsePhysics();
+                if (corpse.Begin(transform, model, transform.TransformDirection(fallDirection) * 0.9f, lastVelocity))
+                {
+                    CurrentMotion = Motion.Dying;
+                    return;
+                }
+            }
             if (dieT >= 1f) return;
             dieT = Mathf.Min(1f, dieT + dt / Mathf.Max(0.7f, deathDuration));
             float buckle = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(dieT / 0.28f));
