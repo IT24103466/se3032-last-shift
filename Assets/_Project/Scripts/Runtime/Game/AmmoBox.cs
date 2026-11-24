@@ -8,7 +8,7 @@ namespace LastShift
     /// </summary>
     public class AmmoBox : MonoBehaviour
     {
-        public int pistolRounds = 18, shells = 6;
+        public int pistolRounds = 30, shells = 10;
 
         public void Take(PlayerGun gun)
         {

@@ -71,6 +71,7 @@ namespace LastShift
             if (kb == null) return;
             flash = Mathf.Max(0f, flash - Time.unscaledDeltaTime * 1.2f);
             if (kb.f9Key.wasPressedThisFrame) debugAI = !debugAI;
+            if (IsPlaying && alarmQueue.Count > 0) DispatchGuards();
 
             switch (phase)
             {
@@ -131,12 +132,31 @@ namespace LastShift
             if (AlarmRaised || !IsPlaying) return;
             AlarmRaised = true;
             Toast("ALARM! Security knows someone is inside the premises!", 4f);
+            // Security comes in waves, not all at once: the nearest guards go first (at most
+            // EnemyAI.MaxResponders out at a time); the rest are sent one by one as slots free up.
             foreach (var e in FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude))
-            {
-                if (e.kind == EnemyKind.Guard) e.Alert(player.transform.position);
-                else if (e.kind == EnemyKind.Worker && Vector3.Distance(e.transform.position, player.transform.position) < 30f) e.Alert(player.transform.position);
-            }
+                if (e.kind == EnemyKind.Guard && !e.Dead && !alarmQueue.Contains(e)) alarmQueue.Add(e);
+            nextDispatch = 0f;
+            DispatchGuards();
             if (alarmMusic != null) Instantiate(alarmMusic, transform);
+        }
+
+        // ---- Alarm waves
+        readonly System.Collections.Generic.List<EnemyAI> alarmQueue = new System.Collections.Generic.List<EnemyAI>();
+        float nextDispatch;
+        const float DispatchGap = 8f;   // seconds between sending one guard and the next
+
+        /// <summary>Sends the nearest waiting guard to where the player is, if a responder slot is free.</summary>
+        void DispatchGuards()
+        {
+            alarmQueue.RemoveAll(e => e == null || e.Dead);
+            if (alarmQueue.Count == 0 || player == null || Time.time < nextDispatch) return;
+            Vector3 p = player.transform.position;
+            alarmQueue.Sort((a, b) => (a.transform.position - p).sqrMagnitude.CompareTo((b.transform.position - p).sqrMagnitude));
+            var g = alarmQueue[0];
+            if (!g.Alert(p)) return;   // two already out: try again later
+            alarmQueue.RemoveAt(0);
+            nextDispatch = Time.time + DispatchGap;
         }
 
         public void OnBagSearched(TeaBag bag)
@@ -148,7 +168,8 @@ namespace LastShift
                 Toast("Your wedding ring! It was in this bag. Now get out through the main gate!", 5f);
                 // Everyone hears the commotion
                 foreach (var e in FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude))
-                    if (e.kind == EnemyKind.Guard) e.Alert(player.transform.position);
+                    if (e.kind == EnemyKind.Guard && !e.Dead && !alarmQueue.Contains(e)) alarmQueue.Add(e);
+                nextDispatch = 0f;
             }
             else Toast($"Just tea leaves... ({searched}/{bags.Length} bags searched)");
         }
@@ -203,7 +224,7 @@ namespace LastShift
 
         string Objective()
         {
-            if (!reachedEstate) return "Get through the jungle to the tea estate (follow the trail north). A hunter is out tonight";
+            if (!reachedEstate) return "Get through the jungle to the tea estate (follow the trail north)";
             if (!AlarmRaised && !HasRing) return "Sneak into the factory premises: part of the fence has collapsed near the east end";
             if (!HasRing) return $"Search the tea bags for your ring ({searched}/{bags.Length})\nBags: dispatch warehouse, withering loft, storeroom, workers' line house";
             return "Escape through the main gate on the west side of the yard";
@@ -211,9 +232,15 @@ namespace LastShift
 
         // ------------------------------------------------------------------ HUD
 
+        GUISkin stylesSkin;
+
         void Styles()
         {
-            if (box != null) return;
+            // Rebuild the styles whenever the GUI skin (and so its font) changes. If Play is pressed
+            // while the Game view is hidden, the first OnGUI can come from a different skin whose font
+            // later goes away: the panels then draw their dark background but no text at all.
+            if (box != null && stylesSkin == GUI.skin && box.font == GUI.skin.font) return;
+            stylesSkin = GUI.skin;
             box = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.UpperLeft, fontSize = 16, wordWrap = true, padding = new RectOffset(12, 12, 8, 8) };
             box.normal.textColor = Color.white;
             big = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, wordWrap = true };
@@ -301,6 +328,24 @@ namespace LastShift
                 Fill(new Rect(w / 2 - 14, h / 2 - 1.5f, 28, 3), hc); Fill(new Rect(w / 2 - 1.5f, h / 2 - 14, 3, 28), hc);
                 GUI.matrix = old;
             }
+            // One fight at a time: who's after you; and how close the others are to noticing you
+            string threat = ThreatDirector.HolderName;
+            if (threat != null)
+                GUI.Label(new Rect(w / 2 - 300, h * 0.14f, 600, 30), $"{threat} is after you!", new GUIStyle(center) { normal = { textColor = new Color(1f, 0.45f, 0.35f) } });
+            else
+            {
+                float sus = 0f;
+                foreach (var e in EnemyAI.All) if (e != null && e.Suspicion > sus && e.Suspicion < 1f) sus = e.Suspicion;
+                if (sus > 0.03f)
+                {
+                    // Detection meter: fills while someone is starting to notice you; get out of sight or crouch
+                    Color mc = Color.Lerp(new Color(1f, 0.9f, 0.3f), new Color(1f, 0.35f, 0.2f), sus);
+                    Fill(new Rect(w / 2 - 42, h / 2 - 46, 84, 7), new Color(0, 0, 0, 0.55f));
+                    Fill(new Rect(w / 2 - 40, h / 2 - 44, 80 * sus, 3), mc);
+                    GUI.Label(new Rect(w / 2 - 100, h / 2 - 70, 200, 22), sus > 0.6f ? "!  BEING SPOTTED" : "?  someone noticed something", new GUIStyle(small) { normal = { textColor = mc } });
+                }
+            }
+
             // Which way the last hit came from
             if (Time.unscaledTime < hitDirUntil)
             {
@@ -380,7 +425,7 @@ namespace LastShift
             GUI.Label(new Rect(x, h * 0.26f, cw, 200),
                 "This afternoon Nimal helped load the day's tea at the Kirimala factory. Tonight he noticed his wedding ring was gone: it slipped " +
                 "into one of the tea bags, and the bags leave on the lorry at dawn.\n\n" +
-                "He has to get it back before morning: through the jungle (tigers, the old elephant, and a poacher with a rifle), " +
+                "He has to get it back before morning: through the jungle (tigers and the old elephant: the camp fire keeps them away), " +
                 "up through the tea, over the factory fence, and past the armed security guards and night-shift workers.", body);
             GUI.Label(new Rect(x, h * 0.58f, cw, 120),
                 "WASD move  ·  Shift sprint  ·  Space jump  ·  C crouch (hide in bushes)  ·  Left click shoot  ·  R reload  ·  1 pistol  2 shotgun  3 slingshot  ·  Right click stick\n" +

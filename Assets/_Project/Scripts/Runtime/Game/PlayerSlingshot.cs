@@ -14,7 +14,7 @@ namespace LastShift
     [RequireComponent(typeof(PlayerController))]
     public class PlayerSlingshot : MonoBehaviour
     {
-        public int ammo = 12, maxAmmo = 25;
+        public int ammo = 20, maxAmmo = 40;
         public float minSpeed = 20f, maxSpeed = 42f, drawTime = 0.6f, cooldown = 0.35f, minDamage = 14f, maxDamage = 34f;
         public Material pebbleMaterial, trailMaterial;
         [Tooltip("Set by PlayerGun: the slingshot is weapon 3")]

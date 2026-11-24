@@ -17,7 +17,7 @@ namespace WorldBuilder.EditorTools
     /// Makes the game playable: builds the characters out of primitives (no imported models
     /// needed) and saves them as prefabs, then places them in Level_01:
     ///   Player (Nimal)       first-person, pistol, shotgun, slingshot, stick, torch -> at Spawn_Player (jungle camp)
-    ///   3 tigers, 4 deer, 1 elephant, 1 hunter (rifle, headlamp)             -> jungle
+    ///   3 tigers, 4 deer, 1 elephant                                         -> jungle
     ///   5 security guards (pistols, patrol routes, torches),
     ///   4 night-shift workers (shotguns, lanterns)                           -> factory premises
     ///   ammo crates and stone piles along the route
@@ -101,7 +101,7 @@ namespace WorldBuilder.EditorTools
             foreach (var p in new[] { new Vector2(20f, -28f), new Vector2(23f, -26f), new Vector2(52f, -10f), new Vector2(-6f, -42f) })
                 Enemy("Deer", jungle, Outdoor(p), wander: 8f);
             Enemy("Elephant", jungle, Outdoor(new Vector2(44f, -29f)), wander: 7f);
-            Enemy("Hunter", jungle, Outdoor(new Vector2(46f, -40f)), wander: 14f);   // poacher working the slopes east of the trail
+            // (The Hunter enemy type still exists in EnemyAI but isn't placed: the jungle is the easy first half.)
 
             // Factory people
             var factory = Group(agents, "Factory");
@@ -164,11 +164,11 @@ namespace WorldBuilder.EditorTools
                 a.pistolRounds = rounds; a.shells = shells;
             }
             foreach (var p in new[] { new Vector2(58.2f, -19.5f), new Vector2(32.2f, -4f), new Vector2(40.7f, 22.5f), new Vector2(48.2f, 37.5f) })
-                Crate(Outdoor(p), 18, 6);
-            Crate(new Vector3(24.7f, Ground, 44.5f), 18, 6);      // yard
-            Crate(new Vector3(62.7f, Ground, 58.5f), 18, 6);      // east compound
-            Crate(new Vector3(28.7f, LoftY, 69f), 12, 4);         // loft
-            Crate(new Vector3(42.7f, Ground, 64f), 12, 4);        // boiler room
+                Crate(Outdoor(p), 30, 10);
+            Crate(new Vector3(24.7f, Ground, 44.5f), 30, 10);      // yard
+            Crate(new Vector3(62.7f, Ground, 58.5f), 30, 10);      // east compound
+            Crate(new Vector3(28.7f, LoftY, 69f), 24, 8);         // loft
+            Crate(new Vector3(42.7f, Ground, 64f), 24, 8);        // boiler room
 
             // Triggers and tea bags
             AddOnce<AlarmZone>("Trigger_Alarm_Premises");
@@ -191,7 +191,7 @@ namespace WorldBuilder.EditorTools
 
             EditorSceneManager.MarkSceneDirty(scene);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[World Builder] Gameplay built: player (pistol, shotgun, slingshot), 3 tigers, 4 deer, 1 elephant, 1 hunter, " +
+            Debug.Log($"[World Builder] Gameplay built: player (pistol, shotgun, slingshot), 3 tigers, 4 deer, 1 elephant, " +
                       $"5 guards, 4 workers, {crates.childCount} ammo crates, {bags} tea bags, GameManager. Press Play to play the game.");
         }
 
@@ -220,7 +220,7 @@ namespace WorldBuilder.EditorTools
             var cc = root.AddComponent<CharacterController>();
             cc.height = 1.8f; cc.radius = 0.3f; cc.center = new Vector3(0f, 0.9f, 0f); cc.stepOffset = 0.4f; cc.slopeLimit = 45f;
             var hp = root.AddComponent<Health>();
-            hp.max = 150f; hp.regenDelay = 4f; hp.regenPerSecond = 8f;
+            hp.max = 400f; hp.regenDelay = 4f; hp.regenPerSecond = 8f;   // 400: survives ~6 mammoth charges (wounds do not heal)
             var pc = root.AddComponent<PlayerController>();
             root.AddComponent<PlayerCombat>();
             var sling = root.AddComponent<PlayerSlingshot>();

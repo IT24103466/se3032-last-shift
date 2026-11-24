@@ -187,11 +187,28 @@ namespace LastShift
             }
         }
 
+        /// <summary>
+        /// What the player is looking at, ignoring his own body. A plain Raycast from the eyes hits
+        /// the player's own CharacterController when he looks down (the eyes sit inside its top),
+        /// which made anything on the floor - tea bags, ammo boxes, stone piles - impossible to use.
+        /// </summary>
+        bool LookingAt(float range, out RaycastHit best)
+        {
+            best = default;
+            float bestDist = float.MaxValue;
+            foreach (var h in Physics.RaycastAll(eyes.position, eyes.forward, range, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            {
+                if (h.collider.transform.IsChildOf(transform)) continue;   // my own body / hands
+                if (h.distance < bestDist) { bestDist = h.distance; best = h; }
+            }
+            return bestDist < float.MaxValue;
+        }
+
         void Interact(Keyboard kb)
         {
             Prompt = null;
             TeaBag bag = null; GreyboxInteractable thing = null; PebblePile pile = null; AmmoBox ammo = null;
-            if (Physics.Raycast(eyes.position, eyes.forward, out var hit, 2.6f, ~(1 << 2), QueryTriggerInteraction.Ignore))
+            if (LookingAt(2.6f, out var hit))
             {
                 bag = hit.collider.GetComponentInParent<TeaBag>();
                 pile = hit.collider.GetComponentInParent<PebblePile>();
