@@ -339,7 +339,7 @@ namespace LastShift
             if (harmless || Time.time < nextAttack || !ClearLine()) return;
             nextAttack = Time.time + attackCooldown;
             Vector3 to = player.transform.position - transform.position; to.y = 0f;
-            if (to.sqrMagnitude > 0.01f) transform.rotation = Quaternion.LookRotation(to);
+            if (to.sqrMagnitude > 0.01f) Face(player.Chest, 10f);
             anim?.PlayAttack();
             attackAt = Time.time + 0.3f;   // the blow lands after a short wind-up: you can dodge
         }
@@ -363,12 +363,12 @@ namespace LastShift
             bool holding = Aiming || dist < gunRange * 0.55f || Time.time < reloadUntil;
             if (holding) { if (agent.hasPath) agent.ResetPath(); }
             else Go(player.transform.position, walkSpeed);   // close in while the gun is ready
-            Face(player.transform.position, 8f);
+            Face(player.Chest, 8f);
 
             if (Time.time < reloadUntil || Time.time < nextShot) return;
             // The first shot after spotting you takes longer (reaction time): a chance to get to cover
             if (!Aiming) { aimUntil = Time.time + gunAim + (Time.time - nextShot > 3f ? 0.8f : 0f); return; }
-            if (Time.time < aimUntil) return;
+            if (Time.time < aimUntil || (anim != null && !anim.CanAimAt(player.Chest))) return;
             aimUntil = -1f;
             if (!ClearShot()) { nextShot = Time.time + 0.4f; return; }
             Fire(dist);
@@ -383,6 +383,7 @@ namespace LastShift
 
         void Face(Vector3 target, float speed)
         {
+            if (anim != null && anim.FaceTarget(target, speed)) return;
             Vector3 to = target - transform.position; to.y = 0f;
             if (to.sqrMagnitude > 0.01f) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to), speed * Time.deltaTime);
         }

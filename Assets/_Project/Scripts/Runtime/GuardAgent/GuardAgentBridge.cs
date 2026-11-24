@@ -328,6 +328,7 @@ namespace LastShift
 
         void Face(Vector3 target, float speed)
         {
+            if (anim != null && anim.FaceTarget(target, speed)) return;
             Vector3 to = target - transform.position; to.y = 0f;
             if (to.sqrMagnitude > 0.01f) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to), speed * Time.deltaTime);
         }
@@ -336,12 +337,12 @@ namespace LastShift
         {
             float dist = Vector3.Distance(transform.position, player.transform.position);
             bool sees = !player.Health.Dead && CanSee(dist);
-            if (!sees) { aimUntil = -1f; if (lastKnown != Vector3.zero) Face(lastKnown, 5f); return; }
+            if (!sees) { aimUntil = -1f; if (lastKnown != Vector3.zero) Face(lastKnown + Vector3.up * 1.3f, 5f); return; }
             lastKnown = player.transform.position;
-            Face(player.transform.position, 8f);
+            Face(player.Chest, 8f);
             if (dist > gunRange || player.Hidden || reloadUntil > 0f || ammo <= 0 || Time.time < nextShot) return;
             if (aimUntil < 0f) { aimUntil = Time.time + gunAim + (Time.time - nextShot > 3f ? 0.5f : 0f); return; }
-            if (Time.time < aimUntil) return;
+            if (Time.time < aimUntil || (anim != null && !anim.CanAimAt(player.Chest))) return;
             aimUntil = -1f;
             if (!ClearShot()) { nextShot = Time.time + 0.3f; return; }
             Fire(dist);
