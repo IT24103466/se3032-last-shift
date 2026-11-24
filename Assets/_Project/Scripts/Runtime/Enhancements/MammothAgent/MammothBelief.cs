@@ -46,6 +46,7 @@ namespace LastShift
         public float nearbyRadius = 25f;
         public float nearbyMass = 0.5f;
         public bool logEvents = true;
+        float lastLog = -99f;      // rate limit: an idle belief flickers Lost<->Nearby; log only meaningful changes
 
         public TacticalGraph Graph { get; private set; }
         public bool Ready { get; private set; }
@@ -228,7 +229,7 @@ namespace LastShift
             else if (Confidence < lostConfidence) s = BeliefState.Lost;
             else if (MassWithin(transform.position, nearbyRadius) > nearbyMass) s = BeliefState.Nearby;
             else s = BeliefState.Uncertain;
-            if (s != State && logEvents) Debug.Log($"[MammothAI] belief {State} -> {s} (confidence {Confidence:F2}, peak {PeakMass:F2})");
+            if (s != State && logEvents && (Time.time - lastLog > 4f || s == BeliefState.Observed || State == BeliefState.Observed)) { lastLog = Time.time; Debug.Log($"[MammothAI] belief {State} -> {s} (confidence {Confidence:F2}, peak {PeakMass:F2})"); }
             State = s;
         }
 

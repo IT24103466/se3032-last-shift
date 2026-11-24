@@ -15,6 +15,7 @@ namespace LastShift
     ///   Track    = seen inside notice range: wTrackVisible*(0.6+0.4*closeness);   not seen: (wFresh*freshness + wConf*confidence)*(1 - arrived)
     ///   Investigate = wClue * clueQuality * clueFreshness        (clueQuality = 1 - sigma/40: a pinpointed shot beats a vague rustle)
     ///   Search   = wSearch * recentEvidence * (1 - lost) * (ready ? 1 : 0.35)   (only after tracking is exhausted)
+    ///   Ambush   = wAmbush * routeHeat(best ambush node) * recentEvidence * min(1, huntFailures/2)   (only after a hunt came up empty)
     ///   Return   = wTerritory*excursion + wLost*lost*timeSinceEvidence*farFromHome
     ///   Patrol   = patrolBase (the floor: do this when nothing else matters)
     ///
@@ -35,7 +36,7 @@ namespace LastShift
         public float wClue = 0.6f;
         public float wSearch = 0.55f;
         public float wTerritory = 0.7f, wLost = 0.5f;
-        public float patrolBase = 0.25f;
+        public float patrolBase = 0.25f, wAmbush = 0.5f;
         [Header("Stability")]
         public float decisionInterval = 0.25f;
         public float hysteresis = 1.15f, hysteresisBonus = 0.02f;
@@ -137,6 +138,13 @@ namespace LastShift
             {
                 bool ready = !seenEver || arrived > 0.5f || tSeen > 30f;
                 u[(int)MammothAction.Search] = wSearch * evRecent * (1f - lost) * (ready ? 1f : 0.35f);
+            }
+
+            // --- Ambush: after failed hunts, wait silently at a hot route node near where it believes the player is
+            if (!vis && alert && memory != null && memory.HuntFailures > 0 && belief != null && belief.Ready)
+            {
+                ai.FindAmbushNode(out float heat);
+                u[(int)MammothAction.Ambush] = wAmbush * heat * evRecent * Mathf.Min(1f, memory.HuntFailures / 2f);
             }
 
             // --- Return to territory

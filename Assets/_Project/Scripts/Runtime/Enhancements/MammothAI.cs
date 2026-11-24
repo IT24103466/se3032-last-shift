@@ -39,6 +39,7 @@ namespace LastShift
         MammothAction lastAction = MammothAction.Patrol;
         Vector3 lastDest; float nextDest, nextReplan; bool routeActive; int routeIdx; Vector3 routeGoal;
         Vector3 searchPos; int searchNode = -1; float searchDeadline;
+        int ambushNode = -1; Vector3 ambushPos; bool failReported;
 
         public float NoticeR => noticeR; public float AggroR => aggroR; public float LeashR => leashR;
         public Vector3 Home => home;
@@ -221,7 +222,8 @@ namespace LastShift
             if (act != lastAction)
             {
                 routeActive = false; nextDest = 0f;
-                if (act == MammothAction.Pursue) Roar();
+                if (act == MammothAction.Pursue) { Roar(); failReported = false; }
+                if (act == MammothAction.Ambush) ambushNode = -1;
                 if (act == MammothAction.Search) searchNode = -1;
                 lastAction = act;
             }
@@ -230,8 +232,8 @@ namespace LastShift
                 case MammothAction.Patrol: Wander(); break;
                 case MammothAction.InvestigateSound: DoInvestigate(); break;
                 case MammothAction.TrackLastKnown: DoTrack(pp); break;
-                case MammothAction.Search:
-                case MammothAction.Ambush: DoSearch(); break;
+                case MammothAction.Search: DoSearch(); break;
+                case MammothAction.Ambush: DoAmbush(); break;
                 case MammothAction.Pursue: DoPursue(pp, d); break;
                 case MammothAction.ReturnHome: DoReturn(); break;
             }
@@ -262,7 +264,7 @@ namespace LastShift
             if (!vis && FlatDist(transform.position, perc.LastSeenPos) < 6f)
             {
                 MarkSearchedHere();
-                if (memory != null) memory.MarkCluesChecked(transform.position, 12f);
+                if (memory != null) { memory.MarkCluesChecked(transform.position, 12f); if (!failReported) { memory.ReportHuntFailure(); failReported = true; } }
             }
         }
 
@@ -279,16 +281,45 @@ namespace LastShift
 
         void PickSearchNode()
         {
+            // Expected information gain of searching node i = the (not yet searched) probability mass its look-around covers.
+            // The look-around radius grows as confidence drops: when it has no idea where the player is, it checks wide open areas.
             var g = belief.Graph; int best = -1; float bs = -1f; Vector3 pos = transform.position;
+            float lost = 1f - Mathf.Clamp01(belief.Confidence / 0.3f), lookR = Mathf.Lerp(10f, 26f, lost);
             for (int i = 0; i < g.Count; i++)
             {
                 if (!g.Reachable(i)) continue;
-                float p = belief.Probability(i);
-                float score = p * (1f - 0.85f * memory.SearchPenalty(i)) / (1f + FlatDist(pos, g.Position(i)) / 50f);
+                float gain = belief.MassWithin(g.Position(i), lookR) * (1f - 0.85f * memory.SearchPenalty(i));
+                float score = gain / (1f + FlatDist(pos, g.Position(i)) / 50f);
                 if (score > bs) { bs = score; best = i; }
             }
             searchNode = best; searchDeadline = Time.time + 20f;
             if (best >= 0) searchPos = g.Position(best);
+        }
+
+        /// <summary>
+        /// Ambush point: a waypoint near where the player probably is that the player has often passed (route heat), weighted by belief.
+        /// Returns the node and how "hot" it is; -1 when there is no belief / no heat yet.
+        /// </summary>
+        public int FindAmbushNode(out float heat)
+        {
+            heat = 0f;
+            if (belief == null || !belief.Ready || memory == null) return -1;
+            var g = belief.Graph; int best = -1; float bs = 0f; Vector3 est = belief.EstimatedPosition;
+            for (int i = 0; i < g.Count; i++)
+            {
+                if (!g.Reachable(i) || FlatDist(g.Position(i), est) > 40f) continue;
+                float h = memory.RouteHeat(i), sc = h * (0.5f + belief.Probability(i) * 4f) * (1f - memory.SearchPenalty(i) * 0.5f);
+                if (sc > bs) { bs = sc; best = i; heat = h; }
+            }
+            return best;
+        }
+
+        void DoAmbush()
+        {
+            if (ambushNode < 0) { ambushNode = FindAmbushNode(out _); if (ambushNode < 0) { Wander(); return; } ambushPos = belief.Graph.Position(ambushNode); }
+            if (FlatDist(transform.position, ambushPos) > 5f) { MoveTo(ambushPos, 3.2f); return; }
+            Stop();                                              // arrived: stand still, silent, facing where the player is believed to be
+            Face(belief.EstimatedPosition);
         }
 
         void MarkSearchedHere()
@@ -304,10 +335,11 @@ namespace LastShift
         {
             bool vis = perc == null || perc.PlayerVisible;
             Vector3 tgt = vis ? pp : perc.LastSeenPos;
+            if (vis && enraged && perc != null) tgt += perc.LastSeenVelocity * 0.6f;      // enraged: aims where the player is going, not where he is
             MoveTo(tgt, 6.8f);
             if (!vis || atkCd > 0f) return;
             if (d < 6f) { cs = C.Windup; timer = enraged ? 0.7f : 0.95f; chargeDir = Vector3.zero; Stop(); anim?.PlayAttack(); }
-            else if (d > 11f && d < 32f && Random.value < 0.4f * Time.deltaTime * 3f) { cs = C.Windup; timer = 0.9f; Stop(); chargeDir = Vector3.zero; Roar(); }
+            else if (d > 11f && d < (enraged ? 42f : 32f) && Random.value < (enraged ? 0.8f : 0.4f) * Time.deltaTime * 3f) { cs = C.Windup; timer = 0.9f; Stop(); chargeDir = Vector3.zero; Roar(); }
         }
 
         void DoReturn()
