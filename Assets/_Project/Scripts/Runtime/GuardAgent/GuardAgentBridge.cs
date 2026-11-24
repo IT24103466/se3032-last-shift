@@ -30,10 +30,15 @@ namespace LastShift
     /// <summary>The job of this person. Same agent architecture for everyone; the role sets the weapon, the goal (score weights) and the zones he looks after.</summary>
     public enum AgentRole { Sentinel, Gatekeeper, TeaKeeper, Lookout }
 
+    /// <summary>Embedded: the brain runs inside this component (isolated agent, no server, nothing to connect). Remote: the Python server (GuardAgent/) decides, over TCP.</summary>
+    public enum BrainMode { Embedded, Remote }
+
     [RequireComponent(typeof(EnemyAI), typeof(NavMeshAgent), typeof(Health))]
     public class GuardAgentBridge : MonoBehaviour
     {
-        [Header("Brain connection")]
+        [Header("Brain")]
+        [Tooltip("Embedded = an isolated agent: the brain (belief + trained policy + reflexes) runs inside Unity, no server needed. Remote = ask the Python server on host:port.")]
+        public BrainMode brainMode = BrainMode.Embedded;
         public string host = "127.0.0.1";
         public int port = 5555;
         public float decisionInterval = 0.5f;
@@ -52,7 +57,7 @@ namespace LastShift
 
         [Header("Toughness")]
         [Tooltip("Multiplier on hit points. The brain still sees his health as a fraction of the normal body, so the policy behaves as before, but it takes this many times more damage to put him down.")]
-        public float toughness = 2.5f;
+        public float toughness = 1f;
 
         [Header("Weapon and body (the presets match GuardAgent/guard_agent/config.py)")]
         public float hp = 100f;
@@ -77,6 +82,7 @@ namespace LastShift
         readonly List<NoiseEvent> shotEvents = new List<NoiseEvent>();
         EnemyAI ai; NavMeshAgent agent; Health health; CreatureAnimator anim; PlayerController player; Transform muzzle;
         GuardLink link;
+        EmbeddedBrain brain;
         AgentAction action;
         readonly object actionLock = new object();
         string pendingLine;
@@ -94,7 +100,7 @@ namespace LastShift
         // Factory building = protected zones of the zone graph (x0, x1, z0, z1)
         static readonly float[][] Factory = { new[] { 10f, 36f, 52f, 66f }, new[] { 10f, 36f, 66f, 76f }, new[] { 36f, 50f, 52f, 62f }, new[] { 36f, 50f, 62f, 76f } };
 
-        public bool Connected => link != null && link.Connected;
+        public bool Connected => brainMode == BrainMode.Embedded ? (brain != null && brain.Ready) : (link != null && link.Connected);
         [Tooltip("What the socket thread is doing (read-only)")] public string linkStatus = "";
         string lastLoggedStatus = "";
         [Header("Diagnostics (read-only)")] public int ticksSent, actionsReceived; public string debug = "";
@@ -137,8 +143,17 @@ namespace LastShift
             ammo = gunMag;
             health.Damaged += OnDamaged;
             health.Died += OnDied;
-            link = new GuardLink(host, port, HelloJson()) { OnMessage = OnMessage };
-            link.Start();
+            if (brainMode == BrainMode.Embedded)
+            {
+                brain = new EmbeddedBrain(RoleKey(role), name, stayInside, string.IsNullOrEmpty(postZone) ? null : postZone, focusZones);
+                linkStatus = brain.Ready ? (brain.HasPolicy ? "embedded brain (isolated, no server)" : "embedded brain, no policy file: belief planner") : "embedded brain failed: zone graph missing";
+                if (!brain.Ready) Debug.LogError("[Guard Agent] " + name + ": " + linkStatus);
+            }
+            else
+            {
+                link = new GuardLink(host, port, HelloJson()) { OnMessage = OnMessage };
+                link.Start();
+            }
             nextTick = Time.time + 0.5f;
         }
 
@@ -148,14 +163,14 @@ namespace LastShift
 
         void OnDied()
         {
-            if (Connected && !ended) { ended = true; link.Send("{\"type\":\"episode_end\",\"outcome\":\"guard_down\"}"); }
+            if (Connected && !ended) { ended = true; SendEpisodeEnd("guard_down"); }
             agent.enabled = false;
         }
 
         // ------------------------------------------------------------------ main loop
         void Update()
         {
-            if (link != null) { linkStatus = link.Status; if (linkStatus != lastLoggedStatus && (linkStatus.StartsWith("error") || linkStatus == "connected")) Debug.Log("[Guard Agent] " + linkStatus); lastLoggedStatus = linkStatus; }
+            if (link != null && brainMode == BrainMode.Remote) { linkStatus = link.Status; if (linkStatus != lastLoggedStatus && (linkStatus.StartsWith("error") || linkStatus == "connected")) Debug.Log("[Guard Agent] " + linkStatus); lastLoggedStatus = linkStatus; }
             if (health.Dead || !agent.isOnNavMesh) { debug = health.Dead ? "guard dead" : "guard not on NavMesh"; return; }
             var gm = GameManager.Instance;
             bool playing = gm == null || gm.IsPlaying;
@@ -166,23 +181,23 @@ namespace LastShift
             {
                 hadConnection = Connected;
                 ai.enabled = !Connected;
-                if (Connected) { ApplyStats(); link.Send("{\"type\":\"episode_start\"}"); ended = false; }
+                if (Connected) { ApplyStats(); SendEpisodeStart(); ended = false; }
                 else agent.speed = ai.enabled ? agent.speed : walkSpeed;
             }
             // episode bookkeeping
             if (gm != null)
             {
-                if (playing && !wasPlaying && Connected) { link.Send("{\"type\":\"episode_start\"}"); ended = false; alarmSent = false; damageDealt = 0f; score = 0f; ammo = gunMag; reloadUntil = -1f; }
+                if (playing && !wasPlaying && Connected) { SendEpisodeStart(); ended = false; alarmSent = false; damageDealt = 0f; score = 0f; ammo = gunMag; reloadUntil = -1f; }
                 if (!playing && wasPlaying && Connected && !ended)
                 {
                     ended = true;
                     bool iKilledHim = player != null && player.Health.Dead && Time.time - lastHitOnPlayer < 6f;     // only counts if the guard's own shots were the last to hurt him
                     string outcome = gm.phase == GameManager.Phase.Won ? "escape" : (iKilledHim ? "kill" : "timeout");
-                    link.Send("{\"type\":\"episode_end\",\"outcome\":\"" + outcome + "\"}");
+                    SendEpisodeEnd(outcome);
                 }
                 wasPlaying = playing;
             }
-            if (!Connected || !playing || player == null) { debug = !Connected ? "not connected" : !playing ? "game not in Playing phase" : "no player"; return; }
+            if (!Connected || !playing || player == null) { debug = !Connected ? (brainMode == BrainMode.Embedded ? "embedded brain not ready" : "not connected") : !playing ? "game not in Playing phase" : "no player"; return; }
             debug = "running";
 
             // pick up the newest answer
@@ -197,6 +212,9 @@ namespace LastShift
 
             if (Time.time >= nextTick) { nextTick = Time.time + decisionInterval; SendTick(); }
         }
+
+        void SendEpisodeStart() { if (brainMode == BrainMode.Embedded) brain?.NewGame(); else link?.Send("{\"type\":\"episode_start\"}"); }
+        void SendEpisodeEnd(string outcome) { if (brainMode == BrainMode.Embedded) brain?.EndGame(outcome); else link?.Send("{\"type\":\"episode_end\",\"outcome\":\"" + outcome + "\"}"); }
 
         /// <summary>The game has no 'shot fired' event for other scripts, so watch the player's magazine: it drops by one on every shot.
         /// A shot within <see cref="gunshotRadius"/> is heard whether or not the guard can see the player; louder when closer.</summary>
@@ -307,7 +325,29 @@ namespace LastShift
             noises.AddRange(shotEvents); shotEvents.Clear();
             t.noises = noises.ToArray();
             damageSinceTick = 0f; damageTakenSinceTick = 0f;
-            link.Send(JsonUtility.ToJson(t)); ticksSent++;
+            ticksSent++;
+            if (brainMode == BrainMode.Embedded) { DecideEmbedded(t); return; }
+            link.Send(JsonUtility.ToJson(t));
+        }
+
+        /// <summary>Isolated agent: hand the percept to the brain inside this component and use the answer at once (no network, no latency).</summary>
+        void DecideEmbedded(Tick t)
+        {
+            var p = new AgentPercept
+            {
+                dt = t.dt, guardPos = new Vector2(t.guard.pos[0], t.guard.pos[1]), hp = t.guard.hp, ammo = t.guard.ammo, reloading = t.guard.reloading,
+                playerVisible = t.player_visible, playerPos = new Vector2(t.player_pos[0], t.player_pos[1]), playerHpFrac = t.player_hp_frac, clearShot = t.clear_shot,
+                alarm = t.alarm, hasAlarmEvent = t.alarm_event_pos != null && t.alarm_event_pos.Length == 2,
+                damageTaken = t.damage_taken, damageDealtNow = t.score_info.damage_dealt_now, intruderInFactory = t.score_info.intruder_in_factory,
+                intruderSearchingBag = t.score_info.intruder_searching_bag, bagsSearchedTotal = t.score_info.bags_searched_total,
+            };
+            if (p.hasAlarmEvent) p.alarmEventPos = new Vector2(t.alarm_event_pos[0], t.alarm_event_pos[1]);
+            foreach (var n in t.noises) p.noises.Add(new AgentNoise { pos = new Vector2(n.pos[0], n.pos[1]), strength = n.strength, gunshot = n.kind == "gunshot" });
+            var c = brain.Decide(p);
+            var a = new AgentAction { type = "action", mode = c.mode, zone = c.zone, why = c.why, run = c.run, score = c.score, eta = c.eta, belief_top = c.beliefTop, route = c.route };
+            a.target = c.hasTarget ? new[] { c.target.x, c.target.y } : null;
+            action = a; actionsReceived++;
+            lastWhy = a.why; lastMode = a.mode; lastZone = a.zone; belief = a.belief_top ?? belief; score = a.score;
         }
 
         // ------------------------------------------------------------------ execute the brain's decision
