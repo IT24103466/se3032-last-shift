@@ -9,10 +9,11 @@ namespace LastShift.GuardDog
     ///
     /// Root (selector, highest priority first)
     ///  ├─ Idle         game not running                         → sit
-    ///  ├─ Retreat      badly hurt (hysteresis 30% / 75%)         → run home, lick wounds
-    ///  ├─ Engage       sees the player AND has the turn (ThreatDirector: one attacker at a time)
-    ///  │    ├─ Alert   bark (every 5 s): brings guards, alarm inside the premises
-    ///  │    └─ Attack  bite in reach │ zigzag in if a gun is on it │ chase (A*, ε = 1.5)
+    ///  ├─ Engage       sees the player (or saw him &lt; 4 s ago) AND has the turn (ThreatDirector)
+    ///  │    ├─ Alert   loud bark every 5 s: brings guards, alarm inside the premises
+    ///  │    └─ Attack  bite in reach │ pounce (jump-bite) within 4.5 m │ zigzag in if a gun is on it │
+    ///  │               chase (A*, ε = 1.5), barking all the way
+    ///  │  (no retreat: Kalu fights until he's down: five hits)
     ///  ├─ Wait turn    sees him but someone else is fighting him  → keep 10 m off, growl, watch
     ///  ├─ Indicate     smells him hiding (locker / bush) nearby  → stand and bark at the spot
     ///  ├─ Investigate  heard a noise (gunshots always, small noises while still curious)
@@ -27,7 +28,8 @@ namespace LastShift.GuardDog
     [RequireComponent(typeof(DogBody))]
     public class GuardDogBrain : MonoBehaviour
     {
-        public float walkSpeed = 2.2f, trackSpeed = 3.8f, runSpeed = 7.2f, flankSpeed = 6.6f, biteRange = 1.7f;
+        public float walkSpeed = 2.2f, trackSpeed = 4.2f, runSpeed = 7.8f, flankSpeed = 7.2f, biteRange = 1.7f, leapRange = 4.5f;
+        public float pursuitMemory = 4f;   // keeps chasing this long after losing sight of him
         const float TickInterval = 0.1f;
 
         public DogBlackboard Blackboard { get; private set; }
@@ -41,14 +43,13 @@ namespace LastShift.GuardDog
         DogSenses senses;
         PlayerController player;
         ScentTracker world;
-        Vector3 kennel;
         Vector3[] patrol;
 
         float nextTick, moveSpeed;
         Vector3 progressPos; float progressTime; int stuckCount;
         int patrolIndex; float pauseUntil = -1f;
         readonly List<Vector3> castPoints = new List<Vector3>(); int castIndex; float castPauseUntil;
-        float zigSide = 1f, zigFlipAt, nextTreedBark, nextIndicateBark, investigateSniffUntil, lastTrackToast = -99f;
+        float nextChaseBark, zigSide = 1f, zigFlipAt, nextTreedBark, nextIndicateBark, investigateSniffUntil, lastTrackToast = -99f;
         Vector3 lastTrailPoint;
         readonly System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
@@ -57,7 +58,7 @@ namespace LastShift.GuardDog
 
         public void Init(PlayerController p, ScentTracker w, Vector3 kennelPos, Vector3[] patrolPoints)
         {
-            player = p; world = w; kennel = kennelPos; patrol = patrolPoints;
+            player = p; world = w; patrol = patrolPoints;   // (kennelPos: where it starts; it no longer retreats there)
             body = GetComponent<DogBody>();
             Blackboard = new DogBlackboard();
             senses = new DogSenses(Blackboard, body, player, world);
@@ -78,18 +79,17 @@ namespace LastShift.GuardDog
                     new Condition("Game not running", () => !Playing || player.Health.Dead),
                     new ActionNode("Sit", () => { Halt(); return Status.Running; })),
 
-                new Sequence("Retreat",
-                    new Condition("Badly hurt", BadlyHurt),
-                    new ActionNode("Run home", RunHome, enter: () => body.Whimper())),
-
                 new Sequence("Engage",
-                    new Condition("Sees player, my turn", () => bb.SeesPlayer && MyTurn()),
+                    new Condition("Sees / just saw player, my turn", () => (bb.SeesPlayer || InPursuit()) && MyTurn()),
                     new AlwaysSucceed("Alert",
                         new Cooldown("Every 5 s", 5f, new ActionNode("Bark", () => { BarkAndAlert(); return Status.Success; }))),
                     new Selector("Attack",
                         new Sequence("Bite",
                             new Condition("In reach", () => bb.DistToPlayer < biteRange),
                             new ActionNode("Bite", Bite)),
+                        new Sequence("Pounce",
+                            new Condition("Close, sees him, can jump", () => bb.DistToPlayer < leapRange && bb.SeesPlayer && body.CanLeap),
+                            new ActionNode("Jump and bite", Pounce)),
                         new Sequence("Dodge",
                             new Condition("Gun on me", () => bb.PlayerAimingAtMe && bb.DistToPlayer > 5f),
                             new ActionNode("Zigzag in", Zigzag)),
@@ -124,6 +124,7 @@ namespace LastShift.GuardDog
         {
             if (Tree == null) return;
             if (!body.Alive) { Halt(); ThreatDirector.Release(this); enabled = false; senses.Dispose(); return; }
+            if (body.Leaping) { ThreatDirector.TryAttack(this, "Kalu (the estate dog)", player.transform.position); return; }   // mid-jump: keep the turn, no steering
 
             if (Now >= nextTick)
             {
@@ -174,12 +175,15 @@ namespace LastShift.GuardDog
         /// <summary>One fight at a time: only attack when the ThreatDirector gives Kalu the turn.</summary>
         bool MyTurn() => ThreatDirector.TryAttack(this, "Kalu (the estate dog)", player.transform.position);
 
-        bool BadlyHurt()
+        /// <summary>Lost sight of him a moment ago (round a corner, behind a bush): keep after him.</summary>
+        bool InPursuit() => !Blackboard.PlayerHidden && Now - Blackboard.LastSeenTime < pursuitMemory;
+
+        /// <summary>Barks all the way while it chases (sound only; the alert bark that calls the guards is every 5 s).</summary>
+        void ChaseBark()
         {
-            float hp = body.HealthFraction;
-            if (hp < 0.3f) Blackboard.Retreating = true;
-            else if (hp > 0.75f) Blackboard.Retreating = false;   // hysteresis: no flip-flopping at the threshold
-            return Blackboard.Retreating;
+            if (Now < nextChaseBark) return;
+            nextChaseBark = Now + Random.Range(0.8f, 1.5f);
+            if (Random.value < 0.75f) body.Bark(); else body.Growl();
         }
 
         bool SmellsHiddenPlayer()
@@ -210,19 +214,20 @@ namespace LastShift.GuardDog
             return Status.Running;
         }
 
-        Status RunHome()
-        {
-            if (GoTo(kennel, DogNavigator.Mode.Walk, runSpeed * 0.8f)) { Halt(); body.Heal(0.5f); }   // 5 HP/s at the kennel
-            if (Random.value < 0.01f) body.Whimper();
-            return Status.Running;
-        }
-
         Status Bite()
         {
             Halt();
             body.Face(Blackboard.PlayerPos);
             body.TryBite(player);
+            ChaseBark();
             return Status.Running;
+        }
+
+        Status Pounce()
+        {
+            moveSpeed = 0f;
+            body.TryLeap(player);
+            return Status.Success;
         }
 
         Status Zigzag()
@@ -233,12 +238,14 @@ namespace LastShift.GuardDog
             Vector3 to = Blackboard.PlayerPos - body.Position; to.y = 0f;
             Vector3 side = Vector3.Cross(Vector3.up, to.normalized) * zigSide;
             GoTo(Blackboard.PlayerPos + side * Mathf.Min(4f, to.magnitude * 0.5f), DogNavigator.Mode.Flank, flankSpeed, flip);
+            ChaseBark();
             return Status.Running;
         }
 
         Status Chase()
         {
             GoTo(Blackboard.PlayerPos, DogNavigator.Mode.Chase, runSpeed);
+            ChaseBark();
             // Edge case: he's somewhere the dog can't follow (the loft, a roof): wait below and keep barking
             if (Navigator.GoalUnreachable && Navigator.Arrived(body.Position, 1.5f))
             {

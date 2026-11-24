@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -16,6 +17,8 @@ namespace LastShift.GuardDog
         bool Alive { get; }
         float HealthFraction { get; }
         float Speed { get; }
+        bool Leaping { get; }
+        bool CanLeap { get; }
 
         void MoveTo(Vector3 target, float speed);
         void Stop();
@@ -25,6 +28,7 @@ namespace LastShift.GuardDog
         void Growl();
         void Whimper();
         bool TryBite(PlayerController player);
+        bool TryLeap(PlayerController player);
         void Heal(float amount);
         void Unstick();
     }
@@ -36,15 +40,20 @@ namespace LastShift.GuardDog
     [RequireComponent(typeof(NavMeshAgent), typeof(Health))]
     public class DogBody : MonoBehaviour, IDogBody
     {
-        public float maxHealth = 70f, biteDamage = 9f, biteCooldown = 1.1f, biteKnockback = 3f;
+        public float maxHealth = 70f, biteDamage = 11f, biteCooldown = 1f, biteKnockback = 3.5f;
+        [Tooltip("Kalu goes down after this many hits, whatever the weapon (a shotgun blast counts as one)")]
+        public int shotsToKill = 5;
+        [Tooltip("The pounce: a jump at the player from a few metres away that ends in a bite")]
+        public float leapDamage = 15f, leapCooldown = 2.5f, leapTime = 0.38f, leapHeight = 0.8f;
 
         NavMeshAgent agent;
         Health health;
         CreatureAnimator anim;
         AudioSource voice;
         Transform headTilt;
-        float nextBite, sniffBlend;
-        bool sniffing;
+        float nextBite, sniffBlend, nextLeap, lastHitAt = -99f;
+        int hitsTaken;
+        bool sniffing, leaping;
 
         public Transform Transform => transform;
         public Vector3 Position => transform.position;
@@ -53,6 +62,9 @@ namespace LastShift.GuardDog
         public bool Alive => health != null && !health.Dead;
         public float HealthFraction => health.Fraction;
         public float Speed => agent != null && agent.enabled ? agent.velocity.magnitude : 0f;
+        public bool Leaping => leaping;
+        public bool CanLeap => !leaping && Time.time >= nextLeap && Alive && agent.enabled && agent.isOnNavMesh;
+        public int HitsTaken => hitsTaken;
 
         void Awake()
         {
@@ -120,6 +132,62 @@ namespace LastShift.GuardDog
             return true;
         }
 
+        /// <summary>Pounce: jump at the player and bite him on landing.</summary>
+        public bool TryLeap(PlayerController player)
+        {
+            if (!CanLeap || player == null || player.Health.Dead) return false;
+            StartCoroutine(Leap(player));
+            return true;
+        }
+
+        IEnumerator Leap(PlayerController player)
+        {
+            leaping = true;
+            nextLeap = Time.time + leapCooldown;
+            voice.PlayOneShot(DogSounds.Bark, 1f);
+            anim?.PlayAttack();
+            agent.isStopped = true; agent.velocity = Vector3.zero;
+            agent.updatePosition = false;                 // the jump moves the body; the agent catches up on landing
+
+            Vector3 start = transform.position;
+            bool bit = false;
+            for (float t = 0f; t < leapTime; t += Time.deltaTime)
+            {
+                if (!Alive) { Drop(start); yield break; }
+                float k = t / leapTime;
+                Vector3 target = player.transform.position;
+                Vector3 dir = target - start; dir.y = 0f;
+                Vector3 land = dir.sqrMagnitude > 0.01f ? target - dir.normalized * 0.9f : start;   // land just in front of him
+                Vector3 pos = Vector3.Lerp(start, land, k);
+                pos.y = Mathf.Lerp(start.y, target.y, k) + Mathf.Sin(k * Mathf.PI) * leapHeight;
+                transform.position = pos;
+                if (dir.sqrMagnitude > 0.01f) transform.rotation = Quaternion.LookRotation(dir);
+                if (!bit && k > 0.55f && Vector3.Distance(pos, target) < 1.8f && !player.Health.Dead)
+                {
+                    bit = true;
+                    voice.PlayOneShot(DogSounds.Growl, 0.8f);
+                    player.Health.Damage(leapDamage, transform.position);
+                    player.AddKnockback(dir.normalized * (biteKnockback + 1.5f) + Vector3.up * 1.5f);
+                }
+                yield return null;
+            }
+
+            if (!Alive) { Drop(start); yield break; }
+            Vector3 landAt = NavMesh.SamplePosition(transform.position, out var hit, 2.5f, NavMesh.AllAreas) ? hit.position : start;
+            agent.Warp(landAt);
+            agent.updatePosition = true;
+            agent.isStopped = false;
+            nextBite = Time.time + biteCooldown * 0.5f;   // straight into a normal bite if he's still there
+            leaping = false;
+        }
+
+        /// <summary>Shot dead in mid-air: fall to the ground.</summary>
+        void Drop(Vector3 fallback)
+        {
+            transform.position = NavMesh.SamplePosition(transform.position, out var hit, 2.5f, NavMesh.AllAreas) ? hit.position : fallback;
+            leaping = false;
+        }
+
         public void Heal(float amount) => health.current = Mathf.Min(health.max, health.current + amount);
 
         /// <summary>Fell off the NavMesh (pushed, spawned badly): put it back on the nearest point.</summary>
@@ -130,7 +198,12 @@ namespace LastShift.GuardDog
 
         void OnHurt(float amount, Vector3 from)
         {
-            if (!Alive) return;
+            // Five hits and Kalu is down, whatever the weapon: each separate hit counts once (the
+            // 8 pellets of one shotgun blast all land in the same moment, so they count as one shot).
+            if (Time.time - lastHitAt > 0.15f) hitsTaken++;
+            lastHitAt = Time.time;
+            health.current = hitsTaken >= shotsToKill ? 0f : health.max * (1f - hitsTaken / (float)shotsToKill);
+            if (!Alive) return;   // Health raises Died right after this (current is 0)
             voice.PlayOneShot(DogSounds.Yelp, 1f);
             anim?.Flinch();
         }

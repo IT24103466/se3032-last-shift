@@ -104,7 +104,7 @@ namespace LastShift.GuardDog
             GUI.Label(new Rect(x, y + h + 6, w + 260, 220),
                 $"BT: {brain.ActiveBranch}\n" +
                 $"A* [{nav.CurrentMode}] expanded {r.Expanded}, {nav.LastPlanMs:F2} ms, cost {r.Cost:F1}{(r.Partial ? " (partial)" : "")}, plans {nav.PlansMade}\n" +
-                $"Tick {brain.TickMs:F2} ms   HP {brain.GetComponent<Health>().current:F0}   stuck events {brain.StuckEvents}\n" +
+                $"Tick {brain.TickMs:F2} ms   HP {brain.GetComponent<Health>().current:F0} (hits {brain.GetComponent<DogBody>().HitsTaken}/{brain.GetComponent<DogBody>().shotsToKill})   stuck events {brain.StuckEvents}\n" +
                 $"Body: {brain.GetComponent<DogBody>().SteeringInfo}\n" +
                 $"Sees player: {bb.SeesPlayer}  dist {bb.DistToPlayer:F1} m  hidden: {bb.PlayerHidden}  gun on dog: {bb.PlayerAimingAtMe}\n" +
                 $"Scent here {bb.ScentHere:F2}   trail ahead: {trail}\n" +

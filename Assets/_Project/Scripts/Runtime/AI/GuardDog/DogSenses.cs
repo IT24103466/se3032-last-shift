@@ -35,7 +35,6 @@ namespace LastShift.GuardDog
         public float AlertedUntil = -99f;    // a gunshot puts it on edge for a while
 
         // Self
-        public bool Retreating;
         public bool Alerted(float now) => now < AlertedUntil;
     }
 
@@ -51,7 +50,7 @@ namespace LastShift.GuardDog
     /// </summary>
     public sealed class DogSenses
     {
-        public float SightRange = 16f, SightRangeAlerted = 24f, HalfFov = 110f, SniffRadius = 4.5f, ScentThreshold = 0.06f;
+        public float SightRange = 22f, SightRangeAlerted = 30f, HalfFov = 110f, SniffRadius = 4.5f, ScentThreshold = 0.06f;
 
         readonly DogBlackboard bb;
         readonly IDogBody body;

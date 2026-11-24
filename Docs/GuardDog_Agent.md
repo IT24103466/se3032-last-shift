@@ -3,7 +3,10 @@
 Kalu is a black estate dog that guards the tea estate between the jungle and the factory.
 It **tracks Nimal by scent**: every step leaves scent that fades with time and is washed away by
 the rain; the dog follows the trail forwards, loses it at the stream and casts around to pick it
-up again, can't be fooled by a locker, and barks to bring the human guards. It reacts to the
+up again, can't be fooled by a locker, and barks to bring the human guards. Once it has seen him it is
+aggressive: it barks all the way through the chase, keeps after him for a few seconds when he slips
+out of sight, pounces (jump-bite) from a few metres away, and never backs off - it only stops when
+it has been hit five times. It reacts to the
 player's weapon: with a gun pointed at it, it stops running straight in and zigzags outside the
 line of fire.
 
@@ -35,7 +38,7 @@ so they can't accidentally depend on the scene, and could be unit-tested outside
 
 ## Why a behaviour tree (and not an FSM, GOAP or utility AI)
 
-* The dog has a clear **priority order** of concerns (survive → fight what it sees → point out a
+* The dog has a clear **priority order** of concerns (fight what it sees → point out a
   hidden intruder → check noises → follow the trail → search → patrol). A reactive BT expresses
   exactly that: the tree is re-evaluated from the root every tick and the first branch whose
   conditions hold wins, pre-empting (aborting) whatever was running. With an FSM the same logic
@@ -99,11 +102,11 @@ locally towards the farthest path cell in a straight, NavMesh-clear line (string
 ```
 Root (Selector)
  ├─ Idle         game not running                         → sit
- ├─ Retreat      HP < 30% (until > 75%: hysteresis)        → run to the kennel, heal 5 HP/s
- ├─ Engage       sees the player and has the turn (ThreatDirector: one attacker at a time)
+ ├─ Engage       sees the player (or saw him < 4 s ago) and has the turn (ThreatDirector)
  │    ├─ Alert   Cooldown 5 s: bark → noise 35 m (guards come), alarm if inside the premises
- │    └─ Attack (Selector)
- │         ├─ Bite      within 1.7 m                       → 9 damage + knockback / 1.1 s
+ │    └─ Attack (Selector)                                  (barks every 0.8–1.5 s throughout)
+ │         ├─ Bite      within 1.7 m                       → 11 damage + knockback / 1 s
+ │         ├─ Pounce    within 4.5 m, sees him, every 2.5 s → jump at him, 15 damage on landing
  │         ├─ Dodge     gun aimed at it (< 12°) and > 5 m  → zigzag in, Flank-mode A*
  │         └─ Chase                                         → Chase-mode A*; unreachable → wait & bark
  ├─ Wait turn    sees him but another enemy has the turn  → keep ~10 m off, growl, watch
@@ -115,8 +118,8 @@ Root (Selector)
 ```
 
 ### Senses
-* Sight: 220° field of view (dogs' eyes are on the side of the head) but short at night: 16 m,
-  24 m for a minute after hearing a gunshot, ×1.5 if the player's torch is on, ×0.7 if crouching.
+* Sight: 220° field of view (dogs' eyes are on the side of the head) but short at night: 22 m,
+  30 m for a minute after hearing a gunshot, ×1.5 if the player's torch is on, ×0.7 if crouching.
   Needs a clear raycast from the dog's eyes to the player's chest.
 * Hearing: listens to every `EnemyAI.MakeNoise` (one event added), at 1.5× the human radius.
 * Weapon awareness: reads the player's `PlayerGun` – current weapon and aim direction.
@@ -137,7 +140,9 @@ twice with the slingshot, but not forever. Gunfire is never ignored.
 | Trail loops or crosses itself | Deposit-time rule never backtracks |
 | Pebble distractions | Habituation (above) |
 | Gun pointed at it | Zigzags in outside the aim cone |
-| Badly hurt | Retreats and heals at the kennel, returns at 75% (hysteresis prevents flip-flopping) |
+| Shot | Five hits and it's down, whatever the weapon; a shotgun blast's 8 pellets land together and count as one hit. No retreat: it fights on |
+| Loses sight mid-chase | Keeps chasing for 4 s (pursuit memory), then follows the scent trail |
+| Shot dead mid-pounce | Drops to the ground (snapped back onto the NavMesh) |
 | Noise from its own bark | Ignored (< 2 m) |
 | Off the NavMesh (pushed by knockback) | Warped to the nearest NavMesh point |
 | Game paused / player dead | Idle branch |
