@@ -82,14 +82,18 @@ namespace LastShift
                 return;
             }
 
-            bool vis = perc.PlayerVisible;
+            float provoked = Mathf.Exp(-(Time.time - ai.LastHurtTime) / 8f);
+            // Noise-driven senses: eyesight only CONFIRMS a target once a noise / hit has made the mammoth alert.
+            // A silent player (walking, crouching, standing still) is ignored even when standing in plain view.
+            bool alert = perc.IsAlert || provoked > 0.05f || ai.Enraged;
+            bool vis = perc.PlayerVisible && alert;
             float dVis = vis ? Flat(pos, perc.LastSeenPos) : 999f;
             float mul = perc.StealthMul();
             float noticeEff = ai.NoticeR * mul, aggroEff = ai.AggroR * Mathf.Lerp(1f, mul, 0.6f);
-            float provoked = Mathf.Exp(-(Time.time - ai.LastHurtTime) / 8f);
             float enr = ai.Enraged ? 1f : 0f;
             float pe = Mathf.Max(provoked, enr);
-            float tSeen = perc.HasSeenPlayer ? perc.TimeSinceSeen : 999f;
+            bool seenEver = perc.HasSeenPlayer && alert;
+            float tSeen = seenEver ? perc.TimeSinceSeen : 999f;
             float tNoise = perc.HasHeardNoise ? perc.NoiseAge : 999f;
             float tEvid = Mathf.Min(tSeen, tNoise);
             float fresh = Mathf.Exp(-tSeen / 12f);
@@ -114,7 +118,7 @@ namespace LastShift
             // --- Track last known position
             float arrived = 0f;
             if (vis) { if (dVis < noticeEff) u[(int)MammothAction.TrackLastKnown] = wTrackVisible * (0.6f + 0.4f * Mathf.Clamp01(1f - dVis / noticeEff)); }
-            else if (perc.HasSeenPlayer)
+            else if (seenEver)
             {
                 arrived = Flat(pos, perc.LastSeenPos) < 6f ? 1f : 0f;
                 u[(int)MammothAction.TrackLastKnown] = (wTrackFresh * fresh + wTrackConf * conf) * (1f - arrived);
@@ -130,7 +134,7 @@ namespace LastShift
             // --- Search
             if (!vis)
             {
-                bool ready = !perc.HasSeenPlayer || arrived > 0.5f || tSeen > 30f;
+                bool ready = !seenEver || arrived > 0.5f || tSeen > 30f;
                 u[(int)MammothAction.Search] = wSearch * evRecent * (1f - lost) * (ready ? 1f : 0.35f);
             }
 

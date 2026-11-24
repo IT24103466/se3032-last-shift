@@ -37,7 +37,7 @@ namespace LastShift
         public float hiddenMul = 0.2f, crouchMul = 0.55f, sprintMul = 1.25f;
 
         [Header("Hearing radius (metres) by sound")]
-        public float gunshotRadius = 95f, sprintRadius = 30f, otherRadius = 16f;
+        public float gunshotRadius = 70f, sprintRadius = 22f, otherRadius = 12f;
         [Tooltip("Position error as a fraction of distance to the source")]
         public float localisationError = 0.15f;
         public float sprintNoiseInterval = 0.6f;
@@ -55,6 +55,10 @@ namespace LastShift
         public float Detectability { get; private set; }
         public NoiseEvent LastNoise { get; private set; }
         public bool HasHeardNoise => LastNoise.time > 0f;
+        [Tooltip("After hearing a noise (or being hit) the mammoth stays alert this long; only while alert can eyesight confirm a target")]
+        public float alertSeconds = 25f;
+        /// <summary>True while a recent noise / hit has put the mammoth on guard. A silent player never makes it alert, so it never hunts by proximity alone.</summary>
+        public bool IsAlert => HasHeardNoise && NoiseAge < alertSeconds;
         public float NoiseAge => Time.time - LastNoise.time;
         public Vector3 EyePosition => transform.position + Vector3.up * eyeHeight;
 
