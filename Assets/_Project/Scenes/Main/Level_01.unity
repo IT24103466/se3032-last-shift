@@ -12542,7 +12542,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 18
+      value: 44
       objectReference: {fileID: 0}
     - target: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       propertyPath: m_LocalPosition.y
@@ -12550,7 +12550,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 78
+      value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       propertyPath: m_LocalRotation.w
@@ -12623,6 +12623,9 @@ MonoBehaviour:
   role: 0
   useRolePreset: 1
   focusZones: []
+  stayInside: 1
+  postZone: boiler
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2
@@ -29436,6 +29439,9 @@ MonoBehaviour:
   role: 3
   useRolePreset: 1
   focusZones: []
+  stayInside: 1
+  postZone: loft
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2
@@ -68469,15 +68475,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 58
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 8.071383
+      value: 9.23805
       objectReference: {fileID: 0}
     - target: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 70.6
+      value: 60.5
       objectReference: {fileID: 0}
     - target: {fileID: 345597773313721387, guid: bdd370da7d3be7e4f84da434dcf98c71, type: 3}
       propertyPath: m_LocalRotation.w
@@ -68550,6 +68556,9 @@ MonoBehaviour:
   role: 0
   useRolePreset: 1
   focusZones: []
+  stayInside: 1
+  postZone: rolling
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2
@@ -68785,15 +68794,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3241514812544459038, guid: c78cec23a96a3694495d43fef554a151, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 67
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 3241514812544459038, guid: c78cec23a96a3694495d43fef554a151, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 8.142812
+      value: 8.071383
       objectReference: {fileID: 0}
     - target: {fileID: 3241514812544459038, guid: c78cec23a96a3694495d43fef554a151, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 58
+      value: 66
       objectReference: {fileID: 0}
     - target: {fileID: 3241514812544459038, guid: c78cec23a96a3694495d43fef554a151, type: 3}
       propertyPath: m_LocalRotation.w
@@ -68870,6 +68879,9 @@ MonoBehaviour:
   role: 2
   useRolePreset: 1
   focusZones: []
+  stayInside: 1
+  postZone: boiler
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2
@@ -74480,6 +74492,9 @@ MonoBehaviour:
   role: 1
   useRolePreset: 1
   focusZones: []
+  stayInside: 0
+  postZone: 
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2
@@ -132269,6 +132284,9 @@ MonoBehaviour:
   role: 2
   useRolePreset: 1
   focusZones: []
+  stayInside: 1
+  postZone: storeroom
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2
@@ -162184,6 +162202,9 @@ MonoBehaviour:
   role: 1
   useRolePreset: 1
   focusZones: []
+  stayInside: 0
+  postZone: 
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2
@@ -167399,6 +167420,9 @@ MonoBehaviour:
   role: 3
   useRolePreset: 1
   focusZones: []
+  stayInside: 1
+  postZone: rolling
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2
@@ -167766,6 +167790,9 @@ MonoBehaviour:
   role: 0
   useRolePreset: 1
   focusZones: []
+  stayInside: 1
+  postZone: rolling
+  toughness: 2.5
   hp: 100
   walkSpeed: 1.8
   runSpeed: 5.2

@@ -28,10 +28,14 @@ from .zones import ZoneGraph, load_graph
 
 class GuardBrain:
     def __init__(self, model_path: str | None = None, zg: ZoneGraph | None = None, memory_path: str | None = None, role: str = "sentinel",
-                 team: Team | None = None, agent_id: str = "agent", focus=None, model=None):
+                 team: Team | None = None, agent_id: str = "agent", focus=None, model=None, confined: bool = False, post: str | None = None):
         self.zg = zg or load_graph()
         self.n = self.zg.n
         self.spec = get_role(role)
+        # A confined person is an interior garrison: he never leaves the factory building by his own choice (see _keep_inside)
+        self.confined = bool(confined)
+        self.allowed = self.zg.protected.copy() if self.confined else np.ones(self.n, bool)
+        self.post = self.zg.idx(post) if post in self.zg.names else -1
         self.G, self.W = self.spec.stats, self.spec.weights
         self.role, self.id = self.spec.name, agent_id
         self.focus = focus_mask(self.zg, self.spec, focus)
@@ -198,13 +202,39 @@ class GuardBrain:
             else:
                 a, reason = self.fallback.act(o), "utility planner"
             # a visible intruder inside the role's engage range with a clear shot is engaged unless the policy chose to hold cover
-            if self.visible and a < self.n and percept.get("clear_shot", False) and d["ammo"] > 0.01 and dist <= min(self.G.gun_range, self.spec.engage_range) and a != self.zg.idx("tea_field"):
+            if self.visible and a < self.n and percept.get("clear_shot", False) and d["ammo"] > 0.01 and dist <= min(self.G.gun_range, self.spec.engage_range):
                 a, reason = self.A_ENGAGE, reason + " + reflex: clear shot"
+        # he sees the player inside his range but something (a crate, a machine) blocks the shot: step towards him to get a clear line instead of standing there
+        if self.visible and not percept.get("clear_shot", False) and d["ammo"] > 0.01 and a != self.A_COVER and a != self.A_RELOAD and "player_pos" in percept \
+                and dist <= max(6.0, min(self.G.gun_range, self.spec.engage_range)):
+            pz = self.zg.zone_of(*percept["player_pos"])
+            if self.allowed[pz]:
+                px, pzz = percept["player_pos"]
+                self.team.targets[self.id] = pz
+                return dict(mode="goto", zone=self.zg.names[pz], target=[px, pzz], run=True, route=[], eta=0.0, why=reason + " | no clear shot: moving for a line", score=round(self.score, 2),
+                            role=self.role, belief_top=[f"{self.zg.names[i]} {self.belief.b[i]:.2f}" for i in np.argsort(-self.belief.b)[:3]])
+        if self.confined and a < self.n and not self.allowed[a]:
+            a, reason = self._best_inside(), reason + " | stays inside"
+        elif self.confined and a < self.n and not self.visible and sum(1 for k, v in self.team.targets.items() if k != self.id and v == a) >= 2:
+            a, reason = self._best_inside(), reason + " | spreads out"          # the room is already covered by two others
         if self.heard_radio and not self.visible:
             reason += " | radio"
         if self.heard_gunshot:
             reason += " | gunshot"
         return self._to_command(a, d, reason)
+
+    def _best_inside(self) -> int:
+        """The best zone INSIDE the building to wait in: where the intruder probably is, or just behind the door he is probably about to come through.
+        Zones next to an outside zone that carries belief mass count (an ambush position), the post gets a small bonus (no wandering about), distance costs a little."""
+        zg, b = self.zg, self.belief.b
+        best, best_s = self.guard_zone, -1e9
+        for z in np.where(self.allowed)[0]:
+            outside_next = sum(b[j] for j in np.where(zg.adj[z])[0] if not self.allowed[j])
+            crowd = sum(1 for k, v in self.team.targets.items() if k != self.id and v == z)       # teammates already there or on the way
+            s = b[z] + 0.6 * outside_next + (0.25 if z == self.post else 0.0) - 0.01 * zg.dist[self.guard_zone, z] - 0.45 * crowd
+            if s > best_s:
+                best, best_s = int(z), s
+        return best
 
     def _to_command(self, a: int, d: dict, reason: str) -> dict:
         zg, G = self.zg, self.G
@@ -222,11 +252,16 @@ class GuardBrain:
             cmd = dict(mode="engage", zone=zg.names[self.guard_zone], target=[], run=False)
             if not self.visible and self.belief.last_seen_zone >= 0 and self.belief.last_seen_age < 8:
                 lz = self.belief.last_seen_zone
-                cmd.update(mode="goto", zone=zg.names[lz], target=list(self.zone_point(lz)), run=True)
+                if not self.allowed[lz]:
+                    lz = self._best_inside()                  # he was last seen outside: wait at the door instead of running out after him
+                    reason += " | stays inside"
+                if lz != self.guard_zone:
+                    cmd.update(mode="goto", zone=zg.names[lz], target=list(self.zone_point(lz)), run=True)
         elif a == self.A_COVER:
             cmd = dict(mode="cover", zone=zg.names[self.guard_zone], target=[], run=False)
         else:
             cmd = dict(mode="reload", zone=zg.names[self.guard_zone], target=[], run=False)
+        self.team.targets[self.id] = a if a < self.n else self.guard_zone
         cmd["why"] = reason
         cmd["score"] = round(self.score, 2)
         cmd["role"] = self.role

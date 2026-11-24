@@ -45,6 +45,14 @@ namespace LastShift
         public bool useRolePreset = true;
         [Tooltip("Optional: zone names this person looks after instead of the role default (e.g. north_lane, loft)")]
         public string[] focusZones;
+        [Tooltip("Interior garrison: he never leaves the factory building by his own choice. He waits at his post, takes the ambush spot behind the door the intruder is likely to use, and shoots from inside.")]
+        public bool stayInside;
+        [Tooltip("Zone he waits in (zone-graph name: rolling, loft, storeroom, boiler ...)")]
+        public string postZone = "";
+
+        [Header("Toughness")]
+        [Tooltip("Multiplier on hit points. The brain still sees his health as a fraction of the normal body, so the policy behaves as before, but it takes this many times more damage to put him down.")]
+        public float toughness = 2.5f;
 
         [Header("Weapon and body (the presets match GuardAgent/guard_agent/config.py)")]
         public float hp = 100f;
@@ -53,6 +61,7 @@ namespace LastShift
         public int gunMag = 12;
         [Tooltip("Pellets per shot: 1 for the pistol, 5 for the worker shotgun")] public int pellets = 1;
         public float eyeHeight = 1.7f;
+        [Tooltip("Inside this distance (metres) he notices the player whichever way he is facing, if nothing solid is in between")] public float closeAwareness = 4.5f;
 
         [Header("Gunshot hearing")]
         [Tooltip("The guard hears the player's gunshots within this many metres, through walls (the game's own noise radius for a shot is 40)")]
@@ -71,7 +80,7 @@ namespace LastShift
         AgentAction action;
         readonly object actionLock = new object();
         string pendingLine;
-        float nextTick, aimUntil = -1f, nextShot, reloadUntil, nextDoorCheck, coverUntil, lastDamageTime = -99f;
+        float nextTick, aimUntil = -1f, nextShot, reloadUntil = -1f, nextDoorCheck, coverUntil, lastDamageTime = -99f;
         int ammo;
         float damageSinceTick, damageTakenSinceTick, lastHitOnPlayer = -99f;
         bool alarmSent, wasPlaying, ended, hadConnection;
@@ -79,7 +88,7 @@ namespace LastShift
         bool coverValid;
         readonly List<NoiseEvent> noises = new List<NoiseEvent>();
         string lastWhy = "", lastMode = "", lastZone = ""; string[] belief = new string[0];
-        static int hudCount; int hudIndex = -1;
+        static int hudCount; int hudIndex = -1; float lastSeenTime = -99f;
         float lastLatencyMs, bagsCountedAt = -99f; int bagsSearched;
 
         // Factory building = protected zones of the zone graph (x0, x1, z0, z1)
@@ -91,6 +100,7 @@ namespace LastShift
         [Header("Diagnostics (read-only)")] public int ticksSent, actionsReceived; public string debug = "";
 
         // ------------------------------------------------------------------ setup
+        float MaxHp => hp * toughness;
         public static string RoleKey(AgentRole r) => r == AgentRole.Sentinel ? "sentinel" : r == AgentRole.Gatekeeper ? "gatekeeper" : r == AgentRole.TeaKeeper ? "tea_keeper" : "lookout";
         public static string RoleTitle(AgentRole r) => r == AgentRole.Sentinel ? "SENTINEL" : r == AgentRole.Gatekeeper ? "GATEKEEPER" : r == AgentRole.TeaKeeper ? "TEA KEEPER" : "LOOKOUT";
 
@@ -106,6 +116,8 @@ namespace LastShift
         string HelloJson()
         {
             var sb = new StringBuilder("{\"type\":\"hello\",\"version\":2,\"role\":\"").Append(RoleKey(role)).Append("\",\"id\":\"").Append(name).Append("\"");
+            if (stayInside) sb.Append(",\"confined\":true");
+            if (!string.IsNullOrEmpty(postZone)) sb.Append(",\"post\":\"").Append(postZone).Append("\"");
             if (focusZones != null && focusZones.Length > 0) sb.Append(",\"focus\":[").Append(string.Join(",", focusZones.Select(z => "\"" + z + "\""))).Append("]");
             return sb.Append("}").ToString();
         }
@@ -121,7 +133,7 @@ namespace LastShift
             player = FindAnyObjectByType<PlayerController>();
             playerGun = FindAnyObjectByType<PlayerGun>();
             ApplyPreset();
-            health.max = hp; health.current = hp;
+            health.max = MaxHp; health.current = MaxHp;
             ammo = gunMag;
             health.Damaged += OnDamaged;
             health.Died += OnDied;
@@ -160,7 +172,7 @@ namespace LastShift
             // episode bookkeeping
             if (gm != null)
             {
-                if (playing && !wasPlaying && Connected) { link.Send("{\"type\":\"episode_start\"}"); ended = false; alarmSent = false; damageDealt = 0f; score = 0f; ammo = gunMag; }
+                if (playing && !wasPlaying && Connected) { link.Send("{\"type\":\"episode_start\"}"); ended = false; alarmSent = false; damageDealt = 0f; score = 0f; ammo = gunMag; reloadUntil = -1f; }
                 if (!playing && wasPlaying && Connected && !ended)
                 {
                     ended = true;
@@ -181,6 +193,7 @@ namespace LastShift
 
             PollGunshots();
             Execute();
+            ScanWhileWaiting();
 
             if (Time.time >= nextTick) { nextTick = Time.time + decisionInterval; SendTick(); }
         }
@@ -206,9 +219,17 @@ namespace LastShift
             lastMag = g.mag;
         }
 
+        /// <summary>While the alarm is on and he has not seen the player for a moment, a person standing at his post turns slowly on the spot instead of staring at a wall.</summary>
+        void ScanWhileWaiting()
+        {
+            if (!alarmSent || agent.hasPath || action == null || action.mode == "reload") return;
+            if (Time.time - lastSeenTime < 1.5f) return;
+            transform.Rotate(0f, 55f * Time.deltaTime, 0f);
+        }
+
         void ApplyStats()
         {
-            health.max = hp; if (health.current > hp || health.current <= 0f) health.current = hp;
+            health.max = MaxHp; if (health.current > MaxHp || health.current <= 0f) health.current = MaxHp;
             agent.speed = walkSpeed; agent.angularSpeed = 540f; agent.acceleration = 14f; agent.stoppingDistance = 0.3f;
         }
 
@@ -220,7 +241,7 @@ namespace LastShift
             if (dist > range) return false;
             Vector3 eye = transform.position + Vector3.up * eyeHeight;
             Vector3 to = player.Chest - eye;
-            if (dist > 2f && Vector3.Angle(transform.forward, to) > fov * 0.5f) return false;
+            if (dist > closeAwareness && Vector3.Angle(transform.forward, to) > fov * 0.5f) return false;
             if (Physics.Raycast(eye, to.normalized, out var hit, to.magnitude, ~(1 << 2), QueryTriggerInteraction.Ignore))
             {
                 if (hit.collider.transform.IsChildOf(transform)) return true;
@@ -264,16 +285,16 @@ namespace LastShift
             {
                 type = "tick",
                 dt = decisionInterval,
-                guard = new GuardInfo { pos = new[] { transform.position.x, transform.position.z }, hp = health.current, ammo = ammo, reloading = reloadUntil > 0f },
+                guard = new GuardInfo { pos = new[] { transform.position.x, transform.position.z }, hp = health.current / toughness, ammo = ammo, reloading = reloadUntil > 0f },
                 player_visible = sees,
                 player_pos = new[] { player.transform.position.x, player.transform.position.z },
                 player_hp_frac = player.Health.Fraction,
                 clear_shot = sees && dist <= gunRange && ClearShot(),
                 alarm = gm != null && gm.AlarmRaised,
-                damage_taken = damageTakenSinceTick,
+                damage_taken = damageTakenSinceTick / toughness,
                 score_info = new ScoreInfo { damage_dealt_now = damageSinceTick, intruder_in_factory = !player.Health.Dead && InFactory(player.transform.position), intruder_searching_bag = player.SearchProgress > 0.01f, bags_searched_total = CountSearchedBags() },
             };
-            if (sees) lastKnown = player.transform.position;
+            if (sees) { lastKnown = player.transform.position; lastSeenTime = Time.time; }
             if (t.alarm && !alarmSent) { alarmSent = true; t.alarm_event_pos = new[] { player.transform.position.x, player.transform.position.z }; }
             else t.alarm_event_pos = new float[0];
             // noises: sprinting or rummaging within earshot, and gunfire
