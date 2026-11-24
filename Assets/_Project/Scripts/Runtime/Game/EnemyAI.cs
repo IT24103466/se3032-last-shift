@@ -98,7 +98,7 @@ namespace LastShift
         public static System.Collections.Generic.IReadOnlyList<EnemyAI> All => all;
 
         /// <summary>How many guards/workers may be out hunting the player at once (the rest hold their posts).</summary>
-        public const int MaxResponders = 2;
+        public const int MaxResponders = 3;
 
         /// <summary>Guards and workers currently chasing or searching.</summary>
         public static int Responders()
@@ -139,6 +139,18 @@ namespace LastShift
 
         public string DisplayName => kind.ToString();
         public bool IsHuman => kind == EnemyKind.Guard || kind == EnemyKind.Worker || kind == EnemyKind.Hunter;
+        public bool IsAnimal => kind == EnemyKind.Tiger || kind == EnemyKind.Deer || kind == EnemyKind.Elephant;
+
+        /// <summary>Animals never go past this line: the factory fence keeps them out of the premises.</summary>
+        const float AnimalLimitZ = ThreatDirector.PremisesFenceZ - 3f;
+
+        /// <summary>Where an animal may go: never over the factory fence.</summary>
+        Vector3 Allowed(Vector3 target)
+        {
+            if (!IsAnimal || target.z <= AnimalLimitZ) return target;
+            target.z = AnimalLimitZ;
+            return NavMesh.SamplePosition(target, out var hit, 6f, NavMesh.AllAreas) && hit.position.z <= AnimalLimitZ + 0.5f ? hit.position : home;
+        }
         public bool Aiming => aimUntil > 0f;
         public string StateName => state.ToString();
 
@@ -167,8 +179,10 @@ namespace LastShift
                     Set(20f, 110f, 10f, 1.8f, 5.2f, 1.8f, 8f, 1.6f, 3f, 1.7f); health.max = 100f;   // 4 pistol body shots or 2 headshots
                     SetGun(GunSound.Pistol, 22f, 5f, 1, 1.3f, 0.6f, 0.4f, 8, 2.2f); break;
                 case EnemyKind.Worker:
-                    Set(14f, 110f, 9f, 1.4f, 4.6f, 1.7f, 6f, 1.8f, 2.5f, 1.7f); health.max = 40f;
-                    SetGun(GunSound.Shotgun, 10f, 3f, 5, 1.9f, 0.7f, 0.4f, 2, 2.6f); break;
+                    // Factory officers: as sharp as the security guards (sight, speed, reaction time),
+                    // with a double-barrel shotgun: deadly close up, quick to aim, quick to reload
+                    Set(20f, 120f, 11f, 1.8f, 5.4f, 1.7f, 8f, 1.4f, 3f, 1.7f); health.max = 100f;
+                    SetGun(GunSound.Shotgun, 16f, 3.5f, 6, 1.3f, 0.35f, 0.45f, 2, 1.6f); break;
                 case EnemyKind.Hunter:
                     Set(30f, 130f, 18f, 1.7f, 4.8f, 1.8f, 8f, 1.6f, 3f, 1.7f); health.max = 90f; if (leash == 0f) leash = 45f;
                     SetGun(GunSound.Rifle, 45f, 16f, 1, 2.6f, 1f, 0.55f, 5, 3f); break;
@@ -227,6 +241,14 @@ namespace LastShift
                 stateTimer -= Time.deltaTime;
                 if (stateTimer <= 0f) state = resumeState;
                 return;
+            }
+
+            // The factory fence keeps animals out: once he's inside the premises they lose interest,
+            // and one that has strayed over the line heads back home
+            if (IsAnimal && (ThreatDirector.InPremises(player.transform.position) || transform.position.z > AnimalLimitZ + 1f))
+            {
+                sees = false; hears = false;
+                if (state == State.Chase || state == State.Charge || state == State.Search) { state = State.Wander; aimUntil = -1f; Go(home, walkSpeed); }
             }
 
             switch (kind)
@@ -336,6 +358,7 @@ namespace LastShift
 
         void Go(Vector3 target, float speed)
         {
+            target = Allowed(target);
             agent.speed = speed;
             if ((agent.destination - target).sqrMagnitude > 0.5f || !agent.hasPath) agent.SetDestination(target);
         }
@@ -350,7 +373,7 @@ namespace LastShift
             if (!agent.hasPath || Arrived(0.6f))
             {
                 var p = home + Random.insideUnitSphere * wanderRadius;
-                if (NavMesh.SamplePosition(p, out var hit, 4f, NavMesh.AllAreas)) agent.SetDestination(hit.position);
+                if (NavMesh.SamplePosition(p, out var hit, 4f, NavMesh.AllAreas)) agent.SetDestination(Allowed(hit.position));
                 idleUntil = Time.time + Random.Range(2f, 6f);
             }
         }

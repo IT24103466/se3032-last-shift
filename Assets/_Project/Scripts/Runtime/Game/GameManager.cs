@@ -7,7 +7,7 @@ namespace LastShift
 {
     /// <summary>
     /// Runs one night at Kirimala: intro, objectives (jungle -> estate -> premises -> find the ring
-    /// in one of the tea bags -> escape through the main gate), the alarm, win/lose, pause, and the HUD.
+    /// in one of the tea bags -> back through the jungle to the camp), the alarm, win/lose, pause, and the HUD.
     /// </summary>
     public class GameManager : MonoBehaviour
     {
@@ -58,6 +58,9 @@ namespace LastShift
                 var pick = bags[Random.Range(0, bags.Length)];
                 pick.hasRing = true;
             }
+            // The finish: back at the camp in the jungle where the game started (by the rocks)
+            var spawn = GameObject.Find("Spawn_Player");
+            camp = spawn != null ? spawn.transform.position : player != null ? player.transform.position : Vector3.zero;
             if (player != null)
             {
                 player.Health.Damaged += (a, f) => flash = Mathf.Min(0.7f, flash + a / 40f);
@@ -81,6 +84,7 @@ namespace LastShift
                 case Phase.Playing:
                     if (kb.escapeKey.wasPressedThisFrame) { phase = Phase.Paused; Time.timeScale = 0f; SetCursor(false); }
                     if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked) SetCursor(true);
+                    if (HasRing && player != null && !player.Health.Dead && CampDistance() < CampFinishRadius) { Win(); break; }
                     if (!reachedEstate && player != null && player.transform.position.z > 1f)
                     {
                         reachedEstate = true;
@@ -134,17 +138,20 @@ namespace LastShift
             Toast("ALARM! Security knows someone is inside the premises!", 4f);
             // Security comes in waves, not all at once: the nearest guards go first (at most
             // EnemyAI.MaxResponders out at a time); the rest are sent one by one as slots free up.
+            // Factory officers (workers) close by join in too.
             foreach (var e in FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude))
-                if (e.kind == EnemyKind.Guard && !e.Dead && !alarmQueue.Contains(e)) alarmQueue.Add(e);
+                if (!e.Dead && !alarmQueue.Contains(e) && (e.kind == EnemyKind.Guard || e.kind == EnemyKind.Worker && Vector3.Distance(e.transform.position, player.transform.position) < 40f))
+                    alarmQueue.Add(e);
             nextDispatch = 0f;
             DispatchGuards();
+            AlarmSiren.Sound(new Vector3(30f, 18f, 64f));   // the factory siren: everyone on the estate hears it
             if (alarmMusic != null) Instantiate(alarmMusic, transform);
         }
 
         // ---- Alarm waves
         readonly System.Collections.Generic.List<EnemyAI> alarmQueue = new System.Collections.Generic.List<EnemyAI>();
         float nextDispatch;
-        const float DispatchGap = 8f;   // seconds between sending one guard and the next
+        const float DispatchGap = 5f;   // seconds between sending one guard and the next
 
         /// <summary>Sends the nearest waiting guard to where the player is, if a responder slot is free.</summary>
         void DispatchGuards()
@@ -165,7 +172,7 @@ namespace LastShift
             if (bag.hasRing)
             {
                 HasRing = true;
-                Toast("Your wedding ring! It was in this bag. Now get out through the main gate!", 5f);
+                Toast("Your wedding ring! It was in this bag. Now get back through the jungle to your camp!", 5f);
                 // Everyone hears the commotion
                 foreach (var e in FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude))
                     if (e.kind == EnemyKind.Guard && !e.Dead && !alarmQueue.Contains(e)) alarmQueue.Add(e);
@@ -177,9 +184,15 @@ namespace LastShift
         public void TryEscape()
         {
             if (!IsPlaying) return;
-            if (HasRing) Win();
-            else if (Time.time - lastEscapeNag > 5f) { lastEscapeNag = Time.time; Toast("You can't leave without your ring!"); }
+            if (Time.time - lastEscapeNag < 5f) return;
+            lastEscapeNag = Time.time;
+            Toast(HasRing ? "The estate road is watched. Go back down through the tea and the jungle to your camp!" : "You can't leave without your ring!");
         }
+
+        // ---- The finish line: Nimal's camp in the jungle (where the game started)
+        Vector3 camp;
+        const float CampFinishRadius = 7f;
+        float CampDistance() { Vector3 d = player.transform.position - camp; d.y = 0f; return d.magnitude; }
 
         /// <summary>The player was hurt by someone: remember where from (the HUD points that way).</summary>
         public void OnPlayerHit(EnemyAI by)
@@ -227,7 +240,7 @@ namespace LastShift
             if (!reachedEstate) return "Get through the jungle to the tea estate (follow the trail north)";
             if (!AlarmRaised && !HasRing) return "Sneak into the factory premises: part of the fence has collapsed near the east end";
             if (!HasRing) return $"Search the tea bags for your ring ({searched}/{bags.Length})\nBags: dispatch warehouse, withering loft, storeroom, workers' line house";
-            return "Escape through the main gate on the west side of the yard";
+            return $"Get back to your camp in the jungle where you started, by the rocks ({CampDistance():F0} m)\nOut through the fence, down through the tea, over the stream";
         }
 
         // ------------------------------------------------------------------ HUD
@@ -281,7 +294,7 @@ namespace LastShift
                 case Phase.Intro: DrawIntro(w, h); return;
                 case Phase.Paused: DrawHud(w, h); DrawPanel(w, h, "PAUSED", "Esc / Enter  resume        R  restart", null); return;
                 case Phase.Won:
-                    DrawPanel(w, h, "YOU ESCAPED", $"Nimal slips through the main gate with the ring safe in his pocket.\nTime: {Format(endTime - startTime)}    Bags searched: {searched}/{bags.Length}    Knocked out: {knockedOut}", "Press R to play again");
+                    DrawPanel(w, h, "YOU ESCAPED", $"Nimal slips back into the jungle and reaches his camp with the ring safe in his pocket.\nTime: {Format(endTime - startTime)}    Bags searched: {searched}/{bags.Length}    Knocked out: {knockedOut}", "Press R to play again");
                     return;
                 case Phase.Lost:
                     DrawPanel(w, h, "CAUGHT", loseReason, "Press R to try again");
@@ -426,7 +439,7 @@ namespace LastShift
                 "This afternoon Nimal helped load the day's tea at the Kirimala factory. Tonight he noticed his wedding ring was gone: it slipped " +
                 "into one of the tea bags, and the bags leave on the lorry at dawn.\n\n" +
                 "He has to get it back before morning: through the jungle (tigers and the old elephant: the camp fire keeps them away), " +
-                "up through the tea, over the factory fence, and past the armed security guards and night-shift workers.", body);
+                "up through the tea, over the factory fence, past the armed security guards and night-shift workers, and then all the way back to his camp.", body);
             GUI.Label(new Rect(x, h * 0.58f, cw, 120),
                 "WASD move  ·  Shift sprint  ·  Space jump  ·  C crouch (hide in bushes)  ·  Left click shoot  ·  R reload  ·  1 pistol  2 shotgun  3 slingshot  ·  Right click stick\n" +
                 "E use doors, search bags (hold), take ammo, hide in lockers  ·  F torch (helps you see, but helps them see you)  ·  Esc pause\nTip: gunshots are loud (shooting inside the premises sets off the alarm); a slingshot pebble lures a guard away quietly", small);

@@ -11,6 +11,10 @@ namespace LastShift
     /// (a heartbeat); if it stops (killed, lost the player, gave up), the turn frees itself after
     /// <see cref="Timeout"/> seconds, so nobody has to remember to release it.
     /// The start camp is a safe zone: nothing attacks there (the camp fire keeps animals away).
+    ///
+    /// The rule is for the jungle and the tea estate only. Inside the factory premises (from the
+    /// yard fence at Z 40 northwards) there are no animals, and the dog, the guards and the workers
+    /// all fight together: there the turn is always given.
     /// </summary>
     public static class ThreatDirector
     {
@@ -48,6 +52,7 @@ namespace LastShift
         public static bool TryAttack(Object who, string displayName, Vector3 playerPos)
         {
             if (InCamp(playerPos)) return false;
+            if (InPremises(playerPos)) return true;   // inside the factory premises everyone attacks at once
             var h = Holder;
             if (h == who) { holderSeen = Time.time; return true; }
             if (h != null || Time.time < freeAt) return false;
@@ -60,6 +65,12 @@ namespace LastShift
         {
             if (holder != null && holder == who) { holder = null; holderName = null; freeAt = Time.time + Breather; }
         }
+
+        /// <summary>The factory's south fence runs along Z 40: everything north of it is the premises.</summary>
+        public const float PremisesFenceZ = 40f;
+
+        /// <summary>Inside the factory premises (yard, factory, east compound, estate road)?</summary>
+        public static bool InPremises(Vector3 p) => p.z > PremisesFenceZ - 0.5f && p.x > -2f && p.x < 80f;
 
         public static bool InCamp(Vector3 playerPos)
         {

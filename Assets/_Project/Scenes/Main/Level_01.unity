@@ -477,75 +477,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3859230}
   m_Mesh: {fileID: -4930266283023359352, guid: 660523861a2fbaf43976022ee20bf076, type: 2}
---- !u!1001 &4050816
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1807522040}
-    m_Modifications:
-    - target: {fileID: 1635872976070711828, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: wanderRadius
-      value: 14
-      objectReference: {fileID: 0}
-    - target: {fileID: 2137478784962657799, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_Name
-      value: Hunter_09
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 46
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -3.719297
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -40
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: -0.8526401
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0.52249867
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5259620538342242739, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 403012420}
-  m_SourcePrefab: {fileID: 100100000, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
---- !u!4 &4050817 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8318190915422286832, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-  m_PrefabInstance: {fileID: 4050816}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4291501
 GameObject:
   m_ObjectHideFlags: 0
@@ -12641,6 +12572,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
@@ -29457,6 +29389,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
@@ -32273,7 +32206,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1112450136}
+  m_Father: {fileID: 1112450131}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &369884763
 MeshRenderer:
@@ -35126,40 +35059,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 402976966}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &403012418 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5259620538342242739, guid: 5539079f0229a2e43abb2aed95c27384, type: 3}
-  m_PrefabInstance: {fileID: 4050816}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &403012420
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 403012418}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
-  m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
-  m_CustomShadowLayers: 0
-  m_LightCookieSize: {x: 1, y: 1}
-  m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
-  m_RenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_ShadowRenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_Version: 4
-  m_LightLayerMask: 1
-  m_ShadowLayerMask: 1
-  m_RenderingLayers: 1
-  m_ShadowRenderingLayers: 1
 --- !u!1 &405020178
 GameObject:
   m_ObjectHideFlags: 0
@@ -68574,6 +68473,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
@@ -68897,6 +68797,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
@@ -74510,6 +74411,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
@@ -92334,21 +92236,21 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 4987727974694931638, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 369884762}
+    - targetCorrespondingSourceObject: {fileID: 4987727974694931638, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1492026514}
+    - targetCorrespondingSourceObject: {fileID: 4987727974694931638, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1531767408}
     - targetCorrespondingSourceObject: {fileID: 1891664858074902341, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1782073068}
     - targetCorrespondingSourceObject: {fileID: 7672784373732572536, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1453048262}
-    - targetCorrespondingSourceObject: {fileID: 9195073857715486933, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 369884762}
-    - targetCorrespondingSourceObject: {fileID: 8407267864439815240, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1492026514}
-    - targetCorrespondingSourceObject: {fileID: 8465372279784752567, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1531767408}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 6124647860691891056, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
       insertIndex: -1
@@ -92393,21 +92295,6 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
---- !u!4 &1112450134 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8465372279784752567, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
-  m_PrefabInstance: {fileID: 1112450130}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &1112450135 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8407267864439815240, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
-  m_PrefabInstance: {fileID: 1112450130}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &1112450136 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 9195073857715486933, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
-  m_PrefabInstance: {fileID: 1112450130}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1112450137 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7672784373732572536, guid: df2ac4d3032ca144a990e199a174c383, type: 3}
@@ -127140,7 +127027,7 @@ Transform:
   m_LocalScale: {x: 1.0000001, y: 1.0000001, z: 1.0000001}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1112450135}
+  m_Father: {fileID: 1112450131}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1492026515
 MeshRenderer:
@@ -130385,7 +130272,7 @@ Transform:
   m_LocalScale: {x: 0.9200001, y: 0.9200001, z: 0.9200001}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1112450134}
+  m_Father: {fileID: 1112450131}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1531767409
 MeshRenderer:
@@ -132302,6 +132189,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
@@ -152753,7 +152641,6 @@ Transform:
   m_Children:
   - {fileID: 1281998915}
   - {fileID: 1771752781}
-  - {fileID: 4050817}
   - {fileID: 1807711525}
   - {fileID: 220532332}
   - {fileID: 510587912}
@@ -162220,6 +162107,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
@@ -167438,6 +167326,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
@@ -167808,6 +167697,7 @@ MonoBehaviour:
   gunMag: 12
   pellets: 1
   eyeHeight: 1.7
+  closeAwareness: 4.5
   gunshotRadius: 40
   damageDealt: 0
   score: 0
