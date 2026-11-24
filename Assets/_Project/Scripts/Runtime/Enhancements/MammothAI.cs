@@ -26,6 +26,14 @@ namespace LastShift
         AudioSource audioSrc; AudioClip thud, roarClip;
         LineRenderer[] rings; bool showRings; float ringT;
         public static bool RangesRevealed;
+        public bool logHits = true;
+
+        // ---- fixed combat balance: exactly 15 valid player shots kill it, exactly 20 mammoth attacks kill the player
+        public const int ShotsToKill = 15, AttacksToKillPlayer = 20;
+        public const float MinValidDamage = 5f;               // scratches / zero-damage events are not "successful shots"
+        public int ShotsTaken { get; private set; }
+        public int AttacksLanded { get; private set; }
+        int lastShotFrame = -1; float lastAttackOnPlayer = -99f;
 
         // movement bookkeeping
         MammothAction lastAction = MammothAction.Patrol;
@@ -61,19 +69,28 @@ namespace LastShift
 
         float FlatDist(Vector3 a, Vector3 b) { a.y = b.y = 0; return Vector3.Distance(a, b); }
 
+        /// <summary>
+        /// One valid hit = one successful shot. Several pellets of one shotgun blast land in the same frame and count ONCE; damage
+        /// below MinValidDamage is ignored. After every event the health is pinned to max * (1 - shots/15), so the 15th valid shot
+        /// (and only the 15th) takes it to 0 and Health raises Died - whatever weapon dealt the damage.
+        /// </summary>
         void OnHurt(float amt, Vector3 from)
         {
-            lastHurt = Time.time;
             if (cs == C.Dead) return;
+            bool valid = amt >= MinValidDamage && Time.frameCount != lastShotFrame;
+            if (valid) { ShotsTaken++; lastShotFrame = Time.frameCount; staggerAcc += hp.max / ShotsToKill; }
+            hp.current = ShotsTaken >= ShotsToKill ? 0f : hp.max * (1f - ShotsTaken / (float)ShotsToKill);
+            if (valid && logHits) Debug.Log($"[MammothAI] valid shot {ShotsTaken}/{ShotsToKill} (damage {amt:F0}, hp {hp.current:F0}/{hp.max:F0})");
+            if (!valid) return;
+            lastHurt = Time.time;
             anim?.Flinch();
-            staggerAcc += amt;
             if (perc != null) perc.RegisterHit(from);          // a hit tells it which way the shot came from
             if (!enraged && hp.Fraction < 0.35f)
             {
                 enraged = true; Roar(); routeActive = false;
                 GameManager.Instance?.Toast("Sanjula's Mammoth is ENRAGED!", 3f);
             }
-            if (staggerAcc > hp.max * 0.12f && cs == C.Free && CurrentAction == MammothAction.Pursue)
+            if (staggerAcc > hp.max * 0.2f && cs == C.Free && CurrentAction == MammothAction.Pursue)
             {
                 staggerAcc = 0f; cs = C.Recover; timer = 0.7f; Stop();
             }
@@ -89,7 +106,8 @@ namespace LastShift
             GameManager.Instance?.Toast("Sanjula's Mammoth has fallen!", 4f);
             for (int i = 0; i < 3; i++)
                 AmmoBox.Drop(transform.position + new Vector3(Random.Range(-3f, 3f), 0f, Random.Range(-3f, 3f)), 20, 8);
-            if (rings != null) foreach (var r in rings) if (r) r.enabled = false;
+            if (rings != null) foreach (var r in rings) if (r) Destroy(r.gameObject);
+            Destroy(gameObject, 15f);                                            // the carcass lies there a while, then it is removed from the world
         }
 
         void Roar() { if (Time.time < nextRoar) return; nextRoar = Time.time + 6f; audioSrc.PlayOneShot(roarClip, 1f); anim?.Roar(); }
@@ -295,7 +313,6 @@ namespace LastShift
         void DoReturn()
         {
             MoveTo(home, 4.2f);
-            hp.current = Mathf.Min(hp.max * 0.6f, hp.current + hp.max * 0.01f * Time.deltaTime);   // slow breather, never full
         }
 
         void Stomp()
@@ -306,13 +323,25 @@ namespace LastShift
             if (d < 8f) Hit(Mathf.Lerp(48f, 22f, d / 8f), 10f);
         }
 
-        void Hit(float dmg, float knock)
+        /// <summary>
+        /// One successful mammoth attack = one call. Every attack removes max/20 of the player's health (the strength of the stomp /
+        /// charge only changes the knock-back), capped so the player can never die before the 20th; the 20th kills.
+        /// </summary>
+        void Hit(float strength, float knock)
         {
             var dir = player.transform.position - transform.position; dir.y = 0; dir.Normalize();
-            if (dmg >= player.Health.current) GameManager.Instance?.Lose("Trampled by Sanjula's Mammoth.");
-            player.Health.Damage(dmg, player.transform.position - dir * 1f);   // close 'from' = counts as a full-force melee hit
+            var ph = player.Health;
+            AttacksLanded++; lastAttackOnPlayer = Time.time;
+            float per = ph.max / AttacksToKillPlayer;
+            float dmg = AttacksLanded >= AttacksToKillPlayer ? ph.current : Mathf.Min(per, Mathf.Max(0f, ph.current - 1f));
+            if (logHits) Debug.Log($"[MammothAI] attack {AttacksLanded}/{AttacksToKillPlayer} on the player (damage {dmg:F1}, player hp {ph.current:F1}/{ph.max:F0})");
+            if (AttacksLanded >= AttacksToKillPlayer) GameManager.Instance?.Lose("Trampled by Sanjula's Mammoth.");
+            ph.Damage(dmg, player.transform.position - dir * 1f);   // close 'from' = counts as a full-force melee hit (no ranged refund)
             player.AddKnockback(dir * knock + Vector3.up * 5f);
         }
+
+        /// <summary>Test hook (MammothSelfTest): one successful attack on the player, exactly as a landed stomp / charge.</summary>
+        public void TestAttack() { if (cs != C.Dead && player != null) Hit(48f, 0f); }
 
         // ---------------- boss bar ----------------
         void OnGUI()
@@ -320,7 +349,7 @@ namespace LastShift
             if (cs == C.Dead || player == null || hp == null) return;
             var act = decision != null ? decision.Current : MammothAction.Patrol;
             bool engaged = cs != C.Free || act == MammothAction.Pursue || act == MammothAction.TrackLastKnown;
-            if (!engaged && Time.time - lastHurt > 6f) return;
+            if (!engaged && Time.time - lastHurt > 6f && Time.time - lastAttackOnPlayer > 6f) return;
             if (FlatDist(transform.position, player.transform.position) > leashR * 1.2f) return;
             float s = Screen.height / 1080f;
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
@@ -334,6 +363,8 @@ namespace LastShift
             var st = new GUIStyle(GUI.skin.label) { fontSize = 18, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             st.normal.textColor = new Color(1f, 0.92f, 0.8f);
             GUI.Label(new Rect(x, y - 30f, w, 26f), enraged ? "SANJULA'S MAMMOTH  -  ENRAGED" : "SANJULA'S MAMMOTH", st);
+            var st2 = new GUIStyle(st) { fontSize = 15 };
+            GUI.Label(new Rect(x, y + 22f, w, 22f), $"shots landed {ShotsTaken}/{ShotsToKill}     its attacks on you {AttacksLanded}/{AttacksToKillPlayer}", st2);
             GUI.matrix = Matrix4x4.identity;
         }
 
