@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 namespace LastShift.GuardDog
 {
     /// <summary>
-    /// F11: shows what Kalu is thinking, for testing and the viva.
+    /// F12: shows what Kalu is thinking, for testing and the viva.
     ///  - a map of the grid: walls, water (blue), cover (lighter), the scent trail (orange, by
     ///    strength), the cells the last A* search expanded (purple), the planned path (red), the
     ///    dog (white), the player (cyan) and the last noise it heard (yellow);
@@ -41,7 +41,7 @@ namespace LastShift.GuardDog
         void Update()
         {
             var kb = Keyboard.current;
-            if (kb != null && kb.f11Key.wasPressedThisFrame) { visible = !visible; line.enabled = visible; }
+            if (kb != null && kb.f12Key.wasPressedThisFrame) { visible = !visible; line.enabled = visible; }
             if (!visible || brain == null) return;
             if (Time.unscaledTime >= nextRefresh) { nextRefresh = Time.unscaledTime + 0.25f; Paint(); }
             DrawPathInWorld();
@@ -96,7 +96,7 @@ namespace LastShift.GuardDog
             var old = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             float w = 250f, h = w * world.Grid.Height / world.Grid.Width, x = 16f, y = 150f;
-            GUI.Box(new Rect(x - 6, y - 26, w + 12, h + 250), "KALU – guard dog AI (F11)");
+            GUI.Box(new Rect(x - 6, y - 26, w + 12, h + 250), "KALU – guard dog AI (F12)");
             GUI.DrawTexture(new Rect(x, y, w, h), tex, ScaleMode.StretchToFill, false);
 
             var bb = brain.Blackboard; var nav = brain.Navigator; var r = nav.LastResult; float now = Time.time;

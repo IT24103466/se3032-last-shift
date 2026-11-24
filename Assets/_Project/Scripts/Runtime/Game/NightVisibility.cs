@@ -11,7 +11,7 @@ namespace LastShift
     /// normal monitor hides the animals and people coming at you. This lifts the picture at
     /// runtime (exposure, shadows, ambient and moonlight, thinner fog) and hangs a faint cool
     /// "presence" light over every creature so threats read against the dark.
-    /// F7 cycles Bright (default) / Normal / Dark (the original look).
+    /// B cycles Bright (default) / Normal / Dark (the original look).
     /// Nothing is baked or saved: the scene, lightmaps and shared assets are unchanged.
     /// </summary>
     public class NightVisibility : MonoBehaviour
@@ -78,11 +78,11 @@ namespace LastShift
         void Update()
         {
             var kb = Keyboard.current;
-            if (kb != null && kb.f7Key.wasPressedThisFrame)
+            if (kb != null && kb.bKey.wasPressedThisFrame)
             {
                 level = (Level)(((int)level + 1) % Presets.Length);
                 Apply();
-                GameManager.Instance?.Toast($"Brightness: {level}  (F7)", 1.5f);
+                GameManager.Instance?.Toast($"Brightness: {level}  (B)", 1.5f);
             }
             // Creatures spawned later (the dog, the mammoth) get their light too
             if (Time.time >= nextScan) { nextScan = Time.time + 2f; UpdateCreatureLights(); }

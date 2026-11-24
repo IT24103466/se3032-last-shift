@@ -28397,8 +28397,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e06fef72d1fd90419ce7c876e2e71f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.AmmoBox
-  pistolRounds: 18
-  shells: 6
+  pistolRounds: 30
+  shells: 10
 --- !u!65 &335168212
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -107830,8 +107830,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e06fef72d1fd90419ce7c876e2e71f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.AmmoBox
-  pistolRounds: 12
-  shells: 4
+  pistolRounds: 24
+  shells: 8
 --- !u!65 &1294163413
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -122404,8 +122404,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e06fef72d1fd90419ce7c876e2e71f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.AmmoBox
-  pistolRounds: 18
-  shells: 6
+  pistolRounds: 30
+  shells: 10
 --- !u!65 &1440131270
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -138581,8 +138581,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e06fef72d1fd90419ce7c876e2e71f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.AmmoBox
-  pistolRounds: 18
-  shells: 6
+  pistolRounds: 30
+  shells: 10
 --- !u!65 &1627807355
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -144308,8 +144308,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e06fef72d1fd90419ce7c876e2e71f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.AmmoBox
-  pistolRounds: 18
-  shells: 6
+  pistolRounds: 30
+  shells: 10
 --- !u!65 &1702389424
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -150423,8 +150423,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e06fef72d1fd90419ce7c876e2e71f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.AmmoBox
-  pistolRounds: 18
-  shells: 6
+  pistolRounds: 30
+  shells: 10
 --- !u!65 &1776021478
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -167134,8 +167134,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e06fef72d1fd90419ce7c876e2e71f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.AmmoBox
-  pistolRounds: 12
-  shells: 4
+  pistolRounds: 24
+  shells: 8
 --- !u!65 &1995342297
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -170414,8 +170414,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e06fef72d1fd90419ce7c876e2e71f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastShift.AmmoBox
-  pistolRounds: 18
-  shells: 6
+  pistolRounds: 30
+  shells: 10
 --- !u!65 &2052649166
 BoxCollider:
   m_ObjectHideFlags: 0

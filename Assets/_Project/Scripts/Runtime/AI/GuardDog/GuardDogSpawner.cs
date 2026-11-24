@@ -61,7 +61,7 @@ namespace LastShift.GuardDog
             var brain = dog.GetComponent<GuardDogBrain>();
             brain.Init(player, world, kennel, rounds.ToArray());
             worldGo.AddComponent<GuardDogDebugView>().Bind(brain, world, player);
-            Debug.Log($"[GuardDog] Kalu is at the kennel {kennel} with {rounds.Count} patrol points. F11 shows the AI debug view.");
+            Debug.Log($"[GuardDog] Kalu is at the kennel {kennel} with {rounds.Count} patrol points. F12 shows the AI debug view.");
         }
 
         static bool OnNavMesh(Vector2 xz, out Vector3 p)

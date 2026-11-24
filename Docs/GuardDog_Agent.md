@@ -10,7 +10,7 @@ it has been hit five times. It reacts to the
 player's weapon: with a gun pointed at it, it stops running straight in and zigzags outside the
 line of fire.
 
-Press **F11** in play mode for the AI debug view (map of the scent field, A* search and path,
+Press **F12** in play mode for the AI debug view (map of the scent field, A* search and path,
 the behaviour tree's active branch, planner timings and senses).
 
 ## Architecture
@@ -29,7 +29,7 @@ the behaviour tree's active branch, planner timings and senses).
    GuardDogBrain ─ the behaviour tree (10 Hz) → chooses WHAT to do
    DogNavigator ── A* cost model per mode → decides HOW to get there (string-pulled path)
    DogBody (IDogBody) ── NavMeshAgent steering, animation, bite, bark, sounds
-   GuardDogSpawner ── places the dog at runtime (no scene edits); GuardDogDebugView ── F11
+   GuardDogSpawner ── places the dog at runtime (no scene edits); GuardDogDebugView ── F12
 ```
 
 The decision logic never touches GameObjects: it reads the blackboard and calls `IDogBody` /
@@ -162,7 +162,7 @@ twice with the slingshot, but not forever. Gunfire is never ignored.
 
 ## Trying it
 1. Run **Tools > World Builder > Build Guard Dog (Kalu)** once (the prefab is committed, so only after changing the model).
-2. Play, press **F11**. F4 jumps to the fence breach; walk south into the tea estate.
+2. Play, press **F12**. F4 jumps to the fence breach; walk south into the tea estate.
 3. Watch the map: your trail appears in orange; when the dog's 4.5 m sniffing circle touches it the
    tree switches to *Track*; break line of sight and it keeps following the scent; cross the stream
    and it *Casts*; hide in a locker and it *Indicates*; point a gun at it and it *Dodges*.
