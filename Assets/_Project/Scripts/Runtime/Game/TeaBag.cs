@@ -9,6 +9,14 @@ namespace LastShift
         public bool searched;
         public string place = "factory";
 
+        void Start()
+        {
+            // The custom sack already has its label in the texture.
+            var tag = transform.Find("Tag");
+            if (tag != null) tag.gameObject.SetActive(false);
+            PickupTargeting.Fit(this);
+        }
+
         public void Search()
         {
             if (searched) return;
@@ -22,6 +30,7 @@ namespace LastShift
             }
             var tag = transform.Find("Tag");
             if (tag != null) tag.gameObject.SetActive(false);
+            PickupTargeting.Fit(this);
             GameManager.Instance?.OnBagSearched(this);
         }
     }

@@ -51,6 +51,7 @@ namespace LastShift
         NavMeshAgent agent;
         Health health;
         CreatureAnimator anim;
+        HumanLocomotion humanMotion;
         PlayerController player;
         Vector3 home, lastKnown, knock;
         float stateTimer, lostTimer, nextAttack, nextDoorCheck, idleUntil, attackAt = -1f;
@@ -87,6 +88,8 @@ namespace LastShift
         public bool IsHuman => kind == EnemyKind.Guard || kind == EnemyKind.Worker || kind == EnemyKind.Hunter;
         public bool Aiming => aimUntil > 0f;
         public string StateName => state.ToString();
+        public bool IsPursuing => state == State.Chase || state == State.Charge;
+        public bool Reloading => Time.time < reloadUntil;
 
         void Awake()
         {
@@ -137,6 +140,11 @@ namespace LastShift
 
         void Start()
         {
+            if (IsHuman)
+            {
+                humanMotion = GetComponent<HumanLocomotion>();
+                if (humanMotion == null) humanMotion = gameObject.AddComponent<HumanLocomotion>();
+            }
             home = transform.position;
             if (NavMesh.SamplePosition(transform.position, out var hit, 4f, NavMesh.AllAreas)) { agent.Warp(hit.position); home = hit.position; }
             player = FindAnyObjectByType<PlayerController>();
@@ -153,6 +161,7 @@ namespace LastShift
             bool playing = GameManager.Instance == null || GameManager.Instance.IsPlaying;
             agent.isStopped = !playing;
             if (!playing || player == null) return;
+            if (humanMotion != null && humanMotion.Airborne) { agent.isStopped = true; return; }
 
             if (knock.sqrMagnitude > 0.01f)
             {
@@ -306,7 +315,7 @@ namespace LastShift
             if (player.Hidden && dist > 1.3f) return false;
             float range = sight * (player.Crouched ? 0.6f : 1f) * (player.TorchOn ? 1.4f : 1f) * (alerted ? 1.4f : 1f);
             if (dist > range) return false;
-            Vector3 eye = transform.position + Vector3.up * eyeHeight;
+            Vector3 eye = transform.position + Vector3.up * (eyeHeight - (humanMotion != null ? humanMotion.Crouch * 0.38f : 0f));
             Vector3 to = player.Chest - eye;
             if (dist > 2f && Vector3.Angle(transform.forward, to) > fov * 0.5f) return false;
             if (Physics.Raycast(eye, to.normalized, out var hit, to.magnitude, ~(1 << 2), QueryTriggerInteraction.Ignore))

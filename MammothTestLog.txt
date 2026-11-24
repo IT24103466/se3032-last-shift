@@ -335,3 +335,985 @@
    94.2 [MammothAI] HEARD Sprint ~18 m away (strength 0.17, +/-3 m)
    94.9 [MammothAI] HEARD Sprint ~18 m away (strength 0.17, +/-3 m)
    96.3 STATUS mammoth=(-3,-19) act=Search inTerritory=True campDist=38 dPlayer=18 playerHp=150 shots=15 attacks=0
+==== session start 15:56:41
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 7/16.
+    0.0 [Sanjula] Mammoth ready at (39.61, -0.40, -15.48). notice=40 aggro=20 leash=95 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 29 reachable waypoints of 38 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (61 m straight) A* cost 67.7 (4 waypoints, 8 expanded) vs Dijkstra 67.7 -> OPTIMAL
+    0.1 STATUS mammoth=(40,-15) act=Patrol inTerritory=True campDist=50 dPlayer=50 playerHp=150 shots=0 attacks=0
+==== session start 15:56:57
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 6/16.
+    0.0 [Sanjula] Mammoth ready at (28.19, -1.15, -13.99). notice=40 aggro=25 leash=82 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 32 reachable waypoints of 37 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 57.6 (4 waypoints, 9 expanded) vs Dijkstra 57.6 -> OPTIMAL
+    0.2 STATUS mammoth=(28,-14) act=Patrol inTerritory=True campDist=45 dPlayer=45 playerHp=150 shots=0 attacks=0
+    0.9 [MammothAI] HEARD Gunshot ~46 m away (strength 0.34, +/-7 m)
+    3.2 [MammothAI] decision Patrol -> InvestigateSound (u 0.43 vs 0.25; belief Lost, conf 0.06)
+    5.2 STATUS mammoth=(30,-10) act=InvestigateSound inTerritory=True campDist=50 dPlayer=53 playerHp=150 shots=0 attacks=0
+   10.3 STATUS mammoth=(28,-4) act=InvestigateSound inTerritory=True campDist=55 dPlayer=59 playerHp=150 shots=0 attacks=0
+   12.7 [MammothAI] SPOTTED player at 52 m
+   12.8 [MammothAI] belief Lost -> Observed (confidence 0.88, peak 0.89)
+   12.8 [MammothAI] LOST sight of player (last seen (-13.72, 2.53, -40.88))
+   13.0 [MammothAI] belief Observed -> Recent (confidence 0.82, peak 0.83)
+   13.0 [MammothAI] decision InvestigateSound -> Search (u 0.41 vs 0.22; belief Recent, conf 0.82)
+   14.5 [MammothAI] SPOTTED player at 42 m
+   14.5 [MammothAI] belief Recent -> Observed (confidence 0.94, peak 0.95)
+   14.7 [MammothAI] decision Search -> Patrol (u 0.25 vs 0.00; belief Observed, conf 0.94)
+   15.3 [MammothAI] LOST sight of player (last seen (-15.96, 4.41, -29.27))
+   15.3 [MammothAI] belief Observed -> Recent (confidence 0.95, peak 0.96)
+   15.3 STATUS mammoth=(18,-11) act=Patrol inTerritory=True campDist=45 dPlayer=38 playerHp=150 shots=0 attacks=0
+   15.7 [MammothAI] SPOTTED player at 37 m
+   15.7 [MammothAI] belief Recent -> Observed (confidence 0.97, peak 0.98)
+   16.2 [MammothAI] LOST sight of player (last seen (-15.59, 4.39, -25.32))
+   16.2 [MammothAI] belief Observed -> Recent (confidence 0.90, peak 0.91)
+   16.4 [MammothAI] SPOTTED player at 35 m
+   16.5 [MammothAI] belief Recent -> Observed (confidence 0.95, peak 0.96)
+   17.0 [MammothAI] LOST sight of player (last seen (-16.30, 4.89, -21.57))
+   17.0 [MammothAI] belief Observed -> Recent (confidence 0.86, peak 0.87)
+   17.2 [MammothAI] SPOTTED player at 33 m
+   17.2 [MammothAI] belief Recent -> Observed (confidence 0.89, peak 0.89)
+   17.5 [MammothAI] LOST sight of player (last seen (-16.65, 5.16, -19.34))
+   17.5 [MammothAI] belief Observed -> Recent (confidence 0.84, peak 0.82)
+   17.7 [MammothAI] SPOTTED player at 32 m
+   17.7 [MammothAI] belief Recent -> Observed (confidence 0.83, peak 0.73)
+   18.0 [MammothAI] decision Patrol -> TrackLastKnown (u 0.34 vs 0.25; belief Observed, conf 0.81)
+   18.8 [MammothAI] LOST sight of player (last seen (-16.72, 5.16, -17.54))
+   18.9 [MammothAI] belief Observed -> Recent (confidence 0.79, peak 0.62)
+   18.9 [MammothAI] SPOTTED player at 32 m
+   19.0 [MammothAI] LOST sight of player (last seen (-16.72, 5.16, -17.54))
+   19.2 [MammothAI] SPOTTED player at 32 m
+   19.3 [MammothAI] belief Recent -> Observed (confidence 0.80, peak 0.60)
+   20.3 STATUS mammoth=(11,-15) act=TrackLastKnown inTerritory=True campDist=40 dPlayer=27 playerHp=150 shots=0 attacks=0
+   20.5 [MammothAI] LOST sight of player (last seen (-16.29, 5.41, -16.12))
+   20.6 [MammothAI] belief Observed -> Recent (confidence 0.87, peak 0.84)
+   20.9 [MammothAI] SPOTTED player at 25 m
+   20.9 [MammothAI] belief Recent -> Observed (confidence 0.87, peak 0.83)
+   20.9 [MammothAI] decision TrackLastKnown -> Pursue (u 0.50 vs 0.34; belief Observed, conf 0.87)
+   21.0 [MammothAI] LOST sight of player (last seen (-15.59, 3.68, -17.85))
+   21.1 [MammothAI] SPOTTED player at 24 m
+   22.2 [MammothAI] HEARD Sprint ~18 m away (strength 0.20, +/-3 m)
+   22.8 [MammothAI] LOST sight of player (last seen (-13.57, 0.27, -15.52))
+   22.8 [MammothAI] HEARD Sprint ~17 m away (strength 0.25, +/-2 m)
+   22.8 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.92)
+   22.8 [MammothAI] decision Pursue -> TrackLastKnown (u 0.76 vs 0.17; belief Recent, conf 0.88)
+   23.4 [MammothAI] SPOTTED player at 14 m
+   23.5 [MammothAI] HEARD Sprint ~13 m away (strength 0.41, +/-2 m)
+   23.5 [MammothAI] belief Recent -> Observed (confidence 0.87, peak 0.88)
+   23.6 [MammothAI] decision TrackLastKnown -> Pursue (u 0.69 vs 0.41; belief Observed, conf 0.95)
+   24.1 [MammothAI] HEARD Sprint ~9 m away (strength 0.61, +/-2 m)
+   24.1 [MammothAI] LOST sight of player (last seen (-12.45, -1.08, -9.91))
+   24.2 [MammothAI] SPOTTED player at 9 m
+   24.7 [MammothAI] HEARD Sprint ~9 m away (strength 0.60, +/-2 m)
+   25.0 [MammothAI] LOST sight of player (last seen (-11.07, -0.44, -6.82))
+   25.0 [MammothAI] decision Pursue -> TrackLastKnown (u 0.79 vs 0.20; belief Observed, conf 0.99)
+   25.2 [MammothAI] belief Observed -> Recent (confidence 0.92, peak 0.92)
+   25.4 STATUS mammoth=(-12,-16) act=TrackLastKnown inTerritory=True campDist=44 dPlayer=9 playerHp=150 shots=0 attacks=0
+   25.4 [MammothAI] HEARD Sprint ~9 m away (strength 0.58, +/-2 m)
+   26.0 [MammothAI] HEARD Sprint ~11 m away (strength 0.51, +/-2 m)
+   26.4 [MammothAI] SPOTTED player at 11 m
+   26.4 [MammothAI] belief Recent -> Observed (confidence 0.91, peak 0.94)
+   26.5 [MammothAI] decision TrackLastKnown -> Pursue (u 0.67 vs 0.40; belief Observed, conf 0.91)
+   26.8 [MammothAI] HEARD Sprint ~11 m away (strength 0.51, +/-2 m)
+   27.4 [MammothAI] HEARD Sprint ~9 m away (strength 0.59, +/-2 m)
+   28.0 [MammothAI] HEARD Sprint ~8 m away (strength 0.63, +/-2 m)
+   28.8 [MammothAI] HEARD Sprint ~6 m away (strength 0.72, +/-2 m)
+   29.4 [MammothAI] HEARD Sprint ~8 m away (strength 0.64, +/-2 m)
+   29.7 [MammothAI] LOST sight of player (last seen (0.36, 0.62, 3.62))
+   29.7 [MammothAI] decision Pursue -> TrackLastKnown (u 0.79 vs 0.19; belief Observed, conf 0.97)
+   29.8 [MammothAI] belief Observed -> Recent (confidence 0.65, peak 0.55)
+   30.1 [MammothAI] HEARD Sprint ~9 m away (strength 0.60, +/-2 m)
+   30.4 STATUS mammoth=(0,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=10 playerHp=150 shots=0 attacks=0
+   30.9 [MammothAI] HEARD Sprint ~12 m away (strength 0.44, +/-2 m)
+   31.5 [MammothAI] HEARD Sprint ~15 m away (strength 0.30, +/-2 m)
+   32.3 [MammothAI] HEARD Sprint ~19 m away (strength 0.14, +/-3 m)
+   33.0 [MammothAI] HEARD Sprint ~22 m away (strength 0.02, +/-3 m)
+   35.5 STATUS mammoth=(0,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=19 playerHp=150 shots=0 attacks=0
+   37.5 [MammothAI] valid shot 1/15 (damage 11, hp 1307/1400)
+   37.5 [MammothAI] HIT from the direction of (0.85, 2.88, 12.77)
+   37.5 [MammothAI] HEARD Gunshot ~15 m away (strength 0.78, +/-2 m)
+   37.7 [MammothAI] decision TrackLastKnown -> InvestigateSound (u 0.56 vs 0.46; belief Nearby, conf 0.71)
+   38.4 [MammothAI] valid shot 2/15 (damage 11, hp 1213/1400)
+   38.4 [MammothAI] HIT from the direction of (0.70, 2.30, 10.49)
+   38.4 [MammothAI] HEARD Gunshot ~13 m away (strength 0.82, +/-2 m)
+   39.0 [MammothAI] SPOTTED player at 12 m
+   39.0 [MammothAI] belief Nearby -> Observed (confidence 0.91, peak 0.91)
+   39.0 [MammothAI] decision InvestigateSound -> Pursue (u 0.93 vs 0.00; belief Observed, conf 0.91)
+   39.3 [MammothAI] valid shot 3/15 (damage 12, hp 1120/1400)
+   39.3 [MammothAI] HIT from the direction of (1.01, 1.96, 9.03)
+   39.3 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   40.5 STATUS mammoth=(1,-2) act=Pursue inTerritory=True campDist=54 dPlayer=11 playerHp=150 shots=3 attacks=0
+   41.6 [MammothAI] valid shot 4/15 (damage 24, hp 1027/1400)
+   41.6 [MammothAI] HIT from the direction of (1.01, 1.96, 9.03)
+   41.6 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   42.1 [MammothAI] valid shot 5/15 (damage 24, hp 933/1400)
+   42.1 [MammothAI] HIT from the direction of (1.01, 1.96, 9.03)
+   42.1 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   42.4 [MammothAI] valid shot 6/15 (damage 24, hp 840/1400)
+   42.4 [MammothAI] HIT from the direction of (1.01, 1.96, 9.03)
+   42.4 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   43.0 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   43.5 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   44.1 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   45.2 [MammothAI] valid shot 7/15 (damage 24, hp 747/1400)
+   45.2 [MammothAI] HIT from the direction of (1.65, 1.71, 8.00)
+   45.2 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   45.6 STATUS mammoth=(1,-2) act=Pursue inTerritory=True campDist=54 dPlayer=10 playerHp=150 shots=7 attacks=0
+   45.8 [MammothAI] valid shot 8/15 (damage 24, hp 653/1400)
+   45.8 [MammothAI] HIT from the direction of (1.65, 1.71, 8.00)
+   45.8 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   46.6 [MammothAI] valid shot 9/15 (damage 24, hp 560/1400)
+   46.6 [MammothAI] HIT from the direction of (1.65, 1.71, 8.00)
+   46.6 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   47.2 [MammothAI] valid shot 10/15 (damage 24, hp 467/1400)
+   47.2 [MammothAI] HIT from the direction of (1.65, 1.71, 8.00)
+   47.2 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   47.9 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   48.5 [MammothAI] HEARD Other ~10 m away (strength 0.17, +/-2 m)
+   50.7 STATUS mammoth=(2,-2) act=Pursue inTerritory=True campDist=53 dPlayer=10 playerHp=139 shots=10 attacks=0
+   51.5 [MammothAI] LOST sight of player (last seen (3.18, 1.78, 8.39))
+   51.6 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.94)
+   51.6 [MammothAI] decision Pursue -> TrackLastKnown (u 0.76 vs 0.18; belief Recent, conf 0.91)
+   52.7 [MammothAI] SPOTTED player at 12 m
+   52.8 [MammothAI] belief Recent -> Observed (confidence 0.88, peak 0.88)
+   52.8 [MammothAI] decision TrackLastKnown -> Pursue (u 1.05 vs 0.40; belief Observed, conf 0.88)
+   52.9 [MammothAI] LOST sight of player (last seen (6.64, 1.92, 9.51))
+   53.0 [MammothAI] belief Observed -> Recent (confidence 0.82, peak 0.82)
+   54.0 [MammothAI] decision Pursue -> TrackLastKnown (u 0.68 vs 0.13; belief Recent, conf 0.72)
+   55.7 STATUS mammoth=(7,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=16 playerHp=117 shots=10 attacks=0
+   58.3 [MammothAI] HEARD Gunshot ~18 m away (strength 0.75, +/-3 m)
+   58.5 [MammothAI] HEARD Gunshot ~18 m away (strength 0.74, +/-3 m)
+   58.8 [MammothAI] HEARD Gunshot ~19 m away (strength 0.73, +/-3 m)
+   59.7 [MammothAI] HEARD Gunshot ~19 m away (strength 0.73, +/-3 m)
+   60.0 [MammothAI] HEARD Gunshot ~19 m away (strength 0.73, +/-3 m)
+   60.4 [MammothAI] HEARD Gunshot ~19 m away (strength 0.73, +/-3 m)
+   60.7 [MammothAI] HEARD Gunshot ~19 m away (strength 0.72, +/-3 m)
+   60.7 STATUS mammoth=(7,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=19 playerHp=84 shots=10 attacks=0
+   61.2 [MammothAI] HEARD Gunshot ~21 m away (strength 0.70, +/-3 m)
+   61.4 [MammothAI] HEARD Gunshot ~21 m away (strength 0.69, +/-3 m)
+   64.8 [MammothAI] HEARD Gunshot ~23 m away (strength 0.68, +/-3 m)
+   65.1 [MammothAI] HEARD Gunshot ~22 m away (strength 0.69, +/-3 m)
+   65.8 STATUS mammoth=(7,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=19 playerHp=84 shots=10 attacks=0
+   66.1 [MammothAI] HEARD Gunshot ~18 m away (strength 0.74, +/-3 m)
+   66.4 [MammothAI] HEARD Gunshot ~17 m away (strength 0.76, +/-3 m)
+   68.0 [MammothAI] HEARD Gunshot ~12 m away (strength 0.83, +/-2 m)
+   68.3 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   68.9 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   70.8 STATUS mammoth=(7,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=10 playerHp=71 shots=10 attacks=0
+   73.4 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   75.9 STATUS mammoth=(7,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=8 playerHp=69 shots=10 attacks=0
+   77.2 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   77.4 [MammothAI] HEARD Gunshot ~9 m away (strength 0.88, +/-2 m)
+   77.4 [MammothAI] SPOTTED player at 9 m
+   77.4 [MammothAI] belief Nearby -> Observed (confidence 0.74, peak 0.47)
+   77.4 [MammothAI] decision TrackLastKnown -> Pursue (u 0.95 vs 0.41; belief Observed, conf 0.74)
+   78.1 [MammothAI] LOST sight of player (last seen (10.54, 1.20, 6.23))
+   78.2 [MammothAI] belief Observed -> Recent (confidence 0.82, peak 0.86)
+   78.6 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   78.7 [MammothAI] decision Pursue -> TrackLastKnown (u 0.73 vs 0.16; belief Recent, conf 0.83)
+   78.9 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   81.0 STATUS mammoth=(14,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=9 playerHp=66 shots=10 attacks=0
+   82.1 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   82.4 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+   86.0 STATUS mammoth=(14,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=11 playerHp=66 shots=10 attacks=0
+   89.2 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   89.4 [MammothAI] decision TrackLastKnown -> InvestigateSound (u 0.56 vs 0.37; belief Nearby, conf 0.63)
+   89.7 [MammothAI] SPOTTED player at 11 m
+   89.7 [MammothAI] decision InvestigateSound -> Pursue (u 0.92 vs 0.00; belief Nearby, conf 0.60)
+   89.8 [MammothAI] belief Nearby -> Observed (confidence 0.90, peak 0.92)
+   90.1 [MammothAI] LOST sight of player (last seen (14.47, 1.46, 8.97))
+   90.3 [MammothAI] belief Observed -> Recent (confidence 0.80, peak 0.82)
+   90.6 [MammothAI] valid shot 11/15 (damage 24, hp 373/1400)
+   90.6 [MammothAI] HIT from the direction of (14.47, 1.46, 8.97)
+   90.6 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   90.7 [MammothAI] decision Pursue -> TrackLastKnown (u 0.73 vs 0.16; belief Recent, conf 0.84)
+   91.0 [MammothAI] valid shot 12/15 (damage 24, hp 280/1400)
+   91.0 [MammothAI] HIT from the direction of (14.47, 1.46, 8.97)
+   91.0 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   91.1 STATUS mammoth=(14,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=11 playerHp=66 shots=12 attacks=0
+   91.7 [MammothAI] valid shot 13/15 (damage 24, hp 187/1400)
+   91.7 [MammothAI] HIT from the direction of (14.47, 1.46, 8.97)
+   91.7 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   92.4 [MammothAI] valid shot 14/15 (damage 24, hp 93/1400)
+   92.4 [MammothAI] HIT from the direction of (14.47, 1.46, 8.97)
+   92.4 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   93.1 [MammothAI] valid shot 15/15 (damage 24, hp 0/1400)
+   93.1 [MammothAI] HIT from the direction of (14.47, 1.46, 8.97)
+   93.1 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   96.1 STATUS mammoth=(14,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=10 playerHp=62 shots=15 attacks=0
+   97.6 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+   97.6 [MammothAI] SPOTTED player at 11 m
+   97.6 [MammothAI] belief Nearby -> Observed (confidence 0.83, peak 0.79)
+   98.8 [MammothAI] HEARD Gunshot ~11 m away (strength 0.84, +/-2 m)
+  101.1 STATUS mammoth=(14,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=14 playerHp=62 shots=15 attacks=0
+  106.2 STATUS mammoth=(14,-2) act=TrackLastKnown inTerritory=True campDist=53 dPlayer=14 playerHp=62 shots=15 attacks=0
+==== session start 16:12:47
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (40.32, -0.55, -12.31). notice=37 aggro=20 leash=83 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 30 reachable waypoints of 33 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (50 m straight) A* cost 55.0 (4 waypoints, 4 expanded) vs Dijkstra 55.0 -> OPTIMAL
+==== session start 16:12:56
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 8/16.
+    0.0 [Sanjula] Mammoth ready at (37.50, -0.58, -15.37). notice=37 aggro=25 leash=90 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 28 reachable waypoints of 35 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 55.1 (4 waypoints, 4 expanded) vs Dijkstra 55.1 -> OPTIMAL
+    0.1 STATUS mammoth=(37,-15) act=Patrol inTerritory=True campDist=49 dPlayer=49 playerHp=150 shots=0 attacks=0
+    5.2 STATUS mammoth=(37,-7) act=Patrol inTerritory=True campDist=56 dPlayer=56 playerHp=150 shots=0 attacks=0
+    6.1 [MammothAI] HEARD Gunshot ~57 m away (strength 0.19, +/-9 m)
+    6.1 [MammothAI] decision Patrol -> InvestigateSound (u 0.47 vs 0.25; belief Lost, conf 0.07)
+    8.2 [MammothAI] SPOTTED player at 51 m
+    8.2 [MammothAI] belief Lost -> Observed (confidence 0.11, peak 0.15)
+    8.3 [MammothAI] LOST sight of player (last seen (4.04, -1.12, -51.18))
+    8.4 [MammothAI] belief Observed -> Recent (confidence 0.11, peak 0.14)
+    8.8 [MammothAI] SPOTTED player at 50 m
+    8.8 [MammothAI] belief Recent -> Observed (confidence 0.60, peak 0.75)
+    9.0 [MammothAI] decision InvestigateSound -> Search (u 0.51 vs 0.39; belief Observed, conf 0.97)
+    9.2 [MammothAI] LOST sight of player (last seen (-0.89, -1.00, -49.33))
+    9.3 [MammothAI] SPOTTED player at 49 m
+    9.6 [MammothAI] LOST sight of player (last seen (-3.28, -0.66, -48.70))
+    9.6 [MammothAI] belief Observed -> Recent (confidence 0.90, peak 0.92)
+    9.7 [MammothAI] SPOTTED player at 49 m
+    9.8 [MammothAI] LOST sight of player (last seen (-4.69, -0.59, -48.33))
+    9.9 [MammothAI] SPOTTED player at 49 m
+   10.0 [MammothAI] LOST sight of player (last seen (-6.14, -0.56, -48.40))
+   10.3 STATUS mammoth=(24,-12) act=Search inTerritory=True campDist=46 dPlayer=48 playerHp=150 shots=0 attacks=0
+   12.8 [MammothAI] SPOTTED player at 42 m
+   13.0 [MammothAI] belief Recent -> Observed (confidence 0.84, peak 0.89)
+   13.6 [MammothAI] LOST sight of player (last seen (-12.67, 0.92, -44.32))
+   13.6 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.93)
+   14.3 [MammothAI] SPOTTED player at 35 m
+   14.3 [MammothAI] belief Recent -> Observed (confidence 1.00, peak 1.00)
+   15.3 STATUS mammoth=(7,-17) act=Search inTerritory=True campDist=38 dPlayer=31 playerHp=150 shots=0 attacks=0
+   16.1 [MammothAI] LOST sight of player (last seen (-13.57, 1.00, -38.21))
+   16.2 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.93)
+   16.6 [MammothAI] SPOTTED player at 24 m
+   16.7 [MammothAI] belief Recent -> Observed (confidence 1.00, peak 1.00)
+   16.7 [MammothAI] decision Search -> Pursue (u 0.51 vs 0.00; belief Observed, conf 1.00)
+   17.1 [MammothAI] LOST sight of player (last seen (-14.02, -0.32, -34.05))
+   17.1 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.93)
+   17.9 [MammothAI] decision Pursue -> TrackLastKnown (u 0.71 vs 0.15; belief Recent, conf 0.81)
+   19.5 [MammothAI] SPOTTED player at 24 m
+   19.5 [MammothAI] belief Recent -> Observed (confidence 0.99, peak 1.00)
+   19.6 [MammothAI] decision TrackLastKnown -> Pursue (u 0.51 vs 0.34; belief Observed, conf 0.99)
+   19.9 [MammothAI] LOST sight of player (last seen (-14.29, -0.02, -32.43))
+   20.0 [MammothAI] belief Observed -> Recent (confidence 0.89, peak 0.91)
+   20.3 STATUS mammoth=(4,-19) act=Pursue inTerritory=True campDist=37 dPlayer=22 playerHp=150 shots=0 attacks=0
+   20.4 [MammothAI] SPOTTED player at 22 m
+   20.6 [MammothAI] belief Recent -> Observed (confidence 1.00, peak 1.00)
+   22.4 [MammothAI] LOST sight of player (last seen (-13.78, -0.56, -31.48))
+   22.4 [MammothAI] belief Observed -> Recent (confidence 0.90, peak 0.93)
+   22.5 [MammothAI] decision Pursue -> Search (u 0.55 vs 0.18; belief Recent, conf 0.90)
+   24.0 [MammothAI] SPOTTED player at 8 m
+   24.2 [MammothAI] belief Recent -> Observed (confidence 1.00, peak 1.00)
+   24.5 [MammothAI] LOST sight of player (last seen (-13.28, -1.19, -35.23))
+   24.7 [MammothAI] belief Observed -> Recent (confidence 0.90, peak 0.92)
+   25.3 STATUS mammoth=(-5,-28) act=Search inTerritory=True campDist=30 dPlayer=11 playerHp=150 shots=0 attacks=0
+   26.3 [MammothAI] HEARD Gunshot ~13 m away (strength 0.81, +/-2 m)
+   27.6 [MammothAI] valid shot 1/15 (damage 23, hp 1307/1400)
+   27.6 [MammothAI] HIT from the direction of (-13.28, -1.19, -35.23)
+   27.6 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+   30.0 [MammothAI] SPOTTED player at 21 m
+   30.1 [MammothAI] belief Nearby -> Observed (confidence 1.00, peak 1.00)
+   30.4 STATUS mammoth=(-4,-18) act=Search inTerritory=True campDist=39 dPlayer=19 playerHp=150 shots=1 attacks=0
+   31.9 [MammothAI] LOST sight of player (last seen (-13.30, -1.19, -35.02))
+   32.1 [MammothAI] belief Observed -> Recent (confidence 0.89, peak 0.91)
+   35.5 STATUS mammoth=(-2,-16) act=Search inTerritory=True campDist=41 dPlayer=22 playerHp=139 shots=1 attacks=0
+   35.9 [MammothAI] HEARD Gunshot ~22 m away (strength 0.68, +/-3 m)
+   40.6 STATUS mammoth=(15,-15) act=Search inTerritory=True campDist=40 dPlayer=35 playerHp=139 shots=1 attacks=0
+   41.1 [MammothAI] HEARD Gunshot ~37 m away (strength 0.47, +/-6 m)
+   41.5 [MammothAI] HEARD Gunshot ~37 m away (strength 0.46, +/-6 m)
+   42.1 [MammothAI] HEARD Gunshot ~38 m away (strength 0.46, +/-6 m)
+   45.6 STATUS mammoth=(9,-7) act=Search inTerritory=True campDist=48 dPlayer=35 playerHp=139 shots=1 attacks=0
+   50.7 STATUS mammoth=(22,-13) act=Search inTerritory=True campDist=44 dPlayer=41 playerHp=139 shots=1 attacks=0
+   55.2 [MammothAI] SPOTTED player at 40 m
+   55.2 [MammothAI] decision Search -> Patrol (u 0.25 vs 0.00; belief Nearby, conf 0.30)
+   55.4 [MammothAI] belief Nearby -> Observed (confidence 0.87, peak 0.86)
+   55.8 STATUS mammoth=(23,-19) act=Patrol inTerritory=True campDist=39 dPlayer=38 playerHp=139 shots=1 attacks=0
+   56.7 [MammothAI] LOST sight of player (last seen (-14.03, 2.18, -25.76))
+   56.8 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.93)
+   58.5 [MammothAI] decision Patrol -> TrackLastKnown (u 0.62 vs 0.25; belief Recent, conf 0.61)
+   60.4 [MammothAI] SPOTTED player at 36 m
+   60.4 [MammothAI] belief Recent -> Observed (confidence 0.96, peak 0.97)
+   60.9 STATUS mammoth=(20,-16) act=TrackLastKnown inTerritory=True campDist=41 dPlayer=35 playerHp=139 shots=1 attacks=0
+   63.4 [MammothAI] valid shot 2/15 (damage 21, hp 1213/1400)
+   63.4 [MammothAI] HIT from the direction of (-13.57, 1.42, -25.02)
+   63.4 [MammothAI] HEARD Gunshot ~26 m away (strength 0.63, +/-4 m)
+   63.7 [MammothAI] decision TrackLastKnown -> Pursue (u 0.79 vs 0.33; belief Observed, conf 1.00)
+   65.9 STATUS mammoth=(0,-22) act=Pursue inTerritory=True campDist=34 dPlayer=16 playerHp=139 shots=2 attacks=0
+   68.6 [MammothAI] valid shot 3/15 (damage 24, hp 1120/1400)
+   68.6 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   68.6 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   69.2 [MammothAI] valid shot 4/15 (damage 24, hp 1027/1400)
+   69.2 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   69.2 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   69.8 [MammothAI] valid shot 5/15 (damage 24, hp 933/1400)
+   69.8 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   69.8 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   70.3 [MammothAI] valid shot 6/15 (damage 24, hp 840/1400)
+   70.3 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   70.3 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   71.0 STATUS mammoth=(-10,-24) act=Pursue inTerritory=True campDist=36 dPlayer=7 playerHp=139 shots=6 attacks=0
+   73.3 [MammothAI] valid shot 7/15 (damage 24, hp 747/1400)
+   73.3 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   73.3 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   73.6 [MammothAI] valid shot 8/15 (damage 24, hp 653/1400)
+   73.6 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   73.6 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   74.2 [MammothAI] valid shot 9/15 (damage 24, hp 560/1400)
+   74.2 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   74.2 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   74.7 [MammothAI] valid shot 10/15 (damage 24, hp 467/1400)
+   74.7 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   74.7 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   76.1 STATUS mammoth=(-10,-24) act=Pursue inTerritory=True campDist=36 dPlayer=7 playerHp=139 shots=10 attacks=0
+   76.5 [MammothAI] valid shot 11/15 (damage 24, hp 373/1400)
+   76.5 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   76.5 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   76.9 [MammothAI] valid shot 12/15 (damage 24, hp 280/1400)
+   76.9 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   76.9 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   77.4 [MammothAI] valid shot 13/15 (damage 24, hp 187/1400)
+   77.4 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   77.4 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   77.8 [MammothAI] valid shot 14/15 (damage 24, hp 93/1400)
+   77.8 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   77.8 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   78.1 [MammothAI] valid shot 15/15 (damage 24, hp 0/1400)
+   78.1 [MammothAI] HIT from the direction of (-16.12, 5.37, -26.96)
+   78.1 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   81.1 STATUS mammoth=(-10,-24) act=Pursue inTerritory=True campDist=36 dPlayer=4 playerHp=139 shots=15 attacks=0
+   86.2 STATUS mammoth=(-10,-24) act=Pursue inTerritory=True campDist=36 dPlayer=6 playerHp=139 shots=15 attacks=0
+   91.3 STATUS mammoth=(-10,-24) act=Pursue inTerritory=True campDist=36 dPlayer=4 playerHp=139 shots=15 attacks=0
+==== session start 18:04:19
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=35 aggro=23 leash=84 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL
+    0.1 STATUS mammoth=(30,-14) act=Patrol inTerritory=True campDist=46 dPlayer=46 playerHp=150 shots=0 attacks=0
+==== session start 18:04:36
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=38 aggro=22 leash=94 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL
+    0.2 STATUS mammoth=(30,-14) act=Patrol inTerritory=True campDist=46 dPlayer=46 playerHp=150 shots=0 attacks=0
+    3.9 [MammothAI] SPOTTED player at 40 m
+    3.9 [MammothAI] belief Lost -> Observed (confidence 0.07, peak 0.07)
+    5.3 STATUS mammoth=(24,-21) act=Patrol inTerritory=True campDist=38 dPlayer=38 playerHp=150 shots=0 attacks=0
+   10.4 STATUS mammoth=(20,-24) act=Patrol inTerritory=True campDist=33 dPlayer=34 playerHp=150 shots=0 attacks=0
+   11.0 [MammothAI] LOST sight of player (last seen (9.47, -0.60, -54.69))
+   11.0 [MammothAI] belief Observed -> Recent (confidence 0.34, peak 0.49)
+   13.6 [MammothAI] HEARD Gunshot ~35 m away (strength 0.50, +/-5 m)
+   13.9 [MammothAI] HEARD Gunshot ~36 m away (strength 0.49, +/-5 m)
+   13.9 [MammothAI] decision Patrol -> InvestigateSound (u 0.52 vs 0.25; belief Recent, conf 0.10)
+   15.5 STATUS mammoth=(31,-21) act=InvestigateSound inTerritory=True campDist=40 dPlayer=39 playerHp=150 shots=0 attacks=0
+   17.1 [MammothAI] SPOTTED player at 42 m
+   17.1 [MammothAI] belief Lost -> Observed (confidence 0.13, peak 0.17)
+   17.9 [MammothAI] decision InvestigateSound -> Search (u 0.50 vs 0.40; belief Observed, conf 0.40)
+   18.6 [MammothAI] LOST sight of player (last seen (9.84, -0.61, -54.33))
+   18.6 [MammothAI] belief Observed -> Recent (confidence 0.60, peak 0.72)
+   20.6 STATUS mammoth=(40,-31) act=Search inTerritory=True campDist=39 dPlayer=39 playerHp=150 shots=0 attacks=0
+   21.3 [MammothAI] SPOTTED player at 39 m
+   21.3 [MammothAI] belief Recent -> Observed (confidence 0.38, peak 0.46)
+   22.5 [MammothAI] LOST sight of player (last seen (10.79, 0.82, -56.97))
+   22.5 [MammothAI] belief Observed -> Recent (confidence 0.46, peak 0.55)
+   25.7 STATUS mammoth=(39,-25) act=Search inTerritory=True campDist=43 dPlayer=50 playerHp=150 shots=0 attacks=0
+   29.2 [MammothAI] decision Search -> Patrol (u 0.25 vs 0.20; belief Nearby, conf 0.16)
+   30.7 STATUS mammoth=(40,-32) act=Patrol inTerritory=True campDist=40 dPlayer=59 playerHp=150 shots=0 attacks=0
+   31.6 [MammothAI] belief Nearby -> Lost (confidence 0.14, peak 0.19)
+   35.7 STATUS mammoth=(36,-24) act=Patrol inTerritory=True campDist=41 dPlayer=57 playerHp=150 shots=0 attacks=0
+   38.0 [MammothAI] belief Lost -> Nearby (confidence 0.15, peak 0.14)
+   40.7 STATUS mammoth=(34,-16) act=Patrol inTerritory=True campDist=47 dPlayer=56 playerHp=150 shots=0 attacks=0
+   45.7 STATUS mammoth=(33,-7) act=Patrol inTerritory=True campDist=54 dPlayer=57 playerHp=150 shots=0 attacks=0
+   50.7 STATUS mammoth=(33,-3) act=Patrol inTerritory=True campDist=57 dPlayer=57 playerHp=150 shots=0 attacks=0
+   54.7 [MammothAI] HEARD Gunshot ~54 m away (strength 0.22, +/-8 m)
+   54.7 [MammothAI] decision Patrol -> InvestigateSound (u 0.48 vs 0.25; belief Lost, conf 0.07)
+   55.8 STATUS mammoth=(36,-5) act=InvestigateSound inTerritory=True campDist=57 dPlayer=56 playerHp=150 shots=0 attacks=0
+   55.9 [MammothAI] HEARD Gunshot ~56 m away (strength 0.19, +/-8 m)
+   57.0 [MammothAI] HEARD Gunshot ~57 m away (strength 0.18, +/-9 m)
+   57.0 [MammothAI] belief Lost -> Uncertain (confidence 0.15, peak 0.20)
+   60.8 STATUS mammoth=(30,-10) act=InvestigateSound inTerritory=True campDist=50 dPlayer=48 playerHp=150 shots=0 attacks=0
+   65.8 STATUS mammoth=(24,-10) act=InvestigateSound inTerritory=True campDist=47 dPlayer=44 playerHp=143 shots=0 attacks=0
+   66.4 [MammothAI] HEARD Gunshot ~42 m away (strength 0.40, +/-6 m)
+   68.2 [MammothAI] SPOTTED player at 38 m
+   68.3 [MammothAI] decision InvestigateSound -> Patrol (u 0.25 vs 0.00; belief Uncertain, conf 0.21)
+   68.4 [MammothAI] belief Uncertain -> Observed (confidence 0.89, peak 0.91)
+   69.6 [MammothAI] LOST sight of player (last seen (-15.33, 1.56, -36.29))
+   69.8 [MammothAI] belief Observed -> Recent (confidence 0.89, peak 0.90)
+   70.9 STATUS mammoth=(18,-15) act=Patrol inTerritory=True campDist=41 dPlayer=40 playerHp=143 shots=0 attacks=0
+   71.4 [MammothAI] decision Patrol -> TrackLastKnown (u 0.65 vs 0.25; belief Recent, conf 0.71)
+   73.9 [MammothAI] SPOTTED player at 41 m
+   74.1 [MammothAI] belief Uncertain -> Observed (confidence 0.93, peak 0.95)
+   74.1 [MammothAI] decision TrackLastKnown -> Patrol (u 0.25 vs 0.00; belief Observed, conf 0.93)
+   74.2 [MammothAI] LOST sight of player (last seen (-15.16, 2.18, -30.49))
+   74.3 [MammothAI] belief Observed -> Recent (confidence 0.87, peak 0.88)
+   74.6 [MammothAI] SPOTTED player at 40 m
+   74.8 [MammothAI] belief Recent -> Observed (confidence 0.98, peak 0.99)
+   75.2 [MammothAI] LOST sight of player (last seen (-15.53, 1.89, -33.72))
+   75.2 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.93)
+   75.8 [MammothAI] SPOTTED player at 36 m
+   75.9 STATUS mammoth=(16,-17) act=Patrol inTerritory=True campDist=39 dPlayer=36 playerHp=136 shots=0 attacks=0
+   76.0 [MammothAI] belief Recent -> Observed (confidence 0.98, peak 0.99)
+   77.1 [MammothAI] decision Patrol -> Search (u 0.42 vs 0.25; belief Observed, conf 0.98)
+   77.9 [MammothAI] LOST sight of player (last seen (-9.65, 0.41, -39.44))
+   77.9 [MammothAI] belief Observed -> Recent (confidence 0.88, peak 0.89)
+   78.1 [MammothAI] SPOTTED player at 27 m
+   78.2 [MammothAI] belief Recent -> Observed (confidence 0.95, peak 0.95)
+   78.4 [MammothAI] LOST sight of player (last seen (-9.01, 0.32, -41.53))
+   78.4 [MammothAI] belief Observed -> Recent (confidence 0.86, peak 0.87)
+   78.8 [MammothAI] SPOTTED player at 27 m
+   78.8 [MammothAI] belief Recent -> Observed (confidence 0.94, peak 0.95)
+   80.9 [MammothAI] LOST sight of player (last seen (-6.33, 0.19, -40.66))
+   81.0 [MammothAI] SPOTTED player at 18 m
+   81.0 STATUS mammoth=(-1,-23) act=Search inTerritory=True campDist=34 dPlayer=18 playerHp=136 shots=0 attacks=0
+   81.8 [MammothAI] LOST sight of player (last seen (-6.50, 0.24, -39.85))
+   81.9 [MammothAI] belief Observed -> Recent (confidence 0.86, peak 0.87)
+   84.5 [MammothAI] HEARD Gunshot ~15 m away (strength 0.79, +/-2 m)
+   84.7 [MammothAI] HEARD Gunshot ~14 m away (strength 0.79, +/-2 m)
+   85.1 [MammothAI] HEARD Gunshot ~15 m away (strength 0.79, +/-2 m)
+   86.0 STATUS mammoth=(-6,-21) act=Search inTerritory=True campDist=37 dPlayer=18 playerHp=136 shots=0 attacks=0
+   91.1 STATUS mammoth=(6,-19) act=Search inTerritory=True campDist=36 dPlayer=20 playerHp=128 shots=0 attacks=0
+   92.5 [MammothAI] HEARD Gunshot ~21 m away (strength 0.70, +/-3 m)
+   92.7 [MammothAI] HEARD Gunshot ~22 m away (strength 0.69, +/-3 m)
+   92.9 [MammothAI] HEARD Gunshot ~23 m away (strength 0.68, +/-3 m)
+   94.1 [MammothAI] SPOTTED player at 22 m
+   94.2 [MammothAI] belief Nearby -> Observed (confidence 0.81, peak 0.63)
+   94.6 [MammothAI] HEARD Gunshot ~21 m away (strength 0.70, +/-3 m)
+   94.9 [MammothAI] HEARD Gunshot ~20 m away (strength 0.71, +/-3 m)
+   95.2 [MammothAI] HEARD Gunshot ~20 m away (strength 0.72, +/-3 m)
+   95.6 [MammothAI] HEARD Gunshot ~19 m away (strength 0.72, +/-3 m)
+   95.6 [MammothAI] LOST sight of player (last seen (1.37, -0.05, -41.68))
+   95.7 [MammothAI] belief Observed -> Recent (confidence 0.88, peak 0.91)
+   96.1 [MammothAI] HEARD Gunshot ~19 m away (strength 0.73, +/-3 m)
+   96.1 STATUS mammoth=(3,-23) act=Search inTerritory=True campDist=33 dPlayer=19 playerHp=121 shots=0 attacks=0
+   96.6 [MammothAI] HEARD Gunshot ~18 m away (strength 0.75, +/-3 m)
+  100.5 [MammothAI] SPOTTED player at 13 m
+  100.6 [MammothAI] belief Nearby -> Observed (confidence 0.84, peak 0.80)
+  100.9 [MammothAI] HEARD Gunshot ~13 m away (strength 0.81, +/-2 m)
+  101.1 STATUS mammoth=(-7,-24) act=Search inTerritory=True campDist=35 dPlayer=13 playerHp=114 shots=0 attacks=0
+  101.2 [MammothAI] HEARD Gunshot ~13 m away (strength 0.81, +/-2 m)
+  101.5 [MammothAI] HEARD Gunshot ~13 m away (strength 0.81, +/-2 m)
+  101.5 [MammothAI] LOST sight of player (last seen (-4.22, -0.10, -36.78))
+  101.5 [MammothAI] belief Observed -> Recent (confidence 0.85, peak 0.88)
+  106.2 STATUS mammoth=(2,-22) act=Search inTerritory=True campDist=33 dPlayer=18 playerHp=114 shots=0 attacks=0
+  110.2 [MammothAI] belief Nearby -> Uncertain (confidence 0.49, peak 0.33)
+  111.2 STATUS mammoth=(18,-15) act=Search inTerritory=True campDist=41 dPlayer=29 playerHp=114 shots=0 attacks=0
+  113.5 [MammothAI] SPOTTED player at 28 m
+  113.5 [MammothAI] belief Nearby -> Observed (confidence 0.87, peak 0.88)
+  114.0 [MammothAI] LOST sight of player (last seen (7.04, -0.53, -40.31))
+  114.2 [MammothAI] belief Observed -> Recent (confidence 0.71, peak 0.69)
+  116.2 STATUS mammoth=(6,-14) act=Search inTerritory=True campDist=41 dPlayer=26 playerHp=114 shots=0 attacks=0
+  121.2 STATUS mammoth=(8,-6) act=Search inTerritory=True campDist=49 dPlayer=35 playerHp=114 shots=0 attacks=0
+  121.3 [MammothAI] SPOTTED player at 34 m
+  121.4 [MammothAI] belief Nearby -> Observed (confidence 0.84, peak 0.84)
+  125.2 [MammothAI] LOST sight of player (last seen (9.53, -0.45, -36.54))
+  125.3 [MammothAI] belief Observed -> Recent (confidence 0.90, peak 0.93)
+  126.3 STATUS mammoth=(1,-22) act=Search inTerritory=True campDist=34 dPlayer=16 playerHp=114 shots=0 attacks=0
+  127.3 [MammothAI] SPOTTED player at 16 m
+  127.4 [MammothAI] belief Recent -> Observed (confidence 0.93, peak 0.96)
+  127.7 [MammothAI] LOST sight of player (last seen (15.09, -3.99, -28.12))
+  127.7 [MammothAI] belief Observed -> Recent (confidence 0.84, peak 0.88)
+  128.1 [MammothAI] SPOTTED player at 14 m
+  128.1 [MammothAI] belief Recent -> Observed (confidence 0.83, peak 0.84)
+  128.3 [MammothAI] LOST sight of player (last seen (16.16, -3.19, -26.10))
+  128.4 [MammothAI] SPOTTED player at 13 m
+  128.7 [MammothAI] HEARD Sprint ~12 m away (strength 0.46, +/-2 m)
+  128.8 [MammothAI] decision Search -> Pursue (u 0.66 vs 0.00; belief Observed, conf 0.80)
+  129.4 [MammothAI] HEARD Sprint ~13 m away (strength 0.40, +/-2 m)
+  130.0 [MammothAI] LOST sight of player (last seen (20.50, -1.13, -18.86))
+  130.0 [MammothAI] belief Observed -> Recent (confidence 0.76, peak 0.81)
+  130.2 [MammothAI] HEARD Sprint ~16 m away (strength 0.29, +/-2 m)
+  130.2 [MammothAI] decision Pursue -> TrackLastKnown (u 0.72 vs 0.15; belief Recent, conf 0.77)
+  130.6 [MammothAI] SPOTTED player at 12 m
+  130.6 [MammothAI] belief Recent -> Observed (confidence 0.75, peak 0.64)
+  130.8 [MammothAI] HEARD Sprint ~11 m away (strength 0.50, +/-2 m)
+  130.8 [MammothAI] LOST sight of player (last seen (22.54, -1.25, -15.47))
+  130.9 [MammothAI] belief Observed -> Recent (confidence 0.65, peak 0.48)
+  131.1 [MammothAI] SPOTTED player at 9 m
+  131.1 [MammothAI] decision TrackLastKnown -> Pursue (u 0.71 vs 0.42; belief Recent, conf 0.65)
+  131.3 [MammothAI] belief Recent -> Observed (confidence 0.79, peak 0.78)
+  131.4 [MammothAI] HEARD Sprint ~7 m away (strength 0.67, +/-2 m)
+  131.4 STATUS mammoth=(23,-17) act=Pursue inTerritory=True campDist=41 dPlayer=6 playerHp=114 shots=0 attacks=0
+  132.1 [MammothAI] HEARD Sprint ~10 m away (strength 0.55, +/-2 m)
+  132.7 [MammothAI] HEARD Sprint ~14 m away (strength 0.36, +/-2 m)
+  133.3 [MammothAI] HEARD Sprint ~18 m away (strength 0.19, +/-3 m)
+  133.6 [MammothAI] LOST sight of player (last seen (29.13, 0.08, -0.05))
+  133.8 [MammothAI] SPOTTED player at 19 m
+  134.1 [MammothAI] HEARD Sprint ~21 m away (strength 0.06, +/-3 m)
+  134.9 [MammothAI] LOST sight of player (last seen (26.44, 0.88, 5.83))
+  134.9 [MammothAI] belief Observed -> Recent (confidence 0.73, peak 0.75)
+  134.9 [MammothAI] decision Pursue -> TrackLastKnown (u 0.72 vs 0.14; belief Recent, conf 0.73)
+  135.1 [MammothAI] SPOTTED player at 24 m
+  135.2 [MammothAI] belief Recent -> Observed (confidence 0.88, peak 0.86)
+  136.3 [MammothAI] LOST sight of player (last seen (22.61, 2.02, 11.26))
+  136.3 [MammothAI] belief Observed -> Recent (confidence 0.71, peak 0.57)
+  136.4 STATUS mammoth=(24,-15) act=TrackLastKnown inTerritory=True campDist=43 dPlayer=28 playerHp=114 shots=0 attacks=0
+  137.7 [MammothAI] SPOTTED player at 26 m
+  137.7 [MammothAI] belief Recent -> Observed (confidence 0.78, peak 0.69)
+  138.4 [MammothAI] LOST sight of player (last seen (15.77, 3.03, 14.55))
+  138.4 [MammothAI] belief Observed -> Recent (confidence 0.79, peak 0.79)
+  139.3 [MammothAI] SPOTTED player at 29 m
+  139.4 [MammothAI] belief Recent -> Observed (confidence 0.81, peak 0.74)
+  141.5 STATUS mammoth=(18,-7) act=TrackLastKnown inTerritory=True campDist=49 dPlayer=24 playerHp=114 shots=0 attacks=0
+  142.2 [MammothAI] LOST sight of player (last seen (9.80, 4.38, 17.52))
+  142.2 [MammothAI] belief Observed -> Recent (confidence 0.87, peak 0.89)
+  142.4 [MammothAI] SPOTTED player at 25 m
+  142.5 [MammothAI] belief Recent -> Observed (confidence 0.93, peak 0.94)
+  142.7 [MammothAI] decision TrackLastKnown -> Pursue (u 0.51 vs 0.36; belief Observed, conf 0.93)
+  146.5 STATUS mammoth=(12,-3) act=Pursue inTerritory=True campDist=52 dPlayer=26 playerHp=114 shots=0 attacks=0
+  151.6 STATUS mammoth=(12,-3) act=Pursue inTerritory=True campDist=52 dPlayer=30 playerHp=114 shots=0 attacks=0
+  152.8 [MammothAI] LOST sight of player (last seen (0.35, 6.86, 28.89))
+  153.0 [MammothAI] belief Observed -> Recent (confidence 0.52, peak 0.44)
+  153.0 [MammothAI] decision Pursue -> TrackLastKnown (u 0.66 vs 0.10; belief Recent, conf 0.52)
+  156.6 STATUS mammoth=(0,-4) act=TrackLastKnown inTerritory=True campDist=52 dPlayer=41 playerHp=114 shots=0 attacks=0
+  159.3 [MammothAI] decision TrackLastKnown -> ReturnHome (u 0.29 vs 0.00; belief Nearby, conf 0.21)
+  161.2 [MammothAI] belief Nearby -> Uncertain (confidence 0.15, peak 0.17)
+  161.6 STATUS mammoth=(2,-5) act=ReturnHome inTerritory=True campDist=50 dPlayer=45 playerHp=114 shots=0 attacks=0
+  162.0 [MammothAI] HEARD Gunshot ~46 m away (strength 0.35, +/-7 m)
+  162.5 [MammothAI] decision ReturnHome -> InvestigateSound (u 0.48 vs 0.20; belief Nearby, conf 0.21)
+  162.8 [MammothAI] decision InvestigateSound -> TrackLastKnown (u 0.29 vs 0.00; belief Nearby, conf 0.21)
+  164.7 [MammothAI] SPOTTED player at 35 m
+  164.7 [MammothAI] belief Lost -> Observed (confidence 0.10, peak 0.10)
+  166.0 [MammothAI] LOST sight of player (last seen (0.30, 5.95, 24.40))
+  166.1 [MammothAI] belief Observed -> Recent (confidence 0.11, peak 0.14)
+  166.2 [MammothAI] SPOTTED player at 26 m
+  166.4 [MammothAI] belief Recent -> Observed (confidence 0.27, peak 0.36)
+  166.6 [MammothAI] decision TrackLastKnown -> Pursue (u 0.51 vs 0.36; belief Observed, conf 0.63)
+  166.7 STATUS mammoth=(1,-2) act=Pursue inTerritory=True campDist=54 dPlayer=24 playerHp=114 shots=0 attacks=0
+  167.1 [MammothAI] LOST sight of player (last seen (2.72, 5.33, 19.99))
+  167.1 [MammothAI] belief Observed -> Recent (confidence 0.78, peak 0.78)
+  167.5 [MammothAI] HEARD Sprint ~19 m away (strength 0.13, +/-3 m)
+  167.7 [MammothAI] decision Pursue -> TrackLastKnown (u 0.72 vs 0.16; belief Recent, conf 0.82)
+  168.0 [MammothAI] SPOTTED player at 16 m
+  168.0 [MammothAI] decision TrackLastKnown -> Pursue (u 0.61 vs 0.39; belief Recent, conf 0.77)
+  168.3 [MammothAI] HEARD Sprint ~14 m away (strength 0.36, +/-2 m)
+  168.3 [MammothAI] belief Recent -> Observed (confidence 0.87, peak 0.90)
+  168.9 [MammothAI] HEARD Sprint ~10 m away (strength 0.54, +/-2 m)
+  170.5 [MammothAI] valid shot 1/15 (damage 24, hp 1307/1400)
+  170.5 [MammothAI] HIT from the direction of (0.95, 1.74, 8.12)
+  170.5 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+  171.0 [MammothAI] valid shot 2/15 (damage 24, hp 1213/1400)
+  171.0 [MammothAI] HIT from the direction of (0.95, 1.74, 8.12)
+  171.0 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+  171.4 [MammothAI] valid shot 3/15 (damage 24, hp 1120/1400)
+  171.4 [MammothAI] HIT from the direction of (0.95, 1.74, 8.12)
+  171.4 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+  171.8 STATUS mammoth=(1,-2) act=Pursue inTerritory=True campDist=54 dPlayer=10 playerHp=114 shots=3 attacks=0
+  172.0 [MammothAI] valid shot 4/15 (damage 24, hp 1027/1400)
+  172.0 [MammothAI] HIT from the direction of (0.95, 1.74, 8.12)
+  172.0 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+  172.6 [MammothAI] valid shot 5/15 (damage 24, hp 933/1400)
+  172.6 [MammothAI] HIT from the direction of (0.95, 1.74, 8.12)
+  172.6 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+  173.1 [MammothAI] valid shot 6/15 (damage 24, hp 840/1400)
+  173.1 [MammothAI] HIT from the direction of (0.95, 1.74, 8.12)
+  173.1 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+  173.5 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+  173.9 [MammothAI] HEARD Gunshot ~10 m away (strength 0.86, +/-2 m)
+  175.3 [MammothAI] LOST sight of player (last seen (0.95, 1.74, 8.12))
+  175.3 [MammothAI] belief Observed -> Recent (confidence 0.86, peak 0.89)
+  175.5 [MammothAI] decision Pursue -> TrackLastKnown (u 0.75 vs 0.17; belief Recent, conf 0.86)
+  176.7 [MammothAI] HEARD Gunshot ~9 m away (strength 0.87, +/-2 m)
+  176.8 STATUS mammoth=(1,-2) act=TrackLastKnown inTerritory=True campDist=54 dPlayer=9 playerHp=114 shots=6 attacks=0
+  177.3 [MammothAI] valid shot 7/15 (damage 24, hp 747/1400)
+  177.3 [MammothAI] HIT from the direction of (5.99, 1.21, 5.97)
+  177.3 [MammothAI] HEARD Gunshot ~9 m away (strength 0.87, +/-2 m)
+  177.7 [MammothAI] valid shot 8/15 (damage 24, hp 653/1400)
+  177.7 [MammothAI] HIT from the direction of (5.43, 1.04, 5.16)
+  177.7 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+  178.2 [MammothAI] valid shot 9/15 (damage 24, hp 560/1400)
+  178.2 [MammothAI] HIT from the direction of (5.40, 1.39, 3.56)
+  178.2 [MammothAI] HEARD Gunshot ~7 m away (strength 0.90, +/-2 m)
+  178.6 [MammothAI] valid shot 10/15 (damage 24, hp 467/1400)
+  178.6 [MammothAI] HIT from the direction of (5.95, 0.53, 2.93)
+  178.6 [MammothAI] HEARD Gunshot ~7 m away (strength 0.90, +/-2 m)
+  178.9 [MammothAI] HEARD Gunshot ~7 m away (strength 0.90, +/-2 m)
+  179.4 [MammothAI] HEARD Gunshot ~6 m away (strength 0.91, +/-2 m)
+  181.2 [MammothAI] valid shot 11/15 (damage 25, hp 373/1400)
+  181.2 [MammothAI] HIT from the direction of (3.94, 0.28, 0.09)
+  181.2 [MammothAI] HEARD Gunshot ~3 m away (strength 0.95, +/-2 m)
+  181.6 [MammothAI] valid shot 12/15 (damage 25, hp 280/1400)
+  181.6 [MammothAI] HIT from the direction of (2.67, 0.28, -0.03)
+  181.6 [MammothAI] HEARD Gunshot ~2 m away (strength 0.97, +/-2 m)
+  181.8 STATUS mammoth=(1,-2) act=TrackLastKnown inTerritory=True campDist=54 dPlayer=2 playerHp=114 shots=12 attacks=0
+  181.9 [MammothAI] valid shot 13/15 (damage 25, hp 187/1400)
+  181.9 [MammothAI] HIT from the direction of (2.50, 0.22, -0.18)
+  181.9 [MammothAI] HEARD Gunshot ~2 m away (strength 0.97, +/-2 m)
+  182.3 [MammothAI] valid shot 14/15 (damage 25, hp 93/1400)
+  182.3 [MammothAI] HIT from the direction of (2.50, 0.22, -0.18)
+  182.3 [MammothAI] HEARD Gunshot ~2 m away (strength 0.97, +/-2 m)
+  182.6 [MammothAI] valid shot 15/15 (damage 25, hp 0/1400)
+  182.6 [MammothAI] HIT from the direction of (2.50, 0.22, -0.18)
+  182.6 [MammothAI] HEARD Gunshot ~2 m away (strength 0.97, +/-2 m)
+  182.9 [MammothAI] SPOTTED player at 3 m
+  182.9 [MammothAI] belief Nearby -> Observed (confidence 0.95, peak 0.96)
+  184.6 [MammothAI] HEARD Sprint ~2 m away (strength 0.92, +/-2 m)
+  185.2 [MammothAI] HEARD Sprint ~3 m away (strength 0.86, +/-2 m)
+  185.3 [MammothAI] LOST sight of player (last seen (-0.99, 0.26, -4.30))
+  185.3 [MammothAI] belief Observed -> Recent (confidence 0.89, peak 0.91)
+  185.8 [MammothAI] HEARD Sprint ~6 m away (strength 0.71, +/-2 m)
+  186.4 [MammothAI] HEARD Sprint ~10 m away (strength 0.54, +/-2 m)
+  186.8 STATUS mammoth=(1,-2) act=TrackLastKnown inTerritory=True campDist=54 dPlayer=12 playerHp=114 shots=15 attacks=0
+  187.1 [MammothAI] HEARD Sprint ~12 m away (strength 0.44, +/-2 m)
+  187.8 [MammothAI] HEARD Sprint ~16 m away (strength 0.26, +/-2 m)
+  188.4 [MammothAI] HEARD Sprint ~20 m away (strength 0.11, +/-3 m)
+  188.7 [MammothAI] SPOTTED player at 22 m
+  188.8 [MammothAI] belief Recent -> Observed (confidence 0.54, peak 0.29)
+  188.9 [MammothAI] LOST sight of player (last seen (-10.41, -1.01, -20.28))
+  189.1 [MammothAI] belief Observed -> Recent (confidence 0.49, peak 0.28)
+  191.5 [MammothAI] SPOTTED player at 30 m
+  191.6 [MammothAI] belief Recent -> Observed (confidence 0.92, peak 0.94)
+  191.7 [MammothAI] LOST sight of player (last seen (-16.20, 5.39, -25.77))
+  191.9 STATUS mammoth=(1,-2) act=TrackLastKnown inTerritory=True campDist=54 dPlayer=29 playerHp=114 shots=15 attacks=0
+  191.9 [MammothAI] belief Observed -> Recent (confidence 0.86, peak 0.87)
+  191.9 [MammothAI] SPOTTED player at 29 m
+  192.1 [MammothAI] belief Recent -> Observed (confidence 0.96, peak 0.97)
+  196.4 [MammothAI] LOST sight of player (last seen (-19.69, 7.95, -20.52))
+  196.6 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.93)
+  196.7 [MammothAI] SPOTTED player at 27 m
+  196.8 [MammothAI] belief Recent -> Observed (confidence 0.89, peak 0.88)
+  196.9 STATUS mammoth=(1,-2) act=TrackLastKnown inTerritory=True campDist=54 dPlayer=26 playerHp=114 shots=15 attacks=0
+==== session start 19:19:49
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (26.48, -0.50, -21.06). notice=38 aggro=20 leash=87 (F10 reveals)
+    0.0 [MammothAI] SPOTTED player at 38 m
+    0.0 [MammothAI] tactical graph ready: 23 reachable waypoints of 31 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (58 m straight) A* cost 83.4 (6 waypoints, 15 expanded) vs Dijkstra 83.4 -> OPTIMAL
+    0.0 [MammothAI] belief Lost -> Observed (confidence 0.00, peak 0.04)
+==== session start 19:19:53
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 6/16.
+    0.0 [Sanjula] Mammoth ready at (19.40, -1.44, -15.53). notice=36 aggro=23 leash=80 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 30 reachable waypoints of 38 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (68 m straight) A* cost 87.0 (6 waypoints, 16 expanded) vs Dijkstra 87.0 -> OPTIMAL
+    0.1 STATUS mammoth=(19,-16) act=Patrol inTerritory=True campDist=41 dPlayer=41 playerHp=150 shots=0 attacks=0
+    0.5 [MammothAI] SPOTTED player at 41 m
+    0.6 [MammothAI] belief Lost -> Observed (confidence 0.01, peak 0.05)
+    1.0 [MammothAI] LOST sight of player (last seen (8.50, -0.62, -55.00))
+    1.1 [MammothAI] belief Observed -> Recent (confidence 0.02, peak 0.05)
+    5.1 STATUS mammoth=(27,-20) act=Patrol inTerritory=True campDist=40 dPlayer=40 playerHp=150 shots=0 attacks=0
+    6.7 [MammothAI] SPOTTED player at 40 m
+    6.7 [MammothAI] belief Lost -> Observed (confidence 0.10, peak 0.08)
+    8.1 [MammothAI] valid shot 1/15 (damage 19, hp 1307/1400)
+    8.1 [MammothAI] HIT from the direction of (8.85, -0.57, -55.21)
+    8.1 [MammothAI] HEARD Gunshot ~38 m away (strength 0.46, +/-6 m)
+    8.1 [MammothAI] LOST sight of player (last seen (8.85, -0.57, -55.21))
+    8.3 [MammothAI] belief Observed -> Recent (confidence 0.35, peak 0.46)
+    8.4 [MammothAI] decision Patrol -> Search (u 0.55 vs 0.25; belief Recent, conf 0.35)
+    8.7 [MammothAI] SPOTTED player at 37 m
+    8.7 [MammothAI] belief Recent -> Observed (confidence 0.29, peak 0.39)
+    9.0 [MammothAI] LOST sight of player (last seen (8.85, -0.57, -55.21))
+    9.0 [MammothAI] belief Observed -> Recent (confidence 0.29, peak 0.41)
+    9.3 [MammothAI] SPOTTED player at 36 m
+    9.5 [MammothAI] belief Recent -> Observed (confidence 0.12, peak 0.17)
+   10.2 STATUS mammoth=(21,-24) act=Search inTerritory=True campDist=34 dPlayer=34 playerHp=150 shots=1 attacks=0
+   10.8 [MammothAI] valid shot 2/15 (damage 20, hp 1213/1400)
+   10.8 [MammothAI] HIT from the direction of (7.46, -0.69, -54.40)
+   10.8 [MammothAI] HEARD Gunshot ~33 m away (strength 0.53, +/-5 m)
+   12.0 [MammothAI] LOST sight of player (last seen (7.46, -0.69, -54.40))
+   12.2 [MammothAI] belief Observed -> Recent (confidence 0.59, peak 0.66)
+   15.3 STATUS mammoth=(8,-20) act=Search inTerritory=True campDist=35 dPlayer=35 playerHp=150 shots=2 attacks=0
+   15.4 [MammothAI] decision Search -> InvestigateSound (u 0.39 vs 0.30; belief Recent, conf 0.18)
+   15.8 [MammothAI] valid shot 3/15 (damage 20, hp 1120/1400)
+   15.8 [MammothAI] HIT from the direction of (7.96, -0.66, -54.78)
+   15.8 [MammothAI] HEARD Gunshot ~36 m away (strength 0.49, +/-5 m)
+   16.1 [MammothAI] SPOTTED player at 35 m
+   16.1 [MammothAI] belief Recent -> Observed (confidence 0.37, peak 0.44)
+   16.4 [MammothAI] LOST sight of player (last seen (7.96, -0.66, -54.78))
+   16.4 [MammothAI] belief Observed -> Recent (confidence 0.34, peak 0.41)
+   16.5 [MammothAI] SPOTTED player at 35 m
+   16.7 [MammothAI] belief Recent -> Observed (confidence 0.36, peak 0.44)
+   17.1 [MammothAI] LOST sight of player (last seen (5.25, -0.87, -54.39))
+   17.3 [MammothAI] SPOTTED player at 33 m
+   17.6 [MammothAI] LOST sight of player (last seen (4.09, -0.97, -54.02))
+   17.6 [MammothAI] belief Observed -> Recent (confidence 0.24, peak 0.20)
+   18.2 [MammothAI] HEARD Gunshot ~29 m away (strength 0.59, +/-4 m)
+   18.2 [MammothAI] SPOTTED player at 29 m
+   18.2 [MammothAI] belief Recent -> Observed (confidence 0.56, peak 0.64)
+   18.5 [MammothAI] LOST sight of player (last seen (1.47, -1.19, -51.99))
+   18.5 [MammothAI] belief Observed -> Recent (confidence 0.52, peak 0.60)
+   18.7 [MammothAI] SPOTTED player at 27 m
+   18.8 [MammothAI] belief Recent -> Observed (confidence 0.87, peak 0.92)
+   19.0 [MammothAI] HEARD Gunshot ~26 m away (strength 0.63, +/-4 m)
+   19.0 [MammothAI] decision InvestigateSound -> Search (u 0.55 vs 0.44; belief Observed, conf 0.85)
+   20.1 [MammothAI] LOST sight of player (last seen (-3.11, -0.68, -48.87))
+   20.1 [MammothAI] belief Observed -> Recent (confidence 0.89, peak 0.93)
+   20.3 STATUS mammoth=(-9,-27) act=Search inTerritory=True campDist=33 dPlayer=22 playerHp=150 shots=3 attacks=0
+   20.6 [MammothAI] SPOTTED player at 21 m
+   20.6 [MammothAI] belief Recent -> Observed (confidence 0.93, peak 0.94)
+   21.1 [MammothAI] LOST sight of player (last seen (-6.94, -0.16, -47.80))
+   21.3 [MammothAI] SPOTTED player at 20 m
+   21.5 [MammothAI] LOST sight of player (last seen (-8.30, -0.43, -47.51))
+   21.5 [MammothAI] belief Observed -> Recent (confidence 0.76, peak 0.71)
+   21.7 [MammothAI] SPOTTED player at 19 m
+   21.7 [MammothAI] belief Recent -> Observed (confidence 0.80, peak 0.56)
+   21.9 [MammothAI] LOST sight of player (last seen (-8.56, -0.34, -46.42))
+   22.0 [MammothAI] belief Observed -> Recent (confidence 0.71, peak 0.51)
+   24.3 [MammothAI] HEARD Sprint ~17 m away (strength 0.24, +/-3 m)
+   25.0 [MammothAI] HEARD Sprint ~17 m away (strength 0.21, +/-3 m)
+   25.3 STATUS mammoth=(-3,-19) act=Search inTerritory=True campDist=38 dPlayer=18 playerHp=150 shots=3 attacks=0
+   25.8 [MammothAI] HEARD Sprint ~19 m away (strength 0.13, +/-3 m)
+   26.7 [MammothAI] HEARD Sprint ~20 m away (strength 0.11, +/-3 m)
+   27.3 [MammothAI] HEARD Sprint ~17 m away (strength 0.21, +/-3 m)
+   28.2 [MammothAI] HEARD Sprint ~16 m away (strength 0.27, +/-2 m)
+   29.1 [MammothAI] HEARD Sprint ~15 m away (strength 0.31, +/-2 m)
+   29.8 [MammothAI] HEARD Sprint ~14 m away (strength 0.37, +/-2 m)
+   30.3 STATUS mammoth=(-3,-18) act=Search inTerritory=True campDist=38 dPlayer=13 playerHp=150 shots=3 attacks=0
+   30.5 [MammothAI] HEARD Sprint ~13 m away (strength 0.39, +/-2 m)
+   31.1 [MammothAI] HEARD Sprint ~14 m away (strength 0.37, +/-2 m)
+   31.8 [MammothAI] HEARD Sprint ~15 m away (strength 0.32, +/-2 m)
+   32.4 [MammothAI] HEARD Sprint ~17 m away (strength 0.23, +/-3 m)
+   33.1 [MammothAI] HEARD Sprint ~20 m away (strength 0.07, +/-3 m)
+   35.4 STATUS mammoth=(-11,-26) act=Search inTerritory=True campDist=35 dPlayer=22 playerHp=150 shots=3 attacks=0
+   37.2 [MammothAI] SPOTTED player at 21 m
+   37.2 [MammothAI] belief Nearby -> Observed (confidence 0.83, peak 0.79)
+   37.4 [MammothAI] decision Search -> Pursue (u 0.56 vs 0.00; belief Observed, conf 0.94)
+   40.4 STATUS mammoth=(-12,-17) act=Pursue inTerritory=True campDist=43 dPlayer=18 playerHp=150 shots=3 attacks=0
+   43.8 [MammothAI] LOST sight of player (last seen (-19.65, 7.72, -3.09))
+   43.8 [MammothAI] belief Observed -> Recent (confidence 0.73, peak 0.74)
+   43.8 [MammothAI] decision Pursue -> TrackLastKnown (u 0.73 vs 0.14; belief Recent, conf 0.73)
+   45.4 STATUS mammoth=(-12,-17) act=TrackLastKnown inTerritory=True campDist=43 dPlayer=13 playerHp=150 shots=3 attacks=0
+   47.2 [MammothAI] SPOTTED player at 11 m
+   47.2 [MammothAI] belief Recent -> Observed (confidence 0.74, peak 0.66)
+   47.4 [MammothAI] decision TrackLastKnown -> Pursue (u 0.69 vs 0.40; belief Observed, conf 0.82)
+   50.4 [MammothAI] LOST sight of player (last seen (-19.02, 7.59, -17.75))
+   50.4 [MammothAI] belief Observed -> Recent (confidence 0.88, peak 0.92)
+   50.5 STATUS mammoth=(-12,-16) act=Pursue inTerritory=True campDist=44 dPlayer=8 playerHp=150 shots=3 attacks=0
+   50.5 [MammothAI] decision Pursue -> TrackLastKnown (u 0.76 vs 0.17; belief Recent, conf 0.88)
+   51.2 [MammothAI] SPOTTED player at 11 m
+   51.2 [MammothAI] belief Recent -> Observed (confidence 0.92, peak 0.94)
+   51.4 [MammothAI] decision TrackLastKnown -> Pursue (u 0.70 vs 0.41; belief Observed, conf 0.92)
+   51.7 [MammothAI] valid shot 4/15 (damage 24, hp 1027/1400)
+   51.7 [MammothAI] HIT from the direction of (-19.50, 7.82, -18.30)
+   51.7 [MammothAI] HEARD Gunshot ~8 m away (strength 0.89, +/-2 m)
+   52.7 [MammothAI] valid shot 5/15 (damage 24, hp 933/1400)
+   52.7 [MammothAI] HIT from the direction of (-19.50, 7.82, -18.30)
+   52.7 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   53.8 [MammothAI] valid shot 6/15 (damage 24, hp 840/1400)
+   53.8 [MammothAI] HIT from the direction of (-19.50, 7.82, -18.30)
+   53.8 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   55.0 [MammothAI] valid shot 7/15 (damage 23, hp 747/1400)
+   55.0 [MammothAI] HIT from the direction of (-19.50, 7.82, -18.30)
+   55.0 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   55.5 STATUS mammoth=(-12,-15) act=Pursue inTerritory=True campDist=45 dPlayer=8 playerHp=150 shots=7 attacks=0
+   56.6 [MammothAI] valid shot 8/15 (damage 24, hp 653/1400)
+   56.6 [MammothAI] HIT from the direction of (-19.50, 7.82, -18.30)
+   56.6 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   57.5 [MammothAI] valid shot 9/15 (damage 23, hp 560/1400)
+   57.5 [MammothAI] HIT from the direction of (-19.50, 7.82, -18.30)
+   57.5 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   58.2 [MammothAI] valid shot 10/15 (damage 23, hp 467/1400)
+   58.2 [MammothAI] HIT from the direction of (-19.50, 7.82, -18.30)
+   58.2 [MammothAI] HEARD Gunshot ~8 m away (strength 0.88, +/-2 m)
+   60.6 STATUS mammoth=(-12,-15) act=Pursue inTerritory=True campDist=45 dPlayer=8 playerHp=150 shots=10 attacks=0
+   64.0 [MammothAI] valid shot 11/15 (damage 24, hp 373/1400)
+   64.0 [MammothAI] HIT from the direction of (-17.99, 6.86, -20.22)
+   64.0 [MammothAI] HEARD Gunshot ~8 m away (strength 0.89, +/-2 m)
+   64.6 [MammothAI] valid shot 12/15 (damage 24, hp 280/1400)
+   64.6 [MammothAI] HIT from the direction of (-17.99, 6.86, -20.22)
+   64.6 [MammothAI] HEARD Gunshot ~8 m away (strength 0.89, +/-2 m)
+   65.3 [MammothAI] valid shot 13/15 (damage 24, hp 187/1400)
+   65.3 [MammothAI] HIT from the direction of (-17.99, 6.86, -20.22)
+   65.3 [MammothAI] HEARD Gunshot ~8 m away (strength 0.89, +/-2 m)
+   65.6 STATUS mammoth=(-12,-15) act=Pursue inTerritory=True campDist=45 dPlayer=8 playerHp=150 shots=13 attacks=0
+   65.8 [MammothAI] valid shot 14/15 (damage 24, hp 93/1400)
+   65.8 [MammothAI] HIT from the direction of (-17.99, 6.86, -20.22)
+   65.8 [MammothAI] HEARD Gunshot ~8 m away (strength 0.89, +/-2 m)
+   66.4 [MammothAI] valid shot 15/15 (damage 24, hp 0/1400)
+   66.4 [MammothAI] HIT from the direction of (-17.99, 6.86, -20.22)
+   66.4 [MammothAI] HEARD Gunshot ~8 m away (strength 0.89, +/-2 m)
+   70.7 STATUS mammoth=(-12,-15) act=Pursue inTerritory=True campDist=45 dPlayer=7 playerHp=150 shots=15 attacks=0
+   71.4 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   72.6 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   73.7 [MammothAI] HEARD Gunshot ~7 m away (strength 0.91, +/-2 m)
+   75.6 [MammothAI] HEARD Gunshot ~6 m away (strength 0.91, +/-2 m)
+   75.8 STATUS mammoth=(-12,-15) act=Pursue inTerritory=True campDist=45 dPlayer=6 playerHp=150 shots=15 attacks=0
+   80.8 STATUS mammoth=(-12,-15) act=Pursue inTerritory=True campDist=45 dPlayer=5 playerHp=150 shots=15 attacks=0
+==== session start 19:45:03
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=38 aggro=18 leash=85 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL
+    0.1 STATUS mammoth=(30,-14) act=Patrol inTerritory=True campDist=46 dPlayer=46 playerHp=150 shots=0 attacks=0
+    5.2 STATUS mammoth=(38,-12) act=Patrol inTerritory=True campDist=53 dPlayer=53 playerHp=150 shots=0 attacks=0
+   10.2 STATUS mammoth=(43,-6) act=Patrol inTerritory=True campDist=60 dPlayer=60 playerHp=150 shots=0 attacks=0
+   15.2 STATUS mammoth=(34,-4) act=Patrol inTerritory=True campDist=57 dPlayer=57 playerHp=150 shots=0 attacks=0
+   16.5 [MammothAI] belief Lost -> Uncertain (confidence 0.16, peak 0.10)
+   20.2 STATUS mammoth=(31,-10) act=Patrol inTerritory=True campDist=50 dPlayer=52 playerHp=150 shots=0 attacks=0
+   25.2 STATUS mammoth=(29,-15) act=Patrol inTerritory=True campDist=44 dPlayer=44 playerHp=150 shots=0 attacks=0
+   30.3 STATUS mammoth=(25,-7) act=Patrol inTerritory=True campDist=51 dPlayer=51 playerHp=150 shots=0 attacks=0
+==== session start 20:38:27
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+    0.0 [Sanjula] Mammoth ready at (17.48, -1.59, -15.49). notice=35 aggro=21 leash=92 (F10 reveals)
+    0.0 [MammothAI] tactical graph ready: 29 reachable waypoints of 35 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (67 m straight) A* cost 77.3 (5 waypoints, 12 expanded) vs Dijkstra 77.3 -> OPTIMAL
+==== session start 20:38:32
+    0.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 6/16.
+    0.0 [Sanjula] Mammoth ready at (21.71, -1.19, -16.26). notice=42 aggro=21 leash=84 (F10 reveals)
+    0.0 [MammothAI] SPOTTED player at 41 m
+    0.0 [MammothAI] tactical graph ready: 30 reachable waypoints of 32 candidates
+    0.0 [MammothAI] planner self-check: home->farthest (50 m straight) A* cost 73.5 (5 waypoints, 18 expanded) vs Dijkstra 73.5 -> OPTIMAL
+    0.0 [MammothAI] belief Lost -> Observed (confidence 0.00, peak 0.03)
+    0.1 STATUS mammoth=(22,-16) act=Patrol inTerritory=True campDist=41 dPlayer=41 playerHp=150 shots=0 attacks=0
+    0.5 [MammothAI] LOST sight of player (last seen (8.50, -0.62, -55.00))
+    0.6 [MammothAI] belief Observed -> Recent (confidence 0.02, peak 0.05)
+    5.1 STATUS mammoth=(17,-9) act=Patrol inTerritory=True campDist=47 dPlayer=48 playerHp=150 shots=0 attacks=0
+   10.2 STATUS mammoth=(11,-4) act=Patrol inTerritory=True campDist=51 dPlayer=50 playerHp=150 shots=0 attacks=0
+   15.2 STATUS mammoth=(8,-6) act=Patrol inTerritory=True campDist=49 dPlayer=48 playerHp=150 shots=0 attacks=0
+   16.1 [MammothAI] SPOTTED player at 47 m
+   16.2 [MammothAI] belief Lost -> Observed (confidence 0.07, peak 0.08)
+   16.3 [MammothAI] LOST sight of player (last seen (9.44, -0.67, -52.99))
+   16.4 [MammothAI] SPOTTED player at 45 m
+   17.0 [MammothAI] LOST sight of player (last seen (5.98, -1.18, -50.10))
+   17.0 [MammothAI] belief Observed -> Recent (confidence 0.06, peak 0.08)
+   18.4 [MammothAI] SPOTTED player at 42 m
+   18.7 [MammothAI] LOST sight of player (last seen (4.92, -1.16, -49.06))
+   18.9 [MammothAI] SPOTTED player at 42 m
+   18.9 [MammothAI] belief Recent -> Observed (confidence 0.08, peak 0.08)
+   19.3 [MammothAI] LOST sight of player (last seen (4.92, -1.16, -49.06))
+   19.4 [MammothAI] belief Observed -> Recent (confidence 0.17, peak 0.30)
+   19.9 [MammothAI] SPOTTED player at 41 m
+   19.9 [MammothAI] belief Recent -> Observed (confidence 0.60, peak 0.74)
+   20.3 STATUS mammoth=(13,-9) act=Patrol inTerritory=True campDist=46 dPlayer=40 playerHp=150 shots=0 attacks=0
+   22.1 [MammothAI] LOST sight of player (last seen (3.73, -1.21, -48.23))
+   22.1 [MammothAI] belief Observed -> Recent (confidence 0.89, peak 0.89)
+   22.4 [MammothAI] SPOTTED player at 38 m
+   22.4 [MammothAI] belief Recent -> Observed (confidence 0.99, peak 0.99)
+   23.0 [MammothAI] LOST sight of player (last seen (2.02, -0.85, -45.47))
+   23.1 [MammothAI] belief Observed -> Recent (confidence 0.93, peak 0.93)
+   25.3 STATUS mammoth=(19,-13) act=Patrol inTerritory=True campDist=43 dPlayer=35 playerHp=150 shots=0 attacks=0
+   30.4 STATUS mammoth=(15,-6) act=Patrol inTerritory=True campDist=50 dPlayer=39 playerHp=150 shots=0 attacks=0
+   35.4 STATUS mammoth=(13,-5) act=Patrol inTerritory=True campDist=51 dPlayer=46 playerHp=150 shots=0 attacks=0
+   39.3 [MammothAI] belief Nearby -> Uncertain (confidence 0.16, peak 0.17)
+   40.5 STATUS mammoth=(16,-6) act=Patrol inTerritory=True campDist=50 dPlayer=51 playerHp=150 shots=0 attacks=0
+   45.5 STATUS mammoth=(24,-5) act=Patrol inTerritory=True campDist=53 dPlayer=51 playerHp=150 shots=0 attacks=0
+   50.6 STATUS mammoth=(28,-2) act=Patrol inTerritory=True campDist=56 dPlayer=54 playerHp=150 shots=0 attacks=0
+   55.6 STATUS mammoth=(31,-8) act=Patrol inTerritory=True campDist=52 dPlayer=50 playerHp=150 shots=0 attacks=0
+   60.7 STATUS mammoth=(35,-16) act=Patrol inTerritory=True campDist=47 dPlayer=50 playerHp=150 shots=0 attacks=0
+   63.5 [MammothAI] SPOTTED player at 49 m
+   63.6 [MammothAI] LOST sight of player (last seen (-11.67, -1.26, -17.31))
+   63.6 [MammothAI] belief Lost -> Recent (confidence 0.11, peak 0.13)
+   63.9 [MammothAI] SPOTTED player at 48 m
+   64.1 [MammothAI] LOST sight of player (last seen (-11.41, -1.37, -14.65))
+   64.2 [MammothAI] SPOTTED player at 48 m
+   64.3 [MammothAI] belief Recent -> Observed (confidence 0.66, peak 0.33)
+   64.5 [MammothAI] LOST sight of player (last seen (-11.21, -1.37, -12.48))
+   64.5 [MammothAI] belief Observed -> Recent (confidence 0.61, peak 0.43)
+   65.5 [MammothAI] SPOTTED player at 46 m
+   65.7 [MammothAI] belief Recent -> Observed (confidence 0.76, peak 0.71)
+   65.8 STATUS mammoth=(34,-17) act=Patrol inTerritory=True campDist=45 dPlayer=45 playerHp=150 shots=0 attacks=0
+   67.6 [MammothAI] LOST sight of player (last seen (-4.58, -0.05, -6.69))
+   67.7 [MammothAI] belief Observed -> Recent (confidence 0.95, peak 0.96)
+   69.1 [MammothAI] SPOTTED player at 36 m
+   69.2 [MammothAI] belief Recent -> Observed (confidence 0.98, peak 0.99)
+   70.8 STATUS mammoth=(26,-13) act=Patrol inTerritory=True campDist=46 dPlayer=34 playerHp=150 shots=0 attacks=0
+   71.0 [MammothAI] HEARD Gunshot ~34 m away (strength 0.52, +/-5 m)
+   71.6 [MammothAI] decision Patrol -> TrackLastKnown (u 0.31 vs 0.25; belief Observed, conf 1.00)
+   72.8 [MammothAI] HEARD Gunshot ~28 m away (strength 0.59, +/-4 m)
+   73.5 [MammothAI] HEARD Gunshot ~26 m away (strength 0.63, +/-4 m)
+   74.2 [MammothAI] LOST sight of player (last seen (-6.74, 2.01, -5.14))
+   74.4 [MammothAI] belief Observed -> Recent (confidence 0.88, peak 0.90)
+   75.7 [MammothAI] SPOTTED player at 28 m
+   75.8 [MammothAI] belief Recent -> Observed (confidence 0.98, peak 0.99)
+   75.8 STATUS mammoth=(21,-7) act=TrackLastKnown inTerritory=True campDist=49 dPlayer=28 playerHp=150 shots=0 attacks=0
+   76.6 [MammothAI] LOST sight of player (last seen (-9.12, 5.08, -3.08))
+   76.6 [MammothAI] belief Observed -> Recent (confidence 0.89, peak 0.91)
+   76.9 [MammothAI] SPOTTED player at 29 m
+   77.1 [MammothAI] belief Recent -> Observed (confidence 1.00, peak 1.00)
+   77.6 [MammothAI] LOST sight of player (last seen (-9.64, 6.08, -2.30))
+   77.8 [MammothAI] belief Observed -> Recent (confidence 0.86, peak 0.84)
+   78.0 [MammothAI] SPOTTED player at 27 m
+   78.0 [MammothAI] belief Recent -> Observed (confidence 0.99, peak 1.00)
+   78.3 [MammothAI] LOST sight of player (last seen (-8.44, 6.97, -1.52))
+   78.4 [MammothAI] belief Observed -> Recent (confidence 0.91, peak 0.93)
+   79.2 [MammothAI] SPOTTED player at 23 m
+   79.3 [MammothAI] belief Recent -> Observed (confidence 0.98, peak 0.99)
+   79.5 [MammothAI] decision TrackLastKnown -> Pursue (u 0.52 vs 0.37; belief Observed, conf 0.99)
+   80.8 STATUS mammoth=(9,-13) act=Pursue inTerritory=True campDist=42 dPlayer=17 playerHp=150 shots=0 attacks=0
+   81.0 [MammothAI] decision Pursue -> ReturnHome (u 0.50 vs 0.00; belief Observed, conf 0.99)
+   81.4 [MammothAI] decision ReturnHome -> Pursue (u 0.65 vs 0.16; belief Observed, conf 0.99)
+   82.0 [MammothAI] attack 1/20 on the player (damage 7.5, player hp 150.0/150)
+   82.6 [MammothAI] LOST sight of player (last seen (-5.19, 8.34, -0.36))
+   82.6 [MammothAI] decision Pursue -> Search (u 0.55 vs 0.20; belief Observed, conf 1.00)
+   82.8 [MammothAI] belief Observed -> Recent (confidence 0.89, peak 0.91)
+   84.6 [MammothAI] SPOTTED player at 9 m
+   84.6 [MammothAI] decision Search -> Pursue (u 0.70 vs 0.00; belief Recent, conf 0.62)
+   84.8 [MammothAI] LOST sight of player (last seen (-7.03, 8.48, -0.34))
+   85.8 [MammothAI] decision Pursue -> TrackLastKnown (u 0.64 vs 0.10; belief Recent, conf 0.56)
+   85.9 STATUS mammoth=(7,-5) act=TrackLastKnown inTerritory=True campDist=50 dPlayer=16 playerHp=143 shots=0 attacks=1
+   87.9 [MammothAI] HEARD Gunshot ~19 m away (strength 0.73, +/-3 m)
+   88.5 [MammothAI] valid shot 1/15 (damage 22, hp 1307/1400)
+   88.5 [MammothAI] HIT from the direction of (-6.43, 7.70, -0.33)
+   88.5 [MammothAI] HEARD Gunshot ~19 m away (strength 0.73, +/-3 m)
+   88.7 [MammothAI] belief Recent -> Nearby (confidence 0.85, peak 0.89)
+   91.0 STATUS mammoth=(12,-6) act=TrackLastKnown inTerritory=True campDist=49 dPlayer=18 playerHp=143 shots=1 attacks=1
+   96.1 STATUS mammoth=(12,-6) act=TrackLastKnown inTerritory=True campDist=49 dPlayer=18 playerHp=143 shots=1 attacks=1
+   99.2 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+   99.4 [MammothAI] decision TrackLastKnown -> InvestigateSound (u 0.55 vs 0.27; belief Nearby, conf 0.44)
+  101.1 STATUS mammoth=(12,-6) act=InvestigateSound inTerritory=True campDist=49 dPlayer=17 playerHp=143 shots=1 attacks=1
+  101.4 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+  102.8 [MammothAI] valid shot 2/15 (damage 22, hp 1213/1400)
+  102.8 [MammothAI] HIT from the direction of (-4.59, 7.60, -0.50)
+  102.8 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+  103.7 [MammothAI] valid shot 3/15 (damage 22, hp 1120/1400)
+  103.7 [MammothAI] HIT from the direction of (-4.59, 7.60, -0.50)
+  103.7 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+  104.4 [MammothAI] valid shot 4/15 (damage 22, hp 1027/1400)
+  104.4 [MammothAI] HIT from the direction of (-4.59, 7.60, -0.50)
+  104.4 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+  105.2 [MammothAI] valid shot 5/15 (damage 22, hp 933/1400)
+  105.2 [MammothAI] HIT from the direction of (-4.59, 7.60, -0.50)
+  105.2 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+  105.9 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+  106.1 STATUS mammoth=(12,-6) act=InvestigateSound inTerritory=True campDist=49 dPlayer=17 playerHp=143 shots=5 attacks=1
+  108.8 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+  109.5 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+  111.2 STATUS mammoth=(12,-6) act=InvestigateSound inTerritory=True campDist=49 dPlayer=16 playerHp=143 shots=5 attacks=1
+  114.6 [MammothAI] decision InvestigateSound -> Search (u 0.48 vs 0.40; belief Nearby, conf 0.49)
+  116.2 STATUS mammoth=(12,-6) act=Search inTerritory=True campDist=49 dPlayer=13 playerHp=143 shots=5 attacks=1
+  118.0 [MammothAI] belief Nearby -> Uncertain (confidence 0.24, peak 0.19)
+  118.8 [MammothAI] valid shot 6/15 (damage 23, hp 840/1400)
+  118.8 [MammothAI] HIT from the direction of (0.85, 0.53, 3.03)
+  118.8 [MammothAI] HEARD Gunshot ~16 m away (strength 0.77, +/-2 m)
+  119.8 [MammothAI] valid shot 7/15 (damage 22, hp 747/1400)
+  119.8 [MammothAI] HIT from the direction of (0.85, 0.53, 3.03)
+  119.8 [MammothAI] HEARD Gunshot ~18 m away (strength 0.74, +/-3 m)
+  119.9 [MammothAI] SPOTTED player at 18 m
+  120.0 [MammothAI] belief Nearby -> Observed (confidence 0.97, peak 0.98)
+  120.1 [MammothAI] valid shot 8/15 (damage 23, hp 653/1400)
+  120.1 [MammothAI] HIT from the direction of (0.82, 0.66, 3.84)
+  120.1 [MammothAI] HEARD Gunshot ~18 m away (strength 0.75, +/-3 m)
+  120.1 [MammothAI] decision Search -> Pursue (u 0.85 vs 0.00; belief Observed, conf 0.99)
+  120.4 [MammothAI] HEARD Gunshot ~18 m away (strength 0.75, +/-3 m)
+  121.3 STATUS mammoth=(4,-9) act=Pursue inTerritory=True campDist=46 dPlayer=15 playerHp=143 shots=8 attacks=1
+  122.7 [MammothAI] valid shot 9/15 (damage 24, hp 560/1400)
+  122.7 [MammothAI] HIT from the direction of (1.60, 1.90, 8.79)
+  122.7 [MammothAI] HEARD Gunshot ~12 m away (strength 0.83, +/-2 m)
+  123.7 [MammothAI] valid shot 10/15 (damage 24, hp 467/1400)
+  123.7 [MammothAI] HIT from the direction of (1.60, 1.90, 8.79)
+  123.7 [MammothAI] HEARD Gunshot ~12 m away (strength 0.83, +/-2 m)
+  124.3 [MammothAI] valid shot 11/15 (damage 24, hp 373/1400)
+  124.3 [MammothAI] HIT from the direction of (1.60, 1.90, 8.79)
+  124.3 [MammothAI] HEARD Gunshot ~12 m away (strength 0.83, +/-2 m)
+  124.6 [MammothAI] valid shot 12/15 (damage 24, hp 280/1400)
+  124.6 [MammothAI] HIT from the direction of (1.60, 1.90, 8.79)
+  124.6 [MammothAI] HEARD Gunshot ~12 m away (strength 0.83, +/-2 m)
+  124.9 [MammothAI] valid shot 13/15 (damage 24, hp 187/1400)
+  124.9 [MammothAI] HIT from the direction of (1.60, 1.90, 8.79)
+  124.9 [MammothAI] HEARD Gunshot ~12 m away (strength 0.83, +/-2 m)
+  125.1 [MammothAI] valid shot 14/15 (damage 24, hp 93/1400)
+  125.1 [MammothAI] HIT from the direction of (1.60, 1.90, 8.79)
+  125.1 [MammothAI] HEARD Gunshot ~12 m away (strength 0.83, +/-2 m)
+  126.3 STATUS mammoth=(3,-3) act=Pursue inTerritory=True campDist=52 dPlayer=12 playerHp=143 shots=14 attacks=1
+  128.0 [MammothAI] valid shot 15/15 (damage 24, hp 0/1400)
+  128.0 [MammothAI] HIT from the direction of (1.60, 1.90, 8.79)
+  128.0 [MammothAI] HEARD Gunshot ~12 m away (strength 0.83, +/-2 m)
+  131.4 STATUS mammoth=(3,-3) act=Pursue inTerritory=True campDist=52 dPlayer=7 playerHp=143 shots=15 attacks=1
+  136.4 STATUS mammoth=(3,-3) act=Pursue inTerritory=True campDist=52 dPlayer=18 playerHp=143 shots=15 attacks=1
+  140.8 [MammothAI] HEARD Gunshot ~18 m away (strength 0.75, +/-3 m)
+  141.5 STATUS mammoth=(3,-3) act=Pursue inTerritory=True campDist=52 dPlayer=18 playerHp=143 shots=15 attacks=1
+  141.8 [MammothAI] HEARD Gunshot ~18 m away (strength 0.75, +/-3 m)
+  142.1 [MammothAI] HEARD Gunshot ~17 m away (strength 0.75, +/-3 m)
+==== session start 20:47:29
+  493.0 [Sanjula] Mammoth spawned (attempt 1), connectivity 5/16.
+  493.0 [Sanjula] Mammoth ready at (30.00, -0.35, -14.00). notice=38 aggro=23 leash=85 (F10 reveals)
+  493.0 STATUS mammoth=(30,-14) act=Patrol inTerritory=True campDist=46 dPlayer=46 playerHp=150 shots=0 attacks=0
+  493.0 [MammothAI] tactical graph ready: 33 reachable waypoints of 33 candidates
+  493.0 [MammothAI] planner self-check: home->farthest (51 m straight) A* cost 56.9 (4 waypoints, 8 expanded) vs Dijkstra 56.9 -> OPTIMAL

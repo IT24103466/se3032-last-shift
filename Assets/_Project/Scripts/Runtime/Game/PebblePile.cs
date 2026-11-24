@@ -6,6 +6,7 @@ namespace LastShift
     public class PebblePile : MonoBehaviour
     {
         public int amount = 8;
+        void Start() => PickupTargeting.Fit(this);
 
         public void Take(PlayerSlingshot sling)
         {

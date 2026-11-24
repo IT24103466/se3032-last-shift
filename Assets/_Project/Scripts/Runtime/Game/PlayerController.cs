@@ -46,6 +46,9 @@ namespace LastShift
             Health = GetComponent<Health>();
             Stamina = maxStamina;
             if (eyes == null) eyes = transform.Find("Eyes");
+            // Legacy scenes contain a shadowless fill light which leaks into nearby walls.
+            foreach (var light in GetComponentsInChildren<Light>(true))
+                if (light.name == "ViewmodelLight") light.enabled = false;
             Health.Damaged += (a, from) => shake = 0.25f;
         }
 
@@ -132,7 +135,7 @@ namespace LastShift
             if (Body.isGrounded)
             {
                 if (vertical < 0f) vertical = -2f;
-                if (kb.spaceKey.wasPressedThisFrame && !Crouched && Stamina > 5f)
+                if (kb.spaceKey.wasPressedThisFrame && Stamina >= 5f)
                 {
                     vertical = Mathf.Sqrt(jumpHeight * -2f * gravity);
                     Stamina -= 5f;
@@ -190,14 +193,10 @@ namespace LastShift
         void Interact(Keyboard kb)
         {
             Prompt = null;
-            TeaBag bag = null; GreyboxInteractable thing = null; PebblePile pile = null; AmmoBox ammo = null;
-            if (Physics.Raycast(eyes.position, eyes.forward, out var hit, 2.6f, ~(1 << 2), QueryTriggerInteraction.Ignore))
-            {
-                bag = hit.collider.GetComponentInParent<TeaBag>();
-                pile = hit.collider.GetComponentInParent<PebblePile>();
-                ammo = hit.collider.GetComponentInParent<AmmoBox>();
-                if (bag == null && pile == null && ammo == null) thing = hit.collider.GetComponentInParent<GreyboxInteractable>();
-            }
+            var target = PickupTargeting.Find(eyes, transform);
+            var bag = target as TeaBag; var pile = target as PebblePile;
+            var ammo = target as AmmoBox; var thing = target as GreyboxInteractable;
+            if (bag != searching) { searching = null; SearchProgress = 0f; }
             if (ammo != null)
             {
                 Prompt = "E  Take the ammo";

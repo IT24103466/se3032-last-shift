@@ -9,6 +9,7 @@ namespace LastShift
     public class AmmoBox : MonoBehaviour
     {
         public int pistolRounds = 18, shells = 6;
+        void Start() => PickupTargeting.Fit(this);
 
         public void Take(PlayerGun gun)
         {

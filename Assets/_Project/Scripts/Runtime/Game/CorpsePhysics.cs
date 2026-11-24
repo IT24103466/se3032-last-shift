@@ -19,6 +19,7 @@ namespace LastShift
             public Quaternion rotation;
             public Rigidbody body;
             public Collider collider;
+            public bool prop;
         }
 
         readonly List<Part> parts = new List<Part>();
@@ -64,8 +65,9 @@ namespace LastShift
             foreach (var visual in all)
             {
                 bool limb = visual.name.StartsWith("Arm_") || visual.name.StartsWith("Leg_");
+                bool prop = visual.name == "Gun" || visual.name == "Lantern" || visual.name == "Flashlight";
                 if (visual != hips && visual != chest && visual.name != "Head" && !limb &&
-                    visual.name != "Tail" && visual.name != "Trunk") continue;
+                    visual.name != "Tail" && visual.name != "Trunk" && !prop) continue;
                 bool nestedDuplicate = false;
                 for (var p = visual.parent; p != null && p != model; p = p.parent)
                     if (p.name == visual.name) { nestedDuplicate = true; break; }
@@ -77,13 +79,13 @@ namespace LastShift
                 proxy.transform.SetPositionAndRotation(visual.position, visual.rotation);
                 var body = proxy.AddComponent<Rigidbody>();
                 body.isKinematic = true;
-                body.mass = visual == hips ? 14f : visual == chest ? 22f : visual.name == "Head" ? 5f : limb ? 4f : 1f;
+                body.mass = prop ? 1.5f : visual == hips ? 14f : visual == chest ? 22f : visual.name == "Head" ? 5f : limb ? 4f : 1f;
                 body.linearDamping = 0.25f;
                 body.angularDamping = 1.8f;
                 body.interpolation = RigidbodyInterpolation.Interpolate;
                 body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-                body.solverIterations = 12;
-                body.solverVelocityIterations = 6;
+                body.solverIterations = 16;
+                body.solverVelocityIterations = 8;
                 body.maxDepenetrationVelocity = 2f;
                 Collider shape;
                 if (limb || visual.name == "Tail" || visual.name == "Trunk")
@@ -92,25 +94,31 @@ namespace LastShift
                     Vector3 size = bounds.size;
                     int axis = size.y >= size.x && size.y >= size.z ? 1 : size.x >= size.z ? 0 : 2;
                     float length = size[axis];
-                    float thickness = Mathf.Min(size[(axis + 1) % 3], size[(axis + 2) % 3]);
+                    float thickness = Mathf.Max(size[(axis + 1) % 3], size[(axis + 2) % 3]);
                     capsule.direction = axis;
-                    capsule.center = bounds.center;
-                    capsule.radius = Mathf.Max(0.025f, thickness * 0.45f);
-                    capsule.height = Mathf.Max(length * 0.96f, capsule.radius * 2f);
+                    // Do not put the shoulder/hip socket inside the colliding capsule.
+                    // The distal limb still collides with its connected torso, blocking paws
+                    // and hands from passing through it without an explosive socket overlap.
+                    Vector3 center = bounds.center;
+                    float awayFromJoint = Mathf.Sign(center[axis]);
+                    if (limb) center[axis] += awayFromJoint * length * 0.2f;
+                    capsule.center = center;
+                    capsule.radius = Mathf.Max(0.025f, Mathf.Min(thickness * 0.48f, length * 0.22f));
+                    capsule.height = Mathf.Max(length * (limb ? 0.6f : 0.96f), capsule.radius * 2f);
                     shape = capsule;
                 }
                 else
                 {
                     var box = proxy.AddComponent<BoxCollider>();
                     box.center = bounds.center;
-                    box.size = Vector3.Max(bounds.size * 0.92f, Vector3.one * 0.05f);
+                    box.size = Vector3.Max(bounds.size * (prop ? 0.95f : 0.98f), Vector3.one * 0.05f);
                     shape = box;
                 }
                 shape.sharedMaterial = material;
                 shape.contactOffset = 0.008f;
                 body.centerOfMass = bounds.center;
                 var part = new Part { visual = visual, parent = visual.parent, position = visual.localPosition,
-                    rotation = visual.localRotation, scale = visual.localScale, body = body, collider = shape };
+                    rotation = visual.localRotation, scale = visual.localScale, body = body, collider = shape, prop = prop };
                 parts.Add(part); byVisual.Add(visual, part);
             }
             var pelvis = hips != null && byVisual.TryGetValue(hips, out var hipPart) ? hipPart : null;
@@ -119,7 +127,7 @@ namespace LastShift
             if (core == null || parts.Count < 3) { Dispose(); return false; }
             foreach (var part in parts)
             {
-                if (part == core) continue;
+                if (part == core || part.prop) continue;
                 bool upper = part.visual.name.StartsWith("Arm_") || part.visual.name == "Head" || part.visual.name == "Trunk";
                 var parent = part == thorax ? core : upper && thorax != null ? thorax : core;
                 if (part == parent) continue;
@@ -148,8 +156,8 @@ namespace LastShift
                 joint.projectionDistance = 0.04f;
                 joint.projectionAngle = 15f;
                 joint.enablePreprocessing = false;
-                joint.enableCollision = false;
-                Physics.IgnoreCollision(part.collider, parent.collider);
+                joint.enableCollision = arm || leg;
+                Physics.IgnoreCollision(part.collider, parent.collider, !(arm || leg));
             }
             foreach (var pair in originalColliders) if (pair.Key != null) pair.Key.enabled = false;
             foreach (var part in parts)
@@ -157,6 +165,7 @@ namespace LastShift
                 part.visual.SetParent(part.body.transform, true);
                 part.body.isKinematic = false;
                 part.body.linearVelocity = Vector3.ClampMagnitude(velocity, 5f) + Vector3.ClampMagnitude(push, 1.5f);
+                if (part.prop) part.body.angularVelocity = new Vector3(0.5f, 0.8f, -0.4f);
             }
             // A bounded angular impulse breaks the upright balance; limbs then settle under
             // gravity and contact forces instead of being frozen in their last keyed pose.
@@ -173,6 +182,9 @@ namespace LastShift
                 bool prop = false;
                 for (var p = renderer.transform; p != null && p != part; p = p.parent)
                     if (p.name == "Gun" || p.name == "Lantern" || p.name == "Flashlight" ||
+                        p.name.IndexOf("sarong", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        p.name.IndexOf("skirt", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        p.name.StartsWith("Expression ") || p.name == "Closed eyelid" ||
                         (p.name != part.name && (p.name == "Trunk" || p.name == "Tail" ||
                          p.name == "Head" || p.name.StartsWith("Arm_") || p.name.StartsWith("Leg_"))))
                     { prop = true; break; }

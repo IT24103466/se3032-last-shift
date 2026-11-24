@@ -25,7 +25,7 @@ namespace LastShift
         {
             public Transform t;
             public Quaternion rest, deathFrom;
-            public float phase, scale; public Vector3 position;
+            public float phase, scale; public Vector3 position, restScale;
         }
         readonly List<Limb> limbs = new List<Limb>();
         Transform model, head, tail, trunk, armR, armL;
@@ -34,6 +34,11 @@ namespace LastShift
         Renderer[] renderers;
         Health health;
         CorpsePhysics corpse;
+        NpcPresentation presentation;
+        EnemyAI presentationAI;
+        HumanLocomotion humanMotion;
+        float crouchPose;
+        MammothAI presentationMammoth;
         bool corpseAttempted;
         Vector3 lastVelocity;
         Transform torso, upperBody;
@@ -87,7 +92,7 @@ namespace LastShift
                 armL.SetParent(upperBody, true);
                 armR.SetParent(upperBody, true);
             }
-            foreach (var limb in limbs) limb.position = limb.t.localPosition;
+            foreach (var limb in limbs) { limb.position = limb.t.localPosition; limb.restScale = limb.t.localScale; }
             health = GetComponent<Health>();
             poseRandom = new System.Random(Mathf.RoundToInt(transform.position.x * 397f + transform.position.z * 17f));
             nextGlance = Time.time + 6f + (float)poseRandom.NextDouble() * 9f;
@@ -96,7 +101,7 @@ namespace LastShift
         }
 
         // Runtime spawners can resize the visual model after Instantiate/Awake (the mammoth).
-        void Start() { if (model != null) modelScale = model.localScale; }
+        void Start() { if (model != null) { modelScale = model.localScale; presentation = new NpcPresentation(transform, model); presentationAI = GetComponent<EnemyAI>(); presentationMammoth = GetComponent<MammothAI>(); } }
 
         void OnEnable()
         {
@@ -110,13 +115,14 @@ namespace LastShift
             RestoreNavigationRotation();
         }
 
-        void OnDestroy() { corpse?.Dispose(); }
+        void OnDestroy() { corpse?.Dispose(); presentation?.Dispose(); }
 
         void OnDamaged(float amount, Vector3 from)
         {
             var away = transform.position - from; away.y = 0f;
             if (away.sqrMagnitude > 0.001f) hitDirection = transform.InverseTransformDirection(away.normalized);
             Flinch();
+            presentation?.Injured();
         }
 
         /// <summary>Controllers supply only targets they already know about; no extra player detection.</summary>
@@ -251,11 +257,12 @@ namespace LastShift
             aiming = false;
             model.SetLocalPositionAndRotation(modelRest, modelRotation);
             model.localScale = modelScale;
-            foreach (var limb in limbs) { limb.t.localRotation = limb.rest; limb.t.localPosition = limb.position; }
+            foreach (var limb in limbs) { limb.t.localRotation = limb.rest; limb.t.localPosition = limb.position; limb.t.localScale = limb.restScale; }
             if (head != null) head.localRotation = headRest;
             if (tail != null) tail.localRotation = tailRest;
             if (trunk != null) trunk.localRotation = trunkRest;
             lastPos = transform.position;
+            presentation?.Reset();
             CurrentMotion = Motion.Standing;
         }
 
@@ -273,7 +280,7 @@ namespace LastShift
             float dt = Time.deltaTime;
             if (dt <= 0f || model == null) return;
             if (health != null && health.Dead) Die();
-            if (dieT >= 0f) { AnimateDeath(dt); return; }
+            if (dieT >= 0f) { AnimateDeath(dt); presentation?.Tick(dt, false, true); return; }
 
             Vector3 delta = transform.position - lastPos;
             delta.y = 0f;
@@ -332,8 +339,24 @@ namespace LastShift
             offset += Vector3.back * 0.15f * Pulse(ref flinchT, dt, 0.25f);
             float roar = Pulse(ref roarT, dt, 0.6f);
             if (head != null && roar > 0f) head.localRotation = headRest * Quaternion.Euler(-25f * roar, 0f, 0f);
+            if (humanoid)
+            {
+                if (humanMotion == null) humanMotion = GetComponent<HumanLocomotion>();
+                crouchPose = humanMotion != null ? humanMotion.Crouch : 0f;
+                offset.y -= 0.38f * crouchPose;
+                if (upperBody != null) upperBody.localRotation *= Quaternion.Euler(12f * crouchPose, 0f, 0f);
+                foreach (var limb in limbs)
+                    if (limb.t.name.StartsWith("Leg_"))
+                    {
+                        // These models have rigid legs; shorten the stance without sinking feet.
+                        limb.t.localScale = Vector3.Scale(limb.restScale, new Vector3(1f, 1f - 0.4f * crouchPose, 1f));
+                        if (humanMotion != null && humanMotion.Airborne)
+                            limb.t.localRotation *= Quaternion.Euler(-30f * Mathf.Sin(humanMotion.AirPhase * Mathf.PI), 0f, 0f);
+                    }
+            }
             model.localPosition = modelRest + offset;
             CurrentMotion = attacking ? Motion.Attacking : speed > 0.1f ? Motion.Walking : Motion.Standing;
+            presentation?.Tick(dt, aiming || attacking || (Time.time <= targetUntil) || (presentationAI != null && presentationAI.IsPursuing) || (presentationMammoth != null && presentationMammoth.IsHunting), false);
         }
 
         static float Pulse(ref float timer, float dt, float duration)

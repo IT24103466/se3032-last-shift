@@ -166,7 +166,7 @@ namespace CustomArt.EditorTools
             mi.importCameras = false; mi.importLights = false; mi.importBlendShapes = false; mi.importAnimation = false;
             mi.animationType = ModelImporterAnimationType.None;
             mi.addCollider = false;                    // gameplay uses the capsule on the root
-            mi.isReadable = false;
+            mi.isReadable = true; // Runtime facial morphs and garment cloth use cloned meshes.
             mi.meshCompression = ModelImporterMeshCompression.Off;
             mi.optimizeMeshPolygons = true; mi.optimizeMeshVertices = true;
             mi.weldVertices = true;
