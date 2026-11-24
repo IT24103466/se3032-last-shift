@@ -57,6 +57,7 @@ namespace LastShift
             go.AddComponent<MammothPerception>();   // milestone 1: sensors
             go.AddComponent<TacticalGraph>();       // milestone 2: waypoint graph + Bayesian belief (observe and log only until milestone 5)
             go.AddComponent<MammothBelief>();
+            go.AddComponent<MammothPlanner>();      // milestone 4: A* route planner (self-checks against Dijkstra at start-up)
             go.AddComponent<MammothMemory>();       // milestone 3: sightings, clues, searched places, route heat
             go.AddComponent<MammothAI>();
             go.SetActive(true);
