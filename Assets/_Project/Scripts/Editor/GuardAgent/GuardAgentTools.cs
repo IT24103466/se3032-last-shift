@@ -30,7 +30,7 @@ namespace GuardAgentTools
             if (guard == null) { Debug.LogWarning("[Guard Agent] no Guard (EnemyAI kind Guard) found in the open scene"); return; }
             if (guard.GetComponent<GuardAgentBridge>() != null) { Debug.Log($"[Guard Agent] {guard.name} already has the agent"); return; }
             var b = Undo.AddComponent<GuardAgentBridge>(guard.gameObject);
-            b.role = RoleFor(guard);
+            b.role = AgentRole.Sentinel; b.toughness = 1f;
             EditorUtility.SetDirty(b);
             if (!Application.isPlaying) EditorSceneManager.MarkAllScenesDirty();
             Debug.Log($"[Guard Agent] agent attached to '{guard.name}' (position {guard.transform.position}). Start the brain: cd GuardAgent ; .venv\\Scripts\\python -m guard_agent.server   then press Play.");
@@ -45,34 +45,19 @@ namespace GuardAgentTools
             Debug.Log($"[Guard Agent] removed {n} agent bridge(s)");
         }
 
-        // ------------------------------------------------------------------ everybody
-        /// <summary>Roles for the people of Level_01 (documented in GuardAgent/ARCHITECTURE.md). Names not in the table get a role from their kind and position.</summary>
-        static AgentRole RoleFor(EnemyAI e)
-        {
-            switch (e.name)
-            {
-                case "Guard_14": case "Guard_13": case "Guard_12": return AgentRole.Sentinel;       // factory floor, back lane, warehouse: keep him out of the building
-                case "Guard_10": case "Guard_11": return AgentRole.Gatekeeper;                      // yard and east compound: cut off the way to the main gate
-                case "Worker_17": case "Worker_18": return AgentRole.TeaKeeper;                     // storeroom and line houses: guard the tea bags
-                case "Worker_15": case "Worker_16": return AgentRole.Lookout;                       // rolling floor and loft: spot, report, survive
-            }
-            if (e.kind == EnemyKind.Worker)
-            {
-                float best = float.MaxValue;
-                foreach (var b in Object.FindObjectsByType<TeaBag>(FindObjectsInactive.Exclude)) best = Mathf.Min(best, Vector3.Distance(b.transform.position, e.transform.position));
-                return best < 6f ? AgentRole.TeaKeeper : AgentRole.Lookout;
-            }
-            return e.transform.position.x < 35f && e.transform.position.z < 54f ? AgentRole.Gatekeeper : AgentRole.Sentinel;
-        }
+        // ------------------------------------------------------------------ the guard and the factory staff
+        /// <summary>ONE security guard gets the full brain (Sentinel: keep the player out of the factory, put him down, score on damage). He roams freely.
+        /// The other guards are not touched: they keep the game's own AI.</summary>
+        const string SecurityGuard = "Guard_14";
 
-        /// <summary>The interior garrison: who waits inside the factory building, at which post, and (for those who start outside) where they are moved to.
-        /// NaN = he already stands inside and is not moved. Gatekeepers are not listed: they hold the yard and the gate.</summary>
-        static readonly Dictionary<string, (string post, float x, float z)> Garrison = new Dictionary<string, (string, float, float)>
+        /// <summary>The factory staff (the workers): each gets a brain whose goals stay INSIDE the factory boundary: he waits at his post, covers the doors, guards his part of the stock,
+        /// and never leaves the building. (role, post zone, and where to move him if he does not already stand inside; NaN = he is already inside)</summary>
+        static readonly Dictionary<string, (AgentRole role, string post, float x, float z)> Staff = new Dictionary<string, (AgentRole, string, float, float)>
         {
-            { "Guard_14", ("rolling", float.NaN, 0f) }, { "Worker_15", ("rolling", float.NaN, 0f) }, { "Worker_16", ("loft", float.NaN, 0f) }, { "Worker_17", ("storeroom", float.NaN, 0f) },
-            { "Guard_12", ("rolling", 18f, 60f) },      // was in the warehouse
-            { "Guard_13", ("boiler", 44f, 70f) },       // was on the back lane
-            { "Worker_18", ("boiler", 40f, 66f) },      // was in the line houses
+            { "Worker_15", (AgentRole.Lookout,   "rolling",   float.NaN, 0f) },   // rolling floor: spot, report, survive
+            { "Worker_16", (AgentRole.Lookout,   "loft",      float.NaN, 0f) },   // withering loft
+            { "Worker_17", (AgentRole.TeaKeeper, "storeroom", float.NaN, 0f) },   // storeroom: guard the tea chests
+            { "Worker_18", (AgentRole.TeaKeeper, "boiler",    40f, 66f) },        // was in the line houses: moved into the boiler room
         };
 
         static void PlaceInside(EnemyAI e, float x, float z)
@@ -83,36 +68,49 @@ namespace GuardAgentTools
             var agent = e.GetComponent<NavMeshAgent>();
             if (agent != null && agent.enabled && agent.isOnNavMesh) agent.Warp(hit.position);
             Undo.RecordObject(e, "Place inside");
-            e.patrolRoute = null;                 // the stock AI (used only when the brain is off) now wanders around his new post instead of walking back outside
+            e.patrolRoute = null;                 // the stock AI (used only when the brain is off) wanders around his new post instead of walking back outside
             e.wanderRadius = 5f;
+        }
+
+        static void Configure(GuardAgentBridge b, AgentRole role, bool inside, string post)
+        {
+            Undo.RecordObject(b, "Agent setup");
+            b.role = role; b.useRolePreset = true; b.stayInside = inside; b.postZone = post; b.toughness = 1f;
+            EditorUtility.SetDirty(b);
         }
 
         [MenuItem("Tools/Guard Agent/Attach Agents To Everyone In The Factory")]
         public static void AttachAll()
         {
-            int added = 0, updated = 0;
+            int added = 0, removed = 0;
             var lines = new List<string>();
-            foreach (var e in Object.FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude).Where(x => x.kind == EnemyKind.Guard || x.kind == EnemyKind.Worker).OrderBy(x => x.name))
+            var people = Object.FindObjectsByType<EnemyAI>(FindObjectsInactive.Exclude).Where(x => x.kind == EnemyKind.Guard || x.kind == EnemyKind.Worker).OrderBy(x => x.name).ToList();
+            string guardName = people.Any(x => x.name == SecurityGuard) ? SecurityGuard : (PickGuard() != null ? PickGuard().name : null);
+            foreach (var e in people)
             {
-                var role = RoleFor(e);
                 var b = e.GetComponent<GuardAgentBridge>();
-                if (b == null) { b = Undo.AddComponent<GuardAgentBridge>(e.gameObject); added++; }
-                else if (b.role != role) { Undo.RecordObject(b, "Set agent role"); updated++; }
-                b.role = role; b.useRolePreset = true;
-                Undo.RecordObject(b, "Garrison");
-                if (Garrison.TryGetValue(e.name, out var g))
+                if (e.name == guardName)
                 {
-                    b.stayInside = true; b.postZone = g.post;
-                    if (!float.IsNaN(g.x)) PlaceInside(e, g.x, g.z);
+                    if (b == null) { b = Undo.AddComponent<GuardAgentBridge>(e.gameObject); added++; }
+                    Configure(b, AgentRole.Sentinel, false, "");
+                    lines.Add($"{e.name} (Guard) -> SECURITY GUARD agent: Sentinel, roams freely, full goal set");
                 }
-                else { b.stayInside = false; b.postZone = ""; }
-                if (b.toughness < 2f) b.toughness = 2.5f;
-                EditorUtility.SetDirty(b);
-                lines.Add($"{e.name} ({e.kind}) -> {role}{(b.stayInside ? ", stays inside at " + b.postZone : ", outside")}, toughness x{b.toughness}");
+                else if (Staff.TryGetValue(e.name, out var st))
+                {
+                    if (b == null) { b = Undo.AddComponent<GuardAgentBridge>(e.gameObject); added++; }
+                    Configure(b, st.role, true, st.post);
+                    if (!float.IsNaN(st.x)) PlaceInside(e, st.x, st.z);
+                    lines.Add($"{e.name} (Worker) -> {st.role}, stays inside the factory (post: {st.post})");
+                }
+                else
+                {
+                    if (b != null) { Undo.DestroyObjectImmediate(b); removed++; }
+                    lines.Add($"{e.name} ({e.kind}) -> stock AI (no agent)");
+                }
             }
-            if (!Application.isPlaying && (added > 0 || updated > 0)) EditorSceneManager.MarkAllScenesDirty();
-            Debug.Log($"[Guard Agent] agents attached: {added} new, {updated} role changes.\n" + string.Join("\n", lines) +
-                      "\nStart the brain:  cd GuardAgent ; .venv\\Scripts\\python -m guard_agent.server   then press Play. (The hunter keeps the stock AI: he never enters the factory.)");
+            if (!Application.isPlaying) EditorSceneManager.MarkAllScenesDirty();
+            Debug.Log($"[Guard Agent] 1 security guard + factory staff: {added} bridges added, {removed} removed.\n" + string.Join("\n", lines) +
+                      "\nStart the brain:  cd GuardAgent ; .\\start_brain.ps1   then press Play. (The hunter and the other guards keep the game's own AI.)");
         }
 
         static EnemyAI PickGuard()

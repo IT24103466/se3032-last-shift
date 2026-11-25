@@ -56,3 +56,14 @@ Retrain one role: `.venv\Scripts\python train.py --role lookout --steps 900000` 
 * **Live check (Level_01)**: all nine connected; the garrison stayed inside for the whole test with the player in the yard; with the player in the storeroom the garrison (two shotgun workers and the guards) put down a 600-hp player in about 50 s, nobody left the building.
 * Not retrained for the higher health: the policies were trained on the normal bodies; they are simply harder to kill in the game. Retraining with `toughness` in the simulator would let them take more risks.
 * Known limit: if the brain server is stopped or restarted during play, the stock AI takes over for a few seconds and may chase the player out of the building.
+
+## Current setup in Level_01 (final)
+* **One security guard agent**: Guard_14, role Sentinel, roams freely, the full goal set (keep the player out of the factory, put him down, score on damage dealt). The other four guards (Guard_10 to Guard_13) keep the game's own AI, unchanged.
+* **Four factory staff agents** (the workers), goals bounded by the factory building, never leave it: Worker_15 and Worker_16 (Lookouts, rolling floor and loft), Worker_17 and Worker_18 (Tea keepers, storeroom and boiler room; Worker_18 was moved in from the line houses).
+* Normal bodies (toughness x1, no extra hit points). `Tools > Guard Agent > Attach Agents To Everyone In The Factory` sets exactly this up and is safe to re-run.
+
+## Isolated agents (embedded brain, no server)
+* Each agent is now **self-contained**: `GuardAgentBridge.brainMode = Embedded` (the default) runs the brain inside Unity (`EmbeddedBrain.cs`): zone map -> Bayes belief (team radio folded in) -> the trained PPO network -> reflexes -> stay-inside rule -> command. There is **no server and no connection**, so the "guard agent not connected" message cannot happen.
+* The trained weights and the zone map are exported from Python into `Assets/_Project/Resources/GuardAgent/` (`policy_<role>.json`, `zone_graph_flat.json`) by `GuardAgent/export_policies.py`. Re-run it after retraining.
+* Each person owns his own `EmbeddedBrain` (belief, ammo, score); they share only the radio (`AgentTeam`).
+* `brainMode = Remote` keeps the old behaviour (Python server on port 5555, `start_brain.ps1`) for training, debugging and comparing.

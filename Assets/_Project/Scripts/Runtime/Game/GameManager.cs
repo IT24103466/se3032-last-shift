@@ -390,7 +390,7 @@ namespace LastShift
                     Fill(new Rect(w / 2 - 58, h / 2 + 36, 116 * gun.ReloadProgress, 4), new Color(0.9f, 0.85f, 0.6f));
                     GUI.Label(new Rect(w / 2 - 100, h / 2 + 44, 200, 24), "RELOADING", small);
                 }
-                else if (g.mag == 0) GUI.Label(new Rect(w / 2 - 150, h / 2 + 34, 300, 24), g.reserve > 0 ? "R  Reload" : "No ammo: switch weapon (1-3) or find an ammo box", small);
+                else if (g.mag == 0) GUI.Label(new Rect(w / 2 - 150, h / 2 + 34, 300, 24), g.reserve > 0 ? "R  Reload" : "No ammo: switch weapon (1-4) or find an ammo box", small);
                 else if (g.mag <= g.magSize / 4) GUI.Label(new Rect(w / 2 - 100, h / 2 + 34, 200, 24), "Low ammo  (R)", small);
             }
             if (sling != null && gun != null && !gun.OnGun)
@@ -400,7 +400,7 @@ namespace LastShift
                 GUI.Label(new Rect(w - 116, h - 72, 100, 30), "/ " + sling.maxAmmo, new GUIStyle(center) { alignment = TextAnchor.MiddleLeft });
             }
             if (gun != null)
-                GUI.Label(new Rect(w - 264, h - 40, 250, 22), "1 Pistol   2 Shotgun   3 Slingshot", new GUIStyle(small) { fontSize = 12, alignment = TextAnchor.UpperLeft });
+                GUI.Label(new Rect(w - 264, h - 40, 250, 22), "1 Pistol   2 Shotgun   3 Slingshot" + (gun.guns.Length > 2 ? "   4 M16" : ""), new GUIStyle(small) { fontSize = 12, alignment = TextAnchor.UpperLeft });
             if (sling != null && sling.active)
             {
                 if (sling.Drawing)
@@ -443,7 +443,7 @@ namespace LastShift
                 "He has to get it back before morning: through the jungle (tigers and the old elephant: the camp fire keeps them away), " +
                 "up through the tea, over the factory fence, past the armed security guards and night-shift workers, and then all the way back to his camp.", body);
             GUI.Label(new Rect(x, h * 0.58f, cw, 120),
-                "WASD move  ·  Hold Ctrl sprint  ·  Space jump  ·  Hold Shift crouch (hide in bushes)  ·  Left click shoot  ·  R reload pistol  ·  1 pistol  2 shotgun  3 slingshot  ·  Right click stick\n" +
+                "WASD move  ·  Hold Ctrl sprint  ·  Space jump  ·  Hold Shift crouch (hide in bushes)  ·  Left click shoot  ·  R reload pistol  ·  1 pistol  2 shotgun  3 slingshot  4 M16 (hold to fire)  ·  Right click stick\n" +
                 "E use doors, search bags (hold), take ammo, hide in lockers  ·  F torch (helps you see, but helps them see you)  ·  Esc pause\nTip: gunshots are loud (shooting inside the premises sets off the alarm); a slingshot pebble lures a guard away quietly", small);
             GUI.Label(new Rect(x, h * 0.70f, cw, 30), "Demo checkpoints: F1 jungle camp · F2 stream · F3 estate · F4 fence breach · F5 warehouse · F6 main gate", small);
             GUI.Label(new Rect(x, h * 0.78f, cw, 40), "Press ENTER to begin", big);

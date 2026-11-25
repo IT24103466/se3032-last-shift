@@ -19,6 +19,8 @@ namespace LastShift
         public float interval = 0.22f, reloadTime = 0.5f, range = 80f, recoil = 2.2f;
         [Tooltip("Shotguns load one shell at a time (and firing interrupts the reload)")]
         public bool shellByShell;
+        [Tooltip("Hold the trigger to keep firing (the M16); semi-automatic guns fire once per click")]
+        public bool automatic;
         public Transform model, muzzle, pump;
     }
 
@@ -51,7 +53,7 @@ namespace LastShift
         Vector3[] rest;
 
         public int Slot => slot;
-        public bool CanAddAmmo => guns[0].reserve < guns[0].maxReserve || guns[1].reserve < guns[1].maxReserve;
+        public bool CanAddAmmo => System.Array.Exists(guns, g => g.reserve < g.maxReserve);
         public bool OnGun => slot < guns.Length;
         public Gun Current => OnGun ? guns[slot] : null;
         public bool Reloading => reloadT >= 0f || reloadDelay > 0f;
@@ -98,6 +100,7 @@ namespace LastShift
             if (kb.digit1Key.wasPressedThisFrame) Select(0);
             if (kb.digit2Key.wasPressedThisFrame) Select(1);
             if (kb.digit3Key.wasPressedThisFrame && sling != null) Select(guns.Length);
+            if (kb.digit4Key.wasPressedThisFrame && guns.Length > 2) Select(2);          // the M16 (added by Tools > Custom Art > Add M16 To Player)
             float wheel = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(wheel) > 0.1f)
             {
@@ -109,8 +112,9 @@ namespace LastShift
             {
                 var g = Current;
                 bool locked = Cursor.lockState == CursorLockMode.Locked;
-                if (kb.rKey.wasPressedThisFrame && g.sound == GunSound.Pistol) StartReload();
-                if (mouse.leftButton.wasPressedThisFrame && locked && !Reloading && switchT >= 1f && Time.time >= nextShot)
+                if (kb.rKey.wasPressedThisFrame && g.sound != GunSound.Shotgun) StartReload();
+                bool trigger = g.automatic ? mouse.leftButton.isPressed : mouse.leftButton.wasPressedThisFrame;
+                if (trigger && locked && !Reloading && switchT >= 1f && Time.time >= nextShot)
                 {
                     if (g.mag > 0)
                     {
@@ -250,6 +254,12 @@ namespace LastShift
             int before = guns[0].reserve + guns[1].reserve;
             guns[0].reserve = Mathf.Min(guns[0].maxReserve, guns[0].reserve + pistolRounds);
             guns[1].reserve = Mathf.Min(guns[1].maxReserve, guns[1].reserve + shells);
+            if (guns.Length > 2)                                                       // the M16 takes rifle rounds: twice what a pistol box holds
+            {
+                before += guns[2].reserve;
+                guns[2].reserve = Mathf.Min(guns[2].maxReserve, guns[2].reserve + pistolRounds * 2);
+                return guns[0].reserve + guns[1].reserve + guns[2].reserve > before;
+            }
             return guns[0].reserve + guns[1].reserve > before;
         }
 
