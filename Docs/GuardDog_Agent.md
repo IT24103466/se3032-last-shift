@@ -103,7 +103,8 @@ locally towards the farthest path cell in a straight, NavMesh-clear line (string
 ```
 Root (Selector)
  ├─ Idle         game not running                         → sit
- ├─ Engage       sees the player (or saw him < 4 s ago) and has the turn (ThreatDirector)
+ ├─ Engage       sees the player (or saw him < 4 s ago) and has the turn (ThreatDirector;
+ │                in the tea estate, his own ground, he always has it)
  │    ├─ Alert   Cooldown 5 s: bark → noise 35 m (guards come), alarm if inside the premises
  │    └─ Attack (Selector)                                  (barks every 0.8–1.5 s throughout)
  │         ├─ Bite      within 1.7 m                       → 7 damage + knockback / 1.2 s

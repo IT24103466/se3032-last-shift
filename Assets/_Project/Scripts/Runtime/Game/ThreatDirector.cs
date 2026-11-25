@@ -72,6 +72,9 @@ namespace LastShift
         /// <summary>Inside the factory premises (yard, factory, east compound, estate road)?</summary>
         public static bool InPremises(Vector3 p) => p.z > PremisesFenceZ - 0.5f && p.x > -2f && p.x < 80f;
 
+        /// <summary>The tea estate: from the jungle fence (Z 0) up to the factory fence (Z 40).</summary>
+        public static bool InTeaEstate(Vector3 p) => p.z >= 0f && p.z <= PremisesFenceZ - 0.5f && p.x > -2f && p.x < 80f;
+
         public static bool InCamp(Vector3 playerPos)
         {
             if (!campKnown)

@@ -177,8 +177,13 @@ namespace LastShift.GuardDog
 
         // ------------------------------------------------------------------ conditions
 
-        /// <summary>One fight at a time: only attack when the ThreatDirector gives Kalu the turn.</summary>
-        bool MyTurn() => ThreatDirector.TryAttack(this, "Kalu (the estate dog)", player.transform.position);
+        /// <summary>
+        /// One fight at a time: only attack when the ThreatDirector gives Kalu the turn. The tea estate is
+        /// Kalu's ground: there he attacks straight away, whoever else is after the player (in the jungle
+        /// he still waits his turn; inside the premises everyone attacks anyway).
+        /// </summary>
+        bool MyTurn() => ThreatDirector.InTeaEstate(player.transform.position)
+                         || ThreatDirector.TryAttack(this, "Kalu (the estate dog)", player.transform.position);
 
         /// <summary>Is this point in the stream? (Kalu never jumps or runs into the water.)</summary>
         bool InWater(Vector3 p)
