@@ -73,7 +73,8 @@ namespace LastShift.GuardDog
             anim = GetComponent<CreatureAnimator>();
             foreach (var t in GetComponentsInChildren<Transform>()) if (t.name == "HeadTilt") { headTilt = t; break; }
             voice = gameObject.AddComponent<AudioSource>();
-            voice.spatialBlend = 1f; voice.minDistance = 3f; voice.maxDistance = 70f; voice.rolloffMode = AudioRolloffMode.Linear;
+            // Mostly 3D (you can tell where he is) but with some 2D so the bark is always heard clearly
+            voice.spatialBlend = 0.75f; voice.minDistance = 8f; voice.maxDistance = 90f; voice.rolloffMode = AudioRolloffMode.Linear;
             agent.acceleration = 22f; agent.angularSpeed = 540f; agent.stoppingDistance = 0.2f; agent.autoBraking = true;
             health.max = maxHealth; health.current = maxHealth;
             health.Damaged += OnHurt;
@@ -116,7 +117,34 @@ namespace LastShift.GuardDog
 
         public void SetSniffing(bool on) => sniffing = on;
 
-        public void Bark() { voice.PlayOneShot(DogSounds.Bark, 1f); anim?.Roar(); }
+        public void Bark() { voice.PlayOneShot(DogSounds.Bark, 1f); anim?.Roar(); lastBark = Time.time; }
+
+        // ---- "WOOF!" over his head when he barks, so you see where the barking comes from
+        float lastBark = -99f;
+        GUIStyle woofStyle;
+
+        void OnGUI()
+        {
+            if (!Alive || Time.time - lastBark > 0.7f) return;
+            var cam = Camera.main;
+            if (cam == null) return;
+            Vector3 head = transform.position + Vector3.up * 1.3f;
+            float dist = Vector3.Distance(cam.transform.position, head);
+            if (dist > 60f) return;
+            Vector3 sp = cam.WorldToScreenPoint(head);
+            if (sp.z <= 0f) return;   // behind the camera
+            if (woofStyle == null)
+            {
+                woofStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+                woofStyle.normal.textColor = new Color(1f, 0.85f, 0.3f);
+            }
+            float rise = (Time.time - lastBark) * 30f;
+            woofStyle.fontSize = Mathf.RoundToInt(Mathf.Lerp(34f, 16f, dist / 60f) * Screen.height / 1080f);
+            var r = new Rect(sp.x - 100f, Screen.height - sp.y - 30f - rise, 200f, 40f);
+            var shadow = new GUIStyle(woofStyle); shadow.normal.textColor = new Color(0f, 0f, 0f, 0.8f);
+            GUI.Label(new Rect(r.x + 2f, r.y + 2f, r.width, r.height), "WOOF!", shadow);
+            GUI.Label(r, "WOOF!", woofStyle);
+        }
         public void Growl() => voice.PlayOneShot(DogSounds.Growl, 0.8f);
         public void Whimper() => voice.PlayOneShot(DogSounds.Whimper, 0.7f);
 

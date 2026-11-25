@@ -67,13 +67,14 @@ locally towards the farthest path cell in a straight, NavMesh-clear line (string
 
 | Mode | m(cell) | m_min | Purpose |
 |---|---|---|---|
-| Walk | 1 (water 2.5) | 1 | patrol, going home |
-| Track | (1 − 0.6·min(1, scent)) (water 2.5) | 0.4 | stay **on** the trail like a real tracker dog instead of cutting corners |
-| Chase | 1 (water 2), ε = 1.5 | 1 | fast re-plans at 2.5 Hz |
-| Flank | 1 + 4·inAimCone (water 2.5) | 1 | approach from outside the gun's ±20–35° cone |
+| Walk | 1 | 1 | patrol, going home |
+| Track | 1 − 0.6·min(1, scent) | 0.4 | stay **on** the trail like a real tracker dog instead of cutting corners |
+| Chase | 1, ε = 1.5 | 1 | fast re-plans at 2.5 Hz |
+| Flank | 1 + 4·inAimCone | 1 | approach from outside the gun's ±20–35° cone |
 
-  Water at 2.5 means the dog will wade through only to avoid a detour longer than 1.5 m of extra
-  dry path per metre of water. The aim-cone weight 4 makes a cell in the line of fire cost 5×,
+  Water (the stream) costs +∞ in every mode: Kalu never goes into the water, and string pulling
+  never takes a shortcut across it. If the player is on the other side, A* returns a partial path
+  and the dog waits on the bank, barking. The aim-cone weight 4 makes a cell in the line of fire cost 5×,
   so the dog accepts up to ~4× the distance to stay out of it, but still comes straight in when
   there is no way round.
 * Bookkeeping: binary heap with lazy deletion, "search stamps" instead of clearing arrays
@@ -137,7 +138,7 @@ twice with the slingshot, but not forever. Gunfire is never ignored.
 | Player hides in a locker or bush | Can't see him, but smells him: *Indicate* – barks at the spot, guards come |
 | Player on the loft / roof (unreachable) | A* returns a partial path; dog waits at the closest point and keeps barking |
 | Door closes / crowd in the way | No progress for 1.5 s → path cells ahead (≥ 2 m away) cost ∞ for 8 s, re-plan; 3× → warp back onto the NavMesh |
-| Player crosses the stream / bridge | Trail breaks (water holds no scent) → Cast ahead, then around |
+| Player crosses the stream | Trail breaks (water holds no scent) and Kalu never enters the water: he waits on the bank barking, or casts along his side |
 | Trail loops or crosses itself | Deposit-time rule never backtracks |
 | Pebble distractions | Habituation (above) |
 | Factory alarm | Inside the premises the one-at-a-time rule is off: Kalu runs to the intruder and fights alongside the guards |
