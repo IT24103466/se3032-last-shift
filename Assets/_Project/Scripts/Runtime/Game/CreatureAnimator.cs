@@ -280,7 +280,7 @@ namespace LastShift
             float dt = Time.deltaTime;
             if (dt <= 0f || model == null) return;
             if (health != null && health.Dead) Die();
-            if (dieT >= 0f) { AnimateDeath(dt); presentation?.Tick(dt, false, true); return; }
+            if (dieT >= 0f) { AnimateDeath(dt); TickPresentation(dt, false, true); return; }
 
             Vector3 delta = transform.position - lastPos;
             delta.y = 0f;
@@ -356,7 +356,31 @@ namespace LastShift
             }
             model.localPosition = modelRest + offset;
             CurrentMotion = attacking ? Motion.Attacking : speed > 0.1f ? Motion.Walking : Motion.Standing;
-            presentation?.Tick(dt, aiming || attacking || (Time.time <= targetUntil) || (presentationAI != null && presentationAI.IsPursuing) || (presentationMammoth != null && presentationMammoth.IsHunting), false);
+            TickPresentation(dt, aiming || attacking || (Time.time <= targetUntil) || (presentationAI != null && presentationAI.IsPursuing) || (presentationMammoth != null && presentationMammoth.IsHunting), false);
+        }
+
+        // ---- Performance: faces (eye/brow mesh deform) and cloth are only worth updating up close.
+        // Deforming every NPC's face mesh and cloth every frame cost about 1.8 ms per NPC (~35 ms a
+        // frame for 19 NPCs in the profiler). Near the camera they update every 2nd frame (30 Hz is plenty
+        // for blinking and cloth); a bit further away every 6th frame; beyond that, where the detail can't
+        // be seen, not at all. NPCs are staggered so they don't all update on the same frame, and the
+        // skipped time is carried over, so expressions and cloth still catch up smoothly.
+        const float PresentationFull = 20f, PresentationReduced = 40f;
+        float presentationDt;
+        int presentationSlot = -1;   // stagger: NPCs update on different frames (spreads the work)
+
+        void TickPresentation(float dt, bool pursuing, bool dead)
+        {
+            if (presentation == null) return;
+            presentationDt = Mathf.Min(presentationDt + dt, 0.25f);
+            var cam = Camera.main;
+            float d2 = cam != null ? (cam.transform.position - transform.position).sqrMagnitude : 0f;
+            if (d2 > PresentationReduced * PresentationReduced) return;
+            if (presentationSlot < 0) presentationSlot = Random.Range(0, 6);
+            int every = d2 > PresentationFull * PresentationFull ? 6 : 2;
+            if ((Time.frameCount + presentationSlot) % every != 0) return;
+            presentation.Tick(presentationDt, pursuing, dead);
+            presentationDt = 0f;
         }
 
         static float Pulse(ref float timer, float dt, float duration)
