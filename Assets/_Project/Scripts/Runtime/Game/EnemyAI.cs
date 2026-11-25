@@ -32,7 +32,7 @@ namespace LastShift
         [Tooltip("Animals give up a chase this far from home (0 = never)")]
         public float leash;
 
-        enum State { Wander, Patrol, Chase, Search, Flee, Charge, Recover, Stunned, Dead }
+        enum State { Wander, Patrol, Chase, Search, Flee, Charge, Recover, Stunned, Dead, Stalk }
 
         // Tuning (set from kind in Configure)
         float sight, fov, hearing, walkSpeed, runSpeed, attackRange, attackDamage, attackCooldown, hitKnock, eyeHeight;
@@ -54,6 +54,10 @@ namespace LastShift
         CreatureAnimator anim;
         HumanLocomotion humanMotion;
         TigerVoice tigerVoice;
+        GuardCombatVoice guardVoice;
+        TigerNavigation tigerNavigation;
+        float tigerMemoryUntil, tigerSearchProbe;
+        AudioSource elephantVoice; float nextElephantCry;
         float nextClueCheck, nextInvestigation;
         PlayerController player;
         Vector3 home, lastKnown, knock;
@@ -106,6 +110,7 @@ namespace LastShift
                     if (IsHuman && state != State.Search && !SlotFree(pos)) return;
                     lastKnown = NavMesh.SamplePosition(pos, out var navPoint, 3f, agent.areaMask) ? navPoint.position : new Vector3(pos.x, transform.position.y, pos.z);
                     state = State.Search; stateTimer = 5f;
+                    if(kind==EnemyKind.Tiger)tigerMemoryUntil=Time.time+7f;
                     break;
             }
         }
@@ -192,7 +197,7 @@ namespace LastShift
             switch (kind)
             {
                 case EnemyKind.Tiger:
-                    Set(15f, 150f, 12f, 2.2f, 6.2f, 2.0f, 8f, 1.8f, 3.5f, 1.0f); health.max = 40f; if (leash == 0f) leash = 30f; break;
+                    Set(15f, 150f, 12f, 2.2f, 6.2f, 2.0f, 8f, 1.8f, 3.5f, 1.0f); health.max = 40f; leash = Mathf.Max(60f,leash); break;
                 case EnemyKind.Deer:
                     Set(16f, 300f, 16f, 1.4f, 7.5f, 0f, 0f, 99f, 0f, 1.7f); health.max = 30f; harmless = true; break;
                 case EnemyKind.Elephant:
@@ -237,8 +242,10 @@ namespace LastShift
                 humanMotion = GetComponent<HumanLocomotion>();
                 if (humanMotion == null) humanMotion = gameObject.AddComponent<HumanLocomotion>();
             }
+            guardVoice = GuardCombatVoice.For(this);
             home = transform.position;
             if (NavMesh.SamplePosition(transform.position, out var hit, 4f, NavMesh.AllAreas)) { agent.Warp(hit.position); home = hit.position; }
+            if(kind==EnemyKind.Tiger)tigerNavigation=new TigerNavigation(agent,TigerDestinationAllowed);
             player = FindAnyObjectByType<PlayerController>();
             waypoint = startWaypoint;
             state = patrolRoute != null && patrolRoute.childCount > 0 ? State.Patrol : State.Wander;
@@ -249,7 +256,8 @@ namespace LastShift
 
         void Update()
         {
-            if (state == State.Dead || !agent.isOnNavMesh) return;
+            if (state == State.Dead || !agent.enabled) return;
+            if (!agent.isOnNavMesh && (tigerNavigation == null || !tigerNavigation.Attach())) return;
             bool playing = GameManager.Instance == null || GameManager.Instance.IsPlaying;
             agent.isStopped = !playing;
             if (!playing || player == null) return;
@@ -293,10 +301,92 @@ namespace LastShift
 
             switch (kind)
             {
+                case EnemyKind.Tiger: TigerLogic(dist, sees, hears); break;
                 case EnemyKind.Deer: DeerLogic(dist, sees || hears); break;
                 case EnemyKind.Elephant: ElephantLogic(dist, sees); break;
                 default: HunterLogic(dist, sees, hears); break;
             }
+        }
+
+        bool TigerDestinationAllowed(Vector3 point) => point.z <= AnimalLimitZ && !ThreatDirector.InCamp(point)
+            && Vector3.Distance(point,home) <= Mathf.Max(60f,leash)*1.5f;
+
+        void TigerLogic(float dist,bool sees,bool hears)
+        {
+            if(player.Health.Dead || ThreatDirector.InCamp(player.transform.position) || ThreatDirector.InPremises(player.transform.position))
+            {
+                ThreatDirector.Release(this);Suspicion=0;lostTimer=0;tigerMemoryUntil=0;
+                state=State.Wander;
+                if(Vector3.Distance(transform.position,home)>4f)tigerNavigation.Move(home,walkSpeed);else TigerWander();
+                return;
+            }
+            bool noticed=Notice(sees,dist) || (sees && (dist<4f || state==State.Chase || state==State.Stalk));
+            if(sees && noticed)
+            {
+                if(state!=State.Chase && state!=State.Stalk)Bark();
+                lastKnown=player.transform.position;tigerMemoryUntil=Time.time+9f;lostTimer=0;
+                state=State.Chase;
+            }
+            else if(hears && !Chasing)
+            {lastKnown=player.transform.position;tigerMemoryUntil=Time.time+6f;state=State.Search;stateTimer=7f;}
+            if(Vector3.Distance(transform.position,home)>leash*1.45f)
+            {ThreatDirector.Release(this);tigerMemoryUntil=0;state=State.Wander;tigerNavigation.Move(home,runSpeed);return;}
+            if(state==State.Chase || state==State.Stalk)
+            {
+                if(Time.time>tigerMemoryUntil || (player.Hidden && !sees))
+                {ThreatDirector.Release(this);state=State.Search;stateTimer=8f;tigerSearchProbe=0;}
+                else
+                {
+                    bool turn=MayAttackPlayer();state=turn?State.Chase:State.Stalk;
+                    if(turn)
+                    {
+                        if(dist<=attackRange*0.8f && sees && ClearLine())
+                        {agent.ResetPath();Face(player.Chest,10f);TryAttack();tigerNavigation.ResetProgress();}
+                        else {tigerNavigation.Move(Allowed(lastKnown),runSpeed);if(dist<=attackRange && sees)TryAttack();}
+                    }
+                    else
+                    {
+                        // Waiting predators stalk a changing flank instead of freezing on the spot.
+                        float angle=Time.time*0.32f+(GetEntityId().GetHashCode()%31)*0.7f;
+                        Vector3 flank=lastKnown+new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*8f;
+                        tigerNavigation.Move(Allowed(flank),walkSpeed*1.25f);
+                        if(dist<10f)Face(lastKnown+Vector3.up,4f);
+                    }
+                    return;
+                }
+            }
+            if(state==State.Search)
+            {
+                stateTimer-=Time.deltaTime;
+                if(Time.time>=tigerSearchProbe)
+                {
+                    tigerSearchProbe=Time.time+1.8f;
+                    Vector2 offset=Random.insideUnitCircle*(stateTimer<5f?4f:0f);
+                    tigerNavigation.Move(Allowed(lastKnown+new Vector3(offset.x,0,offset.y)),walkSpeed*1.6f);
+                }
+                if(stateTimer<=0){state=State.Wander;tigerMemoryUntil=0;idleUntil=0;}
+                return;
+            }
+            if(sees && !noticed)Face(player.Chest,4f);
+            TigerWander();
+        }
+        void TigerWander()
+        {
+            if(agent.hasPath && !Arrived(0.8f)) {tigerNavigation.Move(agent.destination,walkSpeed);return;}
+            if(Time.time<idleUntil)return;
+            if(!agent.hasPath || Arrived(0.8f))
+            {
+                Vector2 offset=Random.insideUnitCircle*wanderRadius;
+                tigerNavigation.Move(Allowed(home+new Vector3(offset.x,0,offset.y)),walkSpeed);
+                idleUntil=Time.time+Random.Range(1f,2.5f);
+            }
+        }
+
+        void ElephantCry()
+        {
+            if(Time.time<nextElephantCry || (elephantVoice!=null && elephantVoice.isPlaying))return;
+            elephantVoice=GunFX.Play(Random.value<0.5f?GunSound.ElephantTrumpet1:GunSound.ElephantTrumpet2,transform.position,0.95f);
+            nextElephantCry=Time.time+Mathf.Max(5f,elephantVoice.clip.length+0.5f);
         }
 
         void HunterLogic(float dist, bool sees, bool hears)
@@ -440,9 +530,10 @@ namespace LastShift
             if (player.Hidden && dist > 1.3f) return false;
             float range = sight * (player.Crouched ? 0.6f : 1f) * (player.TorchOn ? 1.4f : 1f) * (alerted ? 1.4f : 1f);
             if (dist > range) return false;
-            Vector3 eye = transform.position + Vector3.up * (eyeHeight - (humanMotion != null ? humanMotion.Crouch * 0.38f : 0f));
+            Vector3 eye = IsHuman && anim != null ? anim.SightOrigin : transform.position + Vector3.up * eyeHeight;
             Vector3 to = player.Chest - eye;
             if (dist > 2f && Vector3.Angle(transform.forward, to) > fov * 0.5f) return false;
+            if(kind==EnemyKind.Tiger)return EnemyAwareness.Clear(eye,player.Chest,transform,player.transform);
             if (Physics.Raycast(eye, to.normalized, out var hit, to.magnitude, ~(1 << 2), QueryTriggerInteraction.Ignore))
             {
                 if (hit.collider.transform.IsChildOf(transform)) return true;   // own body (rare)
@@ -464,6 +555,7 @@ namespace LastShift
         {
             Vector3 from = transform.position + Vector3.up * Mathf.Min(eyeHeight, 1.2f);
             Vector3 to = player.Chest - from;
+            if(kind==EnemyKind.Tiger)return EnemyAwareness.Clear(from,player.Chest,transform,player.transform);
             if (!Physics.Raycast(from, to.normalized, out var hit, to.magnitude, ~(1 << 2), QueryTriggerInteraction.Ignore)) return true;
             return hit.collider.transform.IsChildOf(transform) || hit.collider.GetComponentInParent<PlayerController>() != null;
         }
@@ -481,6 +573,7 @@ namespace LastShift
         void LandAttack()
         {
             if (state == State.Dead || player == null || player.Hidden) return;
+            if(kind==EnemyKind.Tiger && !MayAttackPlayer())return;
             float d = Vector3.Distance(transform.position, player.transform.position);
             if (d > attackRange + 0.7f || !ClearLine()) return;
             player.Health.Damage(attackDamage, transform.position);
@@ -501,7 +594,7 @@ namespace LastShift
 
             if (Time.time < reloadUntil || Time.time < nextShot) return;
             // The first shot after spotting you takes longer (reaction time): a chance to get to cover
-            if (!Aiming) { aimUntil = Time.time + gunAim + (Time.time - nextShot > 3f ? 0.8f : 0f); return; }
+            if (!Aiming) { guardVoice?.Threaten(); aimUntil = Time.time + gunAim + (Time.time - nextShot > 3f ? 0.8f : 0f); return; }
             if (Time.time < aimUntil || (anim != null && !anim.CanAimAt(player.Chest))) return;
             aimUntil = -1f;
             if (!ClearShot()) { nextShot = Time.time + 0.4f; return; }
@@ -535,6 +628,8 @@ namespace LastShift
         void Fire(float dist)
         {
             Vector3 from = MuzzlePos;
+            guardVoice?.FireCallout();
+            GunFX.Play(gunSound, from, 1f);
             float chance = gunAccuracy * (1f - 0.5f * dist / gunRange) * (player.Sprinting ? 0.6f : 1f) * (player.Crouched ? 0.75f : 1f) * (alerted ? 1.15f : 1f);
             chance = Mathf.Clamp(chance, 0.05f, 0.95f);
             float damage = 0f;
@@ -557,7 +652,6 @@ namespace LastShift
                 }
             }
             GunFX.Flash(from, 5f);
-            GunFX.Play(gunSound, from, 1f);
             anim?.Shoot();
             if (damage > 0f)
             {
@@ -572,7 +666,8 @@ namespace LastShift
         void OnDamaged(float amount, Vector3 from)
         {
             if (state == State.Dead) return;
-            if (kind == EnemyKind.Tiger && !health.Dead) tigerVoice?.TryGrowl();
+            if (kind == EnemyKind.Tiger && !health.Dead) {tigerVoice?.TryGrowl();tigerMemoryUntil=Time.time+10f;tigerNavigation?.ResetProgress();}
+            if(kind==EnemyKind.Elephant && !health.Dead)ElephantCry();
             if (IsHuman && !health.Dead && Time.time >= nextHurtVoice)
             {
                 nextHurtVoice = Time.time + 0.3f;
@@ -589,7 +684,7 @@ namespace LastShift
                     alerted = true;
                     resumeState = State.Chase; state = State.Stunned; stateTimer = hasGun ? 0.35f : 0.8f;
                     aimUntil = -1f;
-                    agent.ResetPath();
+                    if(agent.enabled && agent.isOnNavMesh)agent.ResetPath();
                     transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(from - transform.position, Vector3.up).normalized + transform.forward * 0.001f);
                     break;
             }
@@ -632,6 +727,7 @@ namespace LastShift
         {
             anim?.Roar();
             if (kind == EnemyKind.Tiger) tigerVoice?.TryGrowl();
+            if (kind == EnemyKind.Elephant) ElephantCry();
         }
 
         // Closed doors are not on the NavMesh's mind: open them on the way (guards have keys)

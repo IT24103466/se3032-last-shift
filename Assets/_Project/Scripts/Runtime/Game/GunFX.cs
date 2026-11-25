@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace LastShift
 {
-    public enum GunSound { Pistol, Shotgun, Rifle, Reload, Empty, Pump, PistolReload, ShotgunReload, HumanHurt1, HumanHurt2, HumanDeath, TigerGrowl }
+    public enum GunSound { Pistol, Shotgun, Rifle, Reload, Empty, Pump, PistolReload, ShotgunReload, HumanHurt1, HumanHurt2, HumanDeath, TigerGrowl, M16, M16Reload, DogBark1, DogBark2, ElephantTrumpet1, ElephantTrumpet2, GuardFire1, GuardThreat2, GuardThreat3, GuardFire4 }
 
     /// <summary>
     /// Shared gunfire effects for the player and the enemies: tracers, muzzle flashes, impact sparks
@@ -19,6 +19,7 @@ namespace LastShift
         {
             if (tracer != null) tracerMat = tracer;
             if (spark != null) sparkMat = spark;
+            foreach(var sound in new[]{GunSound.Pistol,GunSound.Shotgun,GunSound.M16,GunSound.PistolReload,GunSound.ShotgunReload,GunSound.M16Reload}) GetClip(sound);
         }
 
         // ------------------------------------------------------------------ visuals
@@ -74,38 +75,91 @@ namespace LastShift
         }
 
         // ------------------------------------------------------------------ sound
-        public static GunSound ReloadFor(GunSound gun) => gun == GunSound.Shotgun ? GunSound.ShotgunReload : gun == GunSound.Pistol ? GunSound.PistolReload : GunSound.Reload;
+        public static GunSound ReloadFor(GunSound gun) => gun == GunSound.M16 ? GunSound.M16Reload : gun == GunSound.Shotgun ? GunSound.ShotgunReload : gun == GunSound.Pistol ? GunSound.PistolReload : GunSound.Reload;
 
         public static AudioSource Play(GunSound s, Vector3 pos, float volume = 1f)
         {
-            var clip = Clip(s);
+            var clip = GetClip(s);
             var go = new GameObject("GunSound");
             go.transform.position = pos;
             var src = go.AddComponent<AudioSource>();
             src.clip = clip;
+            src.priority = s == GunSound.Shotgun || s == GunSound.Pistol || s == GunSound.M16 ? 8 : IsGuardLine(s) ? 48 : 80;
             src.volume = volume;
             src.spatialBlend = 1f;
             src.rolloffMode = AudioRolloffMode.Linear;
-            src.minDistance = 2f;
-            src.maxDistance = s == GunSound.Reload || s == GunSound.PistolReload || s == GunSound.ShotgunReload || s == GunSound.Empty || s == GunSound.Pump ? 12f
+            src.minDistance = IsGuardLine(s) ? 4f : 3.5f;
+            src.dopplerLevel = 0f;
+            src.maxDistance = IsGuardLine(s) ? 35f : s == GunSound.M16Reload || s == GunSound.Reload || s == GunSound.PistolReload || s == GunSound.ShotgunReload || s == GunSound.Empty || s == GunSound.Pump ? 12f
                 : s == GunSound.HumanHurt1 || s == GunSound.HumanHurt2 || s == GunSound.HumanDeath ? 25f : 90f;
             src.pitch = Random.Range(0.94f, 1.06f);
             src.Play();
-            Object.Destroy(go, clip.length + 0.1f);
+            go.name = s == GunSound.M16 ? "M16 shot (independent)" : "SFX " + s;
+            go.AddComponent<SfxPlayback>().FinishAfter(src);
             return src;
         }
 
-        static AudioClip Clip(GunSound s)
+        static bool IsGuardLine(GunSound s) => s==GunSound.GuardFire1 || s==GunSound.GuardThreat2 || s==GunSound.GuardThreat3 || s==GunSound.GuardFire4;
+        // A gentle soft limiter lifts quieter detail without samples exceeding full scale.
+        static AudioClip Louder(AudioClip source,bool rifleTail=false)
+        {
+            var data=new float[source.samples*source.channels];if(!source.GetData(data,0))return source;
+            int extra=rifleTail?Mathf.CeilToInt(source.frequency*0.20f):0;
+            var output=new float[(source.samples+extra)*source.channels];
+            if(rifleTail)
+            {
+                for(int i=0;i<data.Length;i++)
+                {
+                    int frame=i/source.channels;float fade=Mathf.Clamp01((source.samples-frame)/(source.frequency*0.006f));
+                    output[i]+=data[i]*fade;
+                    for(int echo=1;echo<=4;echo++)
+                    {
+                        int delay=Mathf.RoundToInt(source.frequency*0.045f*echo)*source.channels;
+                        if(i+delay<output.Length)output[i+delay]+=data[i]*Mathf.Pow(0.3f,echo);
+                    }
+                }
+            }
+            else System.Array.Copy(data,output,data.Length);
+            for(int i=0;i<output.Length;i++)output[i]=0.98f*(float)System.Math.Tanh(output[i]*1.8f);
+            var clip=AudioClip.Create(source.name+" balanced",output.Length/source.channels,source.channels,source.frequency,false);
+            clip.SetData(output,0);return clip;
+        }
+        static AudioClip TrimLeadingSilence(AudioClip source)
+        {
+            var data = new float[source.samples * source.channels];
+            if(!source.GetData(data,0)) return source;
+            int first=0;
+            while(first<data.Length && Mathf.Abs(data[first])<0.008f) first++;
+            // Preserve a tiny attack lead-in and never trim a silent/malformed clip away.
+            int offset=Mathf.Max(0,first/source.channels-source.frequency/500);
+            if(offset<source.frequency/100 || offset>=source.samples-32) return source;
+            int count=(source.samples-offset)*source.channels;
+            var samples=new float[count];System.Array.Copy(data,offset*source.channels,samples,0,count);
+            var clip=AudioClip.Create(source.name+" immediate",source.samples-offset,source.channels,source.frequency,false);
+            clip.SetData(samples,0);return clip;
+        }
+        public static AudioClip GetClip(GunSound s)
         {
             if (clips.TryGetValue(s, out var c) && c != null) return c;
             string file = s == GunSound.Pistol ? "pistol_fire" : s == GunSound.Shotgun ? "shotgun_fire"
                 : s == GunSound.PistolReload || s == GunSound.Reload ? "pistol_reload" : s == GunSound.ShotgunReload ? "shotgun_reload"
                 : s == GunSound.HumanHurt1 ? "human_hurt1" : s == GunSound.HumanHurt2 ? "human_hurt2"
+                : s == GunSound.M16 ? "m16_fire" : s == GunSound.M16Reload ? "m16_reload"
+                : s == GunSound.DogBark1 ? "dog_bark1" : s == GunSound.DogBark2 ? "dog_bark2"
+                : s == GunSound.ElephantTrumpet1 ? "elephant_trumpet1" : s == GunSound.ElephantTrumpet2 ? "elephant_trumpet2"
+                : s == GunSound.GuardFire1 ? "guard1" : s == GunSound.GuardThreat2 ? "guard2"
+                : s == GunSound.GuardThreat3 ? "guard3" : s == GunSound.GuardFire4 ? "guard4"
                 : s == GunSound.HumanDeath ? "human_death" : s == GunSound.TigerGrowl ? "tiger_growl" : null;
             if (file != null)
             {
                 c = Resources.Load<AudioClip>("Audio/SFX/" + file);
-                if (c != null) { clips[s] = c; return c; }
+                if (c != null)
+                {
+                    c.LoadAudioData();
+                    if (s == GunSound.Shotgun || s == GunSound.M16) c = TrimLeadingSilence(c);
+                    c = Louder(c,s==GunSound.M16);
+                    clips[s] = c; return c;
+                }
             }
             const int rate = 22050;
             float len; System.Func<float, float> wave;

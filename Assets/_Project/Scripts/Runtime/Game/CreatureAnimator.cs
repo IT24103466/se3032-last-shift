@@ -38,6 +38,7 @@ namespace LastShift
         EnemyAI presentationAI;
         HumanLocomotion humanMotion;
         public HumanoidJoints Articulation { get; private set; }
+        public Vector3 SightOrigin => head != null ? head.position + transform.up * 0.05f : transform.position + transform.up * 1.7f;
         float crouchPose;
         MammothAI presentationMammoth;
         bool corpseAttempted;
@@ -347,7 +348,7 @@ namespace LastShift
                 if (humanMotion == null) humanMotion = GetComponent<HumanLocomotion>();
                 crouchPose = humanMotion != null ? humanMotion.Crouch : 0f;
                 offset.y -= Articulation != null && Articulation.JointCount > 0 ? Articulation.CrouchDrop * crouchPose : 0.38f * crouchPose;
-                if (upperBody != null) upperBody.localRotation *= Quaternion.Euler(12f * crouchPose, 0f, 0f);
+                Articulation?.CrouchTorso(upperBody, head, crouchPose);
                 Articulation?.Pose(phase, gait, crouchPose, humanMotion != null && humanMotion.Airborne,
                     humanMotion != null ? humanMotion.AirPhase : 0f, aimBlend, twoHanded,
                     attackT >= 0f ? Mathf.Sin(attackT * Mathf.PI) : 0f);

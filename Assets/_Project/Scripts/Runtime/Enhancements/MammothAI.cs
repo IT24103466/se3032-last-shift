@@ -23,7 +23,7 @@ namespace LastShift
         MammothPerception perc; MammothBelief belief; MammothMemory memory; MammothPlanner planner; MammothDecision decision;
         Vector3 home; float timer, nextWander, atkCd, lastHurt = -99f, staggerAcc, footT, nextRoar;
         Vector3 chargeDir; bool enraged;
-        AudioSource audioSrc; AudioClip thud, roarClip;
+        AudioSource audioSrc, crySource; AudioClip thud;
         LineRenderer[] rings; bool showRings; float ringT;
         public static bool RangesRevealed;
         public bool logHits = true;
@@ -61,7 +61,8 @@ namespace LastShift
             hp.Damaged += OnHurt; hp.Died += OnDied;
             audioSrc = gameObject.AddComponent<AudioSource>();
             audioSrc.spatialBlend = 1f; audioSrc.minDistance = 8f; audioSrc.maxDistance = 120f; audioSrc.rolloffMode = AudioRolloffMode.Linear;
-            thud = MakeThud(); roarClip = MakeRoar();
+            thud = MakeThud();
+            crySource = gameObject.AddComponent<AudioSource>();crySource.spatialBlend=1f;crySource.minDistance=8f;crySource.maxDistance=120f;crySource.rolloffMode=AudioRolloffMode.Linear;
             if (agent != null && agent.enabled) { agent.Warp(home); agent.stoppingDistance = 0f; }
             Debug.Log($"[Sanjula] Mammoth ready at {home}. notice={noticeR:F0} aggro={aggroR:F0} leash={leashR:F0} (F10 reveals)");
         }
@@ -84,6 +85,7 @@ namespace LastShift
             if (valid && logHits) Debug.Log($"[MammothAI] valid shot {ShotsTaken}/{ShotsToKill} (damage {amt:F0}, hp {hp.current:F0}/{hp.max:F0})");
             if (!valid) return;
             lastHurt = Time.time;
+            Roar();
             anim?.Flinch();
             if (perc != null) perc.RegisterHit(from);          // a hit tells it which way the shot came from
             if (!enraged && hp.Fraction < 0.35f)
@@ -103,7 +105,7 @@ namespace LastShift
             if (agent != null) agent.enabled = false;
             foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
             anim?.Die();
-            audioSrc.PlayOneShot(roarClip, 1f);
+            if(crySource!=null) {crySource.Stop();crySource.clip=Trumpet();crySource.Play();}
             GameManager.Instance?.Toast("Sanjula's Mammoth has fallen!", 4f);
             for (int i = 0; i < 3; i++)
                 AmmoBox.Drop(transform.position + new Vector3(Random.Range(-3f, 3f), 0f, Random.Range(-3f, 3f)), 20, 8);
@@ -111,7 +113,12 @@ namespace LastShift
             Destroy(gameObject, 15f);                                            // the carcass lies there a while, then it is removed from the world
         }
 
-        void Roar() { if (Time.time < nextRoar) return; nextRoar = Time.time + 6f; audioSrc.PlayOneShot(roarClip, 1f); anim?.Roar(); }
+        AudioClip Trumpet() => GunFX.GetClip(Random.value < 0.5f ? GunSound.ElephantTrumpet1 : GunSound.ElephantTrumpet2);
+        void Roar()
+        {
+            if(Time.time<nextRoar || crySource==null || crySource.isPlaying) return;
+            crySource.clip=Trumpet();crySource.Play();nextRoar=Time.time+Mathf.Max(6f,crySource.clip.length+0.5f);anim?.Roar();
+        }
         void Stop() { if (agent != null && agent.enabled && agent.isOnNavMesh) { agent.ResetPath(); agent.velocity = Vector3.zero; } routeActive = false; }
         void Face(Vector3 p)
         {

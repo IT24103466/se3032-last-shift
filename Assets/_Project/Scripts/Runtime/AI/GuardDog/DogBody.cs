@@ -117,7 +117,15 @@ namespace LastShift.GuardDog
 
         public void SetSniffing(bool on) => sniffing = on;
 
-        public void Bark() { voice.PlayOneShot(DogSounds.Bark, 1f); anim?.Roar(); lastBark = Time.time; }
+        public void Bark() { if (Say(DogSounds.Bark, 1f)) { anim?.Roar(); lastBark = Time.time; } }
+        float nextHurtVoice;
+        bool Say(AudioClip clip,float volume,bool hurt=false)
+        {
+            if(voice==null || clip==null) return false;
+            if(hurt) {if(Time.time<nextHurtVoice)return false;nextHurtVoice=Time.time+Mathf.Max(0.8f,clip.length);}
+            else if(voice.isPlaying)return false;
+            voice.Stop();voice.clip=clip;voice.volume=volume;voice.Play();return true;
+        }
 
         // ---- "WOOF!" over his head when he barks, so you see where the barking comes from
         float lastBark = -99f;
@@ -145,15 +153,15 @@ namespace LastShift.GuardDog
             GUI.Label(new Rect(r.x + 2f, r.y + 2f, r.width, r.height), "WOOF!", shadow);
             GUI.Label(r, "WOOF!", woofStyle);
         }
-        public void Growl() => voice.PlayOneShot(DogSounds.Growl, 0.8f);
-        public void Whimper() => voice.PlayOneShot(DogSounds.Whimper, 0.7f);
+        public void Growl() => Say(DogSounds.Growl, 0.8f);
+        public void Whimper() => Say(DogSounds.Whimper, 0.7f);
 
         public bool TryBite(PlayerController player)
         {
             if (Time.time < nextBite || player == null || player.Health.Dead) return false;
             nextBite = Time.time + biteCooldown;
             anim?.PlayAttack();
-            voice.PlayOneShot(DogSounds.Growl, 0.6f);
+            Say(DogSounds.Growl, 0.6f);
             player.Health.Damage(biteDamage, transform.position);
             Vector3 push = player.transform.position - transform.position; push.y = 0f;
             player.AddKnockback(push.normalized * biteKnockback + Vector3.up * 1.2f);
@@ -172,7 +180,7 @@ namespace LastShift.GuardDog
         {
             leaping = true;
             nextLeap = Time.time + leapCooldown;
-            voice.PlayOneShot(DogSounds.Bark, 1f);
+            Bark();
             anim?.PlayAttack();
             agent.isStopped = true; agent.velocity = Vector3.zero;
             agent.updatePosition = false;                 // the jump moves the body; the agent catches up on landing
@@ -193,7 +201,7 @@ namespace LastShift.GuardDog
                 if (!bit && k > 0.55f && Vector3.Distance(pos, target) < 1.8f && !player.Health.Dead)
                 {
                     bit = true;
-                    voice.PlayOneShot(DogSounds.Growl, 0.8f);
+                    Say(DogSounds.Growl, 0.8f);
                     player.Health.Damage(leapDamage, transform.position);
                     player.AddKnockback(dir.normalized * (biteKnockback + 1.5f) + Vector3.up * 1.5f);
                 }
@@ -232,13 +240,13 @@ namespace LastShift.GuardDog
             lastHitAt = Time.time;
             health.current = hitsTaken >= shotsToKill ? 0f : health.max * (1f - hitsTaken / (float)shotsToKill);
             if (!Alive) return;   // Health raises Died right after this (current is 0)
-            voice.PlayOneShot(DogSounds.Yelp, 1f);
+            Say(DogSounds.Yelp, 1f, true);
             anim?.Flinch();
         }
 
         void OnDied()
         {
-            voice.PlayOneShot(DogSounds.Yelp, 1f);
+            Say(DogSounds.Yelp, 1f, true);
             anim?.Die();
             if (agent.enabled) agent.enabled = false;
             foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;

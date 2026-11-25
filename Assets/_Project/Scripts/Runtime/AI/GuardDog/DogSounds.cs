@@ -2,16 +2,16 @@ using UnityEngine;
 
 namespace LastShift.GuardDog
 {
-    /// <summary>The dog's voice, synthesised once at runtime (no audio files): bark, growl, whimper, yelp.</summary>
+    /// <summary>Supplied dog barks/hurt cries, with generated growl and whimper accents.</summary>
     public static class DogSounds
     {
         const int Rate = 22050;
-        static AudioClip bark, growl, whimper, yelp;
+        static AudioClip growl, whimper;
 
-        public static AudioClip Bark => bark ??= Make("Dog_Bark", 0.55f, BarkWave, normalize: true);
+        public static AudioClip Bark => GunFX.GetClip(Random.value < 0.5f ? GunSound.DogBark1 : GunSound.DogBark2);
         public static AudioClip Growl => growl ??= Make("Dog_Growl", 0.9f, GrowlWave);
         public static AudioClip Whimper => whimper ??= Make("Dog_Whimper", 0.6f, WhimperWave);
-        public static AudioClip Yelp => yelp ??= Make("Dog_Yelp", 0.3f, YelpWave);
+        public static AudioClip Yelp => Bark;
 
         static readonly System.Random rng = new System.Random(24103466);
         static float Noise() => (float)rng.NextDouble() * 2f - 1f;

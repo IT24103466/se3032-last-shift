@@ -37,10 +37,10 @@ namespace LastShift
             bool lowRoof = Blocked(transform.position, standingHeight, true);
             bool combatCrouch = ai.IsPursuing && agent.velocity.sqrMagnitude < 0.25f && (ai.Reloading || ai.Aiming);
             crouch = Mathf.MoveTowards(crouch, lowRoof || combatCrouch ? 1f : 0f, Time.deltaTime * 4f);
-            agent.height = Mathf.Lerp(standingHeight, Mathf.Max(agent.radius * 2f, standingHeight * 0.6f), crouch);
+            agent.height = Mathf.Lerp(standingHeight, Mathf.Max(agent.radius * 2f, standingHeight * 0.5f), crouch);
             if (body != null)
             {
-                body.height = Mathf.Lerp(bodyHeight, Mathf.Max(body.radius * 2f, bodyHeight * 0.6f), crouch);
+                body.height = Mathf.Lerp(bodyHeight, Mathf.Max(body.radius * 2f, bodyHeight * 0.5f), crouch);
                 body.center = bodyCenter - Vector3.up * ((bodyHeight - body.height) * 0.5f);
             }
             if (Time.time < nextJump) return;

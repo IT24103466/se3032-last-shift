@@ -108,7 +108,7 @@ namespace CustomArt.EditorTools
 
             var g = new Gun
             {
-                name = Marker, sound = GunSound.Rifle, magSize = 30, mag = 30, reserve = 90, maxReserve = 180,
+                name = Marker, sound = GunSound.M16, magSize = 30, mag = 30, reserve = 90, maxReserve = 180,
                 damage = 34f, pellets = 1, spread = 1.0f, interval = 0.092f, reloadTime = 2.0f, range = 120f, recoil = 1.6f,
                 automatic = true, model = go.transform, muzzle = muzzle,
             };

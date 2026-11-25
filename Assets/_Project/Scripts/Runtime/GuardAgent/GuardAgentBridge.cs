@@ -134,10 +134,13 @@ namespace LastShift
             foreach (var t in GetComponentsInChildren<Transform>(true)) if (t.name == "Muzzle") { muzzle = t; break; }
         }
 
+        GuardCombatVoice guardVoice;
+
         void Start()
         {
             player = FindAnyObjectByType<PlayerController>();
             playerGun = FindAnyObjectByType<PlayerGun>();
+            guardVoice = GuardCombatVoice.For(ai);
             ApplyPreset();
             health.max = MaxHp; health.current = MaxHp;
             ammo = gunMag;
@@ -257,7 +260,7 @@ namespace LastShift
             if (player.Hidden && dist > 1.3f) return false;
             float range = sight * (player.Crouched ? 0.6f : 1f) * (player.TorchOn ? 1.4f : 1f) * (alarmSent ? 1.4f : 1f);
             if (dist > range) return false;
-            Vector3 eye = transform.position + Vector3.up * eyeHeight;
+            Vector3 eye = anim != null ? anim.SightOrigin : transform.position + Vector3.up * eyeHeight;
             Vector3 to = player.Chest - eye;
             if (dist > closeAwareness && Vector3.Angle(transform.forward, to) > fov * 0.5f) return false;
             if (Physics.Raycast(eye, to.normalized, out var hit, to.magnitude, ~(1 << 2), QueryTriggerInteraction.Ignore))
@@ -402,7 +405,7 @@ namespace LastShift
             lastKnown = player.transform.position;
             Face(player.Chest, 8f);
             if (dist > gunRange || player.Hidden || reloadUntil > 0f || ammo <= 0 || Time.time < nextShot) return;
-            if (aimUntil < 0f) { aimUntil = Time.time + gunAim + (Time.time - nextShot > 3f ? 0.5f : 0f); return; }
+            if (aimUntil < 0f) { guardVoice?.Threaten(); aimUntil = Time.time + gunAim + (Time.time - nextShot > 3f ? 0.5f : 0f); return; }
             if (Time.time < aimUntil || (anim != null && !anim.CanAimAt(player.Chest))) return;
             aimUntil = -1f;
             if (!ClearShot()) { nextShot = Time.time + 0.3f; return; }
@@ -412,6 +415,7 @@ namespace LastShift
 
         void Fire(float dist)
         {
+            guardVoice?.FireCallout();
             Vector3 from = MuzzlePos;
             float chance = gunAccuracy * (1f - 0.5f * dist / gunRange) * (player.Sprinting ? 0.6f : 1f) * (player.Crouched ? 0.75f : 1f) * (alarmSent ? 1.15f : 1f);
             chance = Mathf.Clamp(chance, 0.05f, 0.95f);

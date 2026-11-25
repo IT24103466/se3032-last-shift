@@ -67,7 +67,7 @@ namespace LastShift
             pc = GetComponent<PlayerController>();
             sling = GetComponent<PlayerSlingshot>();
             combat = GetComponent<PlayerCombat>();
-            foreach (var g in guns) ConfigureHandling(g, true);
+            foreach (var g in guns) { if (g.name == "M16") g.sound = GunSound.M16; ConfigureHandling(g, true); }
             GunFX.Init(tracerMaterial, sparkMaterial);
             rest = new Vector3[guns.Length];
             for (int i = 0; i < guns.Length; i++)
@@ -157,6 +157,8 @@ namespace LastShift
 
             var eyes = pc.eyes;
             Vector3 muzzle = g.muzzle != null ? g.muzzle.position : eyes.position + eyes.forward * 0.6f;
+            // Start the report before hit callbacks, AI notifications or pellet FX can stall this frame.
+            GunFX.Play(g.sound, muzzle, 1f);
             bool hitSomeone = false, headshot = false;
             for (int i = 0; i < g.pellets; i++)
             {
@@ -177,7 +179,6 @@ namespace LastShift
             if (hitSomeone) GameManager.Instance?.HitMarker(headshot);
 
             GunFX.Flash(muzzle);
-            GunFX.Play(g.sound, muzzle, 1f);
             pc.AddRecoil(g.recoil, Random.Range(-0.3f, 0.3f) * g.recoil);
             pc.LastNoiseTime = Time.time;
             EnemyAI.MakeNoise(transform.position, 40f);

@@ -78,7 +78,7 @@ namespace LastShift
                     if(t!=upper && (t.name=="Gun" || t.name=="Lantern" || t.name=="Flashlight"))
                     {attachments.Add((t,t.parent));t.SetParent(c.foot,true);}
                 chains.Add(c);
-                if(leg) CrouchDrop=Mathf.Max(CrouchDrop,(c.a+c.b)*(1-Mathf.Cos(52f*Mathf.Deg2Rad)));
+                if(leg) CrouchDrop=Mathf.Max(CrouchDrop,(c.a+c.b)*(1-Mathf.Cos(66f*Mathf.Deg2Rad)));
             }
         }
         struct Vertex
@@ -155,7 +155,7 @@ namespace LastShift
                     float cycle=phase+c.side, swing=Mathf.Sin(cycle);
                     float drop=CrouchDrop*crouch;
                     float z=swing*gait*0.22f*(1-0.55f*crouch)-0.12f*tuck;
-                    float lift=Mathf.Max(0,swing)*gait*0.12f+0.22f*tuck;
+                    float lift=Mathf.Max(0,swing)*gait*0.12f*(1-0.7f*crouch)+0.22f*tuck;
                     float down=c.a+c.b-drop-lift;
                     float minimum=Mathf.Sqrt(c.a*c.a+c.b*c.b+2*c.a*c.b*Mathf.Cos(140f*Mathf.Deg2Rad));
                     float distance=Mathf.Clamp(Mathf.Sqrt(down*down+z*z),Mathf.Max(minimum,Mathf.Abs(c.a-c.b)+0.01f),c.a+c.b-0.0001f);
@@ -169,12 +169,18 @@ namespace LastShift
                 {
                     bool right=c.upper.name=="Arm_R";
                     float aiming=right || twoHanded?aim:0;
-                    float bend=Mathf.Lerp(12f+gait*(10f+8f*Mathf.Sin(phase+c.side))+crouch*12f+tuck*22f,right?32f:55f,aiming);
+                    float bend=Mathf.Lerp(12f+gait*(10f+8f*Mathf.Sin(phase+c.side))+crouch*45f+tuck*22f,right?32f:55f,aiming);
                     bend=Mathf.Lerp(bend,right?85f:40f,attack);
-                    c.upper.localRotation*=Quaternion.Euler(bend*aiming,0,0);
+                    c.upper.localRotation=Quaternion.Euler(-70f*crouch-25f*crouch*(1-aiming),0,0)*c.upper.localRotation*Quaternion.Euler(bend*aiming,0,0);
                     c.lower.localRotation=Quaternion.Euler(-bend,0,0);c.foot.localRotation=Quaternion.identity;
                 }
             }
+        }
+        public void CrouchTorso(Transform upperBody, Transform head, float crouch)
+        {
+            if(upperBody==null) return;
+            upperBody.localRotation *= Quaternion.Euler(70f*crouch,0,0);
+            if(head!=null) head.localRotation *= Quaternion.Euler(-65f*crouch,0,0);
         }
         public void Reset() {foreach(var c in chains){c.upper.localRotation=c.rest;c.lower.localRotation=c.foot.localRotation=Quaternion.identity;}}
         public void Dispose()
