@@ -8,7 +8,7 @@ namespace LastShift.GuardDog
         const int Rate = 22050;
         static AudioClip bark, growl, whimper, yelp;
 
-        public static AudioClip Bark => bark ??= Make("Dog_Bark", 0.55f, BarkWave);
+        public static AudioClip Bark => bark ??= Make("Dog_Bark", 0.55f, BarkWave, normalize: true);
         public static AudioClip Growl => growl ??= Make("Dog_Growl", 0.9f, GrowlWave);
         public static AudioClip Whimper => whimper ??= Make("Dog_Whimper", 0.6f, WhimperWave);
         public static AudioClip Yelp => yelp ??= Make("Dog_Yelp", 0.3f, YelpWave);
@@ -54,11 +54,18 @@ namespace LastShift.GuardDog
             return (Mathf.Sin(ph) + 0.4f * Mathf.Sin(2f * ph) + Noise() * 0.2f) * env * 0.7f;
         }
 
-        static AudioClip Make(string name, float length, System.Func<float, float> wave)
+        static AudioClip Make(string name, float length, System.Func<float, float> wave, bool normalize = false)
         {
             int n = Mathf.CeilToInt(length * Rate);
             var data = new float[n];
             for (int i = 0; i < n; i++) data[i] = Mathf.Clamp(wave(i / (float)Rate), -1f, 1f);
+            if (normalize)
+            {
+                // Bring the loudest sample up to full scale so the bark carries across the estate
+                float peak = 0f;
+                for (int i = 0; i < n; i++) peak = Mathf.Max(peak, Mathf.Abs(data[i]));
+                if (peak > 0.001f) for (int i = 0; i < n; i++) data[i] *= 0.95f / peak;
+            }
             var clip = AudioClip.Create(name, n, 1, Rate, false);
             clip.SetData(data, 0);
             return clip;

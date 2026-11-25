@@ -13,11 +13,13 @@ namespace LastShift.GuardDog
     /// "prefer the scent trail" or "keep out of the player's line of fire", which are the point.
     ///
     /// Cost multiplier m(cell) per mode (edge cost = step length × m):
-    ///   Walk  : 1, water 2.5                                    (patrol, going home)
-    ///   Track : 1 − 0.6·min(1, scent), water 2.5  (min 0.4)     (stay ON the trail, like a tracker dog,
+    ///   Walk  : 1                                               (patrol, going home)
+    ///   Track : 1 − 0.6·min(1, scent)  (min 0.4)                (stay ON the trail, like a tracker dog,
     ///                                                            instead of cutting corners)
-    ///   Chase : 1, water 2, inflated heuristic ε = 1.5          (fast re-plans while running)
-    ///   Flank : 1 + 4·inAimCone(cell), water 2.5                (approach outside the gun's cone)
+    ///   Chase : 1, inflated heuristic ε = 1.5                   (fast re-plans while running)
+    ///   Flank : 1 + 4·inAimCone(cell)                           (approach outside the gun's cone)
+    /// Water (the stream) costs +∞ in every mode: Kalu never goes into the water. If the player is
+    /// across the stream, A* returns a partial path and the dog waits on the bank, barking.
     /// Cells where the dog recently got stuck (a closed door) cost +∞ for a while.
     /// </summary>
     public sealed class DogNavigator
@@ -60,17 +62,15 @@ namespace LastShift.GuardDog
         float Cost(int c)
         {
             if (blockedUntil[c] > now) return float.PositiveInfinity;
-            bool water = map.Has(c, GridMap.CellFlags.Water);
+            if (map.Has(c, GridMap.CellFlags.Water)) return float.PositiveInfinity;   // never into the stream
             switch (mode)
             {
                 case Mode.Track:
-                    return (1f - 0.6f * Mathf.Min(1f, world.Scent.Strength(c, now))) * (water ? 2.5f : 1f);
-                case Mode.Chase:
-                    return water ? 2f : 1f;
+                    return 1f - 0.6f * Mathf.Min(1f, world.Scent.Strength(c, now));
                 case Mode.Flank:
-                    return (1f + 4f * InAimCone(c)) * (water ? 2.5f : 1f);
+                    return 1f + 4f * InAimCone(c);
                 default:
-                    return water ? 2.5f : 1f;
+                    return 1f;
             }
         }
 
@@ -128,9 +128,22 @@ namespace LastShift.GuardDog
             while (index < path.Count - 1 && Flat(world.WorldOf(path[index]), pos) < 1.1f) index++;
             int pick = index;
             for (int k = Mathf.Min(path.Count - 1, index + 8); k > index; k--)
-                if (!NavMesh.Raycast(pos, world.WorldOf(path[k]), out _, NavMesh.AllAreas)) { pick = k; break; }
+                if (!NavMesh.Raycast(pos, world.WorldOf(path[k]), out _, NavMesh.AllAreas) && !CrossesWater(pos, world.WorldOf(path[k]))) { pick = k; break; }
             target = world.WorldOf(path[pick]);
             return true;
+        }
+
+        /// <summary>Would a straight run from a to b cut through the stream? (then don't take the shortcut)</summary>
+        bool CrossesWater(Vector3 a, Vector3 b)
+        {
+            float len = Flat(a, b);
+            int steps = Mathf.Max(1, Mathf.CeilToInt(len / 0.5f));
+            for (int i = 1; i <= steps; i++)
+            {
+                int c = world.CellOf(Vector3.Lerp(a, b, i / (float)steps));
+                if (c >= 0 && map.Has(c, GridMap.CellFlags.Water)) return true;
+            }
+            return false;
         }
 
         public bool Arrived(Vector3 pos, float tolerance)

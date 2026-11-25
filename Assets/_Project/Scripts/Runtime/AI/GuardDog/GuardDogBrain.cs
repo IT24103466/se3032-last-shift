@@ -89,7 +89,7 @@ namespace LastShift.GuardDog
                             new Condition("In reach", () => bb.DistToPlayer < biteRange),
                             new ActionNode("Bite", Bite)),
                         new Sequence("Pounce",
-                            new Condition("Close, sees him, can jump", () => bb.DistToPlayer < leapRange && bb.SeesPlayer && body.CanLeap),
+                            new Condition("Close, sees him, can jump", () => bb.DistToPlayer < leapRange && bb.SeesPlayer && body.CanLeap && !InWater(bb.PlayerPos)),
                             new ActionNode("Jump and bite", Pounce)),
                         new Sequence("Dodge",
                             new Condition("Gun on me", () => bb.PlayerAimingAtMe && bb.DistToPlayer > 5f),
@@ -179,6 +179,13 @@ namespace LastShift.GuardDog
 
         /// <summary>One fight at a time: only attack when the ThreatDirector gives Kalu the turn.</summary>
         bool MyTurn() => ThreatDirector.TryAttack(this, "Kalu (the estate dog)", player.transform.position);
+
+        /// <summary>Is this point in the stream? (Kalu never jumps or runs into the water.)</summary>
+        bool InWater(Vector3 p)
+        {
+            int c = world.CellOf(p);
+            return c >= 0 && world.Grid.Has(c, GridMap.CellFlags.Water);
+        }
 
         /// <summary>The alarm is on and the intruder is inside the factory premises: the dog joins the hunt.</summary>
         bool AlarmHunt()
