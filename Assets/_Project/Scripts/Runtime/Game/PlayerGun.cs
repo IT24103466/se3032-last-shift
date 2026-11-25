@@ -53,6 +53,7 @@ namespace LastShift
         Vector3[] rest;
 
         public int Slot => slot;
+        public float GripPress => kick;
         public bool CanAddAmmo => System.Array.Exists(guns, g => g.reserve < g.maxReserve);
         public bool OnGun => slot < guns.Length;
         public Gun Current => OnGun ? guns[slot] : null;

@@ -42,6 +42,7 @@ namespace LastShift
         public bool Begin(Transform owner, Transform model, Vector3 push, Vector3 velocity)
         {
             if (Active) return true;
+            var articulation = owner.GetComponent<CreatureAnimator>()?.Articulation;
             var all = model.GetComponentsInChildren<Transform>(true);
             Transform Find(string name) => Array.Find(all, t => t.name == name);
             var hips = Find("Hips");
@@ -64,7 +65,8 @@ namespace LastShift
             // a neighbour's mesh bounds or change a later joint's intended pivot.
             foreach (var visual in all)
             {
-                bool limb = visual.name.StartsWith("Arm_") || visual.name.StartsWith("Leg_");
+                bool segment = articulation != null && articulation.TryBounds(visual, out _);
+                bool limb = segment || visual.name.StartsWith("Arm_") || visual.name.StartsWith("Leg_");
                 bool prop = visual.name == "Gun" || visual.name == "Lantern" || visual.name == "Flashlight";
                 if (visual != hips && visual != chest && visual.name != "Head" && !limb &&
                     visual.name != "Tail" && visual.name != "Trunk" && !prop) continue;
@@ -72,7 +74,11 @@ namespace LastShift
                 for (var p = visual.parent; p != null && p != model; p = p.parent)
                     if (p.name == visual.name) { nestedDuplicate = true; break; }
                 if (nestedDuplicate) continue;
-                if (byVisual.ContainsKey(visual) || !TryBounds(visual, out var bounds)) continue;
+                if (byVisual.ContainsKey(visual)) continue;
+                Bounds bounds;
+                if (segment && articulation.TryBounds(visual, out var local))
+                { bounds = new Bounds(Vector3.Scale(local.center, visual.lossyScale), Vector3.Scale(local.size, visual.lossyScale)); }
+                else if (!TryBounds(visual, out bounds)) continue;
                 var proxy = new GameObject(visual.name + " physics");
                 proxy.layer = owner.gameObject.layer;
                 proxy.transform.SetParent(physicsRoot.transform, false);
@@ -130,6 +136,9 @@ namespace LastShift
                 if (part == core || part.prop) continue;
                 bool upper = part.visual.name.StartsWith("Arm_") || part.visual.name == "Head" || part.visual.name == "Trunk";
                 var parent = part == thorax ? core : upper && thorax != null ? thorax : core;
+                var boneParent = articulation?.ParentBone(part.visual);
+                bool hinge = boneParent != null && byVisual.TryGetValue(boneParent, out _);
+                if (hinge) parent = byVisual[boneParent];
                 if (part == parent) continue;
                 Vector3 anchor = part.visual.position;
                 if (part == thorax)
@@ -147,17 +156,20 @@ namespace LastShift
                 joint.axis = Vector3.right; joint.swingAxis = Vector3.forward;
                 bool arm = part.visual.name.StartsWith("Arm_");
                 bool leg = part.visual.name.StartsWith("Leg_");
-                float swing = arm ? 85f : leg ? 65f : 30f;
-                joint.lowTwistLimit = new SoftJointLimit { limit = arm ? -75f : -35f };
-                joint.highTwistLimit = new SoftJointLimit { limit = arm ? 75f : 35f };
+                bool knee = part.visual.name.StartsWith("Shin_");
+                bool elbow = part.visual.name.StartsWith("Forearm_");
+                float swing = hinge ? 5f : arm ? 85f : leg ? 65f : 30f;
+                float bend = hinge ? Mathf.DeltaAngle(0f, part.visual.localEulerAngles.x) : 0f;
+                joint.lowTwistLimit = new SoftJointLimit { limit = knee ? -bend : elbow ? -135f-bend : hinge ? -25f-bend : arm ? -75f : -35f };
+                joint.highTwistLimit = new SoftJointLimit { limit = knee ? 140f-bend : elbow ? -bend : hinge ? 25f-bend : arm ? 75f : 35f };
                 joint.swing1Limit = new SoftJointLimit { limit = swing };
-                joint.swing2Limit = new SoftJointLimit { limit = arm ? 65f : leg ? 40f : 25f };
+                joint.swing2Limit = new SoftJointLimit { limit = hinge ? 5f : arm ? 65f : leg ? 40f : 25f };
                 joint.enableProjection = true;
                 joint.projectionDistance = 0.04f;
                 joint.projectionAngle = 15f;
                 joint.enablePreprocessing = false;
-                joint.enableCollision = arm || leg;
-                Physics.IgnoreCollision(part.collider, parent.collider, !(arm || leg));
+                joint.enableCollision = !hinge && (arm || leg);
+                Physics.IgnoreCollision(part.collider, parent.collider, hinge || !(arm || leg));
             }
             foreach (var pair in originalColliders) if (pair.Key != null) pair.Key.enabled = false;
             foreach (var part in parts)

@@ -41,7 +41,7 @@ namespace LastShift
             Transform Find(string name) => Array.Find(all, t => t.name == name);
             head = Find("Head");
             var body = Find("Hips") ?? Find("Torso") ?? Find("Body");
-            var legs = Array.FindAll(all, t => t.name.StartsWith("Leg_"));
+            var legs = Array.FindAll(all, t => t.name.StartsWith("Leg_") || t.name.StartsWith("Shin_") || t.name.StartsWith("Foot_"));
             // Loose visible pieces must belong to an anatomical part before physics detaches it.
             foreach (var t in all)
             {

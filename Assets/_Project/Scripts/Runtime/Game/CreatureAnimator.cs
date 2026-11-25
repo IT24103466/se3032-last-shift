@@ -37,6 +37,7 @@ namespace LastShift
         NpcPresentation presentation;
         EnemyAI presentationAI;
         HumanLocomotion humanMotion;
+        public HumanoidJoints Articulation { get; private set; }
         float crouchPose;
         MammothAI presentationMammoth;
         bool corpseAttempted;
@@ -93,6 +94,7 @@ namespace LastShift
                 armR.SetParent(upperBody, true);
             }
             foreach (var limb in limbs) { limb.position = limb.t.localPosition; limb.restScale = limb.t.localScale; }
+            if (humanoid) Articulation = new HumanoidJoints(model);
             health = GetComponent<Health>();
             poseRandom = new System.Random(Mathf.RoundToInt(transform.position.x * 397f + transform.position.z * 17f));
             nextGlance = Time.time + 6f + (float)poseRandom.NextDouble() * 9f;
@@ -115,7 +117,7 @@ namespace LastShift
             RestoreNavigationRotation();
         }
 
-        void OnDestroy() { corpse?.Dispose(); presentation?.Dispose(); }
+        void OnDestroy() { corpse?.Dispose(); presentation?.Dispose(); Articulation?.Dispose(); }
 
         void OnDamaged(float amount, Vector3 from)
         {
@@ -263,6 +265,7 @@ namespace LastShift
             if (trunk != null) trunk.localRotation = trunkRest;
             lastPos = transform.position;
             presentation?.Reset();
+            Articulation?.Reset();
             CurrentMotion = Motion.Standing;
         }
 
@@ -290,7 +293,7 @@ namespace LastShift
             float blend = 1f - Mathf.Exp(-10f * dt);
             speed = Mathf.Lerp(speed, Mathf.Min(measured, 12f), blend);
             float gait = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(speed / 2.5f));
-            phase += speed * cadence * dt;
+            phase += speed * cadence * (humanoid ? 2.5f : 1f) * dt;
             idlePhase += dt * 1.7f;
             float breath = Mathf.Sin(idlePhase) * (1f - gait);
             float amp = gait * stride;
@@ -343,16 +346,11 @@ namespace LastShift
             {
                 if (humanMotion == null) humanMotion = GetComponent<HumanLocomotion>();
                 crouchPose = humanMotion != null ? humanMotion.Crouch : 0f;
-                offset.y -= 0.38f * crouchPose;
+                offset.y -= Articulation != null && Articulation.JointCount > 0 ? Articulation.CrouchDrop * crouchPose : 0.38f * crouchPose;
                 if (upperBody != null) upperBody.localRotation *= Quaternion.Euler(12f * crouchPose, 0f, 0f);
-                foreach (var limb in limbs)
-                    if (limb.t.name.StartsWith("Leg_"))
-                    {
-                        // These models have rigid legs; shorten the stance without sinking feet.
-                        limb.t.localScale = Vector3.Scale(limb.restScale, new Vector3(1f, 1f - 0.4f * crouchPose, 1f));
-                        if (humanMotion != null && humanMotion.Airborne)
-                            limb.t.localRotation *= Quaternion.Euler(-30f * Mathf.Sin(humanMotion.AirPhase * Mathf.PI), 0f, 0f);
-                    }
+                Articulation?.Pose(phase, gait, crouchPose, humanMotion != null && humanMotion.Airborne,
+                    humanMotion != null ? humanMotion.AirPhase : 0f, aimBlend, twoHanded,
+                    attackT >= 0f ? Mathf.Sin(attackT * Mathf.PI) : 0f);
             }
             model.localPosition = modelRest + offset;
             CurrentMotion = attacking ? Motion.Attacking : speed > 0.1f ? Motion.Walking : Motion.Standing;
@@ -409,9 +407,9 @@ namespace LastShift
                 float curl = arm ? Mathf.Lerp(-65f, -18f, settle) : Mathf.Lerp(-42f, -24f, fall);
                 var pose = limb.rest * Quaternion.Euler(curl + side * (arm ? 12f : 16f), side * (arm ? 8f : 5f), side * (arm ? 22f : 9f));
                 limb.t.localRotation = Quaternion.Slerp(limb.deathFrom, pose, arm ? Mathf.Clamp01(buckle * 0.6f + fall * 0.4f) : buckle);
-                // The existing models have one rigid segment per limb: a hip/shoulder fold,
-                // rather than pretending there are knees/elbows or rotating the entire actor rigidly.
+
             }
+            if (humanoid) Articulation?.Pose(phase, 0f, buckle * 0.75f, false, 0f, 0f, false, 0f);
             if (head != null) head.localRotation = Quaternion.Slerp(headDeathRotation,
                 headRest * Quaternion.Euler(18f, -fallDirection.x * 18f, 9f), fall);
             if (tail != null) tail.localRotation = Quaternion.Slerp(tail.localRotation, tailRest * Quaternion.Euler(0f, 0f, 18f), fall);

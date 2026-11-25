@@ -44,7 +44,7 @@ namespace CustomArt.EditorTools
             {
                 mi.materialImportMode = ModelImporterMaterialImportMode.None; mi.useFileScale = true;
                 mi.importCameras = false; mi.importLights = false; mi.importBlendShapes = false; mi.importAnimation = false;
-                mi.animationType = ModelImporterAnimationType.None; mi.addCollider = false; mi.isReadable = false;
+                mi.animationType = ModelImporterAnimationType.None; mi.addCollider = false; mi.isReadable = true;
                 mi.meshCompression = ModelImporterMeshCompression.Off; mi.optimizeMeshPolygons = true; mi.optimizeMeshVertices = true; mi.weldVertices = true;
                 mi.generateSecondaryUV = false; mi.importNormals = ModelImporterNormals.Import; mi.importTangents = ModelImporterTangents.CalculateMikk;
                 mi.SaveAndReimport();
@@ -58,6 +58,7 @@ namespace CustomArt.EditorTools
             m.SetFloat("_SmoothnessTextureChannel", 0f);
             EditorUtility.SetDirty(m);
             AssetDatabase.SaveAssets();
+            FirstPersonArtBuilder.Build();
             Debug.Log("[Custom Art] Hands: model, textures and material ready (" + MatPath + ")");
         }
 

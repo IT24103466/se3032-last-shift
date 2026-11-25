@@ -61,14 +61,20 @@ namespace LastShift
             for (int i = 0; i < triangles.Length; i++) clothTriangles[i] = nodeForVertex[triangles[i]];
             foreach (var leg in legs)
             {
-                var mf = leg.GetComponentInChildren<MeshFilter>();
-                if (mf == null || mf.sharedMesh == null) continue;
-                Bounds local = mf.sharedMesh.bounds; Bounds fitted = new Bounds();
-                for (int i = 0; i < 8; i++)
+                Bounds fitted;
+                var joints = owner.GetComponent<CreatureAnimator>()?.Articulation;
+                if (joints != null && joints.TryBounds(leg, out var segmentBounds)) fitted = segmentBounds;
+                else
                 {
-                    var p = local.center + Vector3.Scale(local.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
-                    p = leg.InverseTransformPoint(mf.transform.TransformPoint(p));
-                    if (i == 0) fitted = new Bounds(p, Vector3.zero); else fitted.Encapsulate(p);
+                    var mf = leg.GetComponentInChildren<MeshFilter>();
+                    if (mf == null || mf.sharedMesh == null) continue;
+                    Bounds local = mf.sharedMesh.bounds; fitted = new Bounds();
+                    for (int i = 0; i < 8; i++)
+                    {
+                        var p = local.center + Vector3.Scale(local.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                        p = leg.InverseTransformPoint(mf.transform.TransformPoint(p));
+                        if (i == 0) fitted = new Bounds(p, Vector3.zero); else fitted.Encapsulate(p);
+                    }
                 }
                 fitted.Expand(0.025f);
                 contacts.Add(new LegContact { t = leg, bounds = fitted, previous = leg.worldToLocalMatrix,

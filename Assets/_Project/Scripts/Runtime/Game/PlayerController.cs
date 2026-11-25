@@ -59,6 +59,10 @@ namespace LastShift
         }
 
         GameManager GM => GameManager.Instance;
+        void Start()
+        {
+            if (GetComponent<FirstPersonHands>() == null) gameObject.AddComponent<FirstPersonHands>();
+        }
         bool Playing => GM == null || GM.IsPlaying;
 
         void Update()
